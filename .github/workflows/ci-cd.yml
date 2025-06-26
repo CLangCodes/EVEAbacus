@@ -80,7 +80,7 @@ jobs:
             pnpm build
             
             # Copy built frontend to nginx directory
-            sudo cp -r .next /var/www/eveabacus-frontend/
+            sudo cp -r .next /var/www/eveabacus/
             
             # Reload nginx
             sudo systemctl reload nginx
