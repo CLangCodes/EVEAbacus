@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nsgName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Network Security Group"
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group containing the NSG"
+      }
+    },
+    "priorityStart": {
+      "type": "int",
+      "defaultValue": 100,
+      "metadata": {
+        "description": "Starting priority for NSG rules"
+      }
+    }
+  },
+  "variables": {
+    "githubActionsRanges": [
+      "4.148.0.0/16",
+      "4.149.0.0/18",
+      "4.150.0.0/18",
+      "4.151.0.0/16",
+      "4.152.0.0/15",
+      "4.154.0.0/15",
+      "4.156.0.0/15",
+      "4.175.0.0/16",
+      "4.180.0.0/16",
+      "4.207.0.0/16",
+      "4.208.0.0/15",
+      "4.210.0.0/17",
+      "4.227.0.0/17",
+      "4.231.0.0/17",
+      "4.236.0.0/17",
+      "4.242.0.0/17",
+      "4.245.0.0/17",
+      "4.246.0.0/17",
+      "4.249.0.0/17",
+      "4.255.0.0/17"
+    ],
+    "githubApiRanges": [
+      "192.30.252.0/22",
+      "185.199.108.0/22",
+      "140.82.112.0/20",
+      "143.55.64.0/20"
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "apiVersion": "2023-05-01",
+      "name": "[concat(parameters('nsgName'), '/GitHubActions-', replace(replace(variables('githubActionsRanges')[copyIndex()], '/', '-'), '.', '-'))]",
+      "copy": {
+        "name": "githubActionsRules",
+        "count": "[length(variables('githubActionsRanges'))]"
+      },
+      "properties": {
+        "protocol": "Tcp",
+        "sourcePortRange": "*",
+        "destinationPortRange": "443",
+        "sourceAddressPrefix": "[variables('githubActionsRanges')[copyIndex()]]",
+        "destinationAddressPrefix": "*",
+        "access": "Allow",
+        "priority": "[add(parameters('priorityStart'), copyIndex())]",
+        "direction": "Inbound",
+        "description": "GitHub Actions deployment access"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "apiVersion": "2023-05-01",
+      "name": "[concat(parameters('nsgName'), '/GitHubAPI-', replace(replace(variables('githubApiRanges')[copyIndex()], '/', '-'), '.', '-'))]",
+      "copy": {
+        "name": "githubApiRules",
+        "count": "[length(variables('githubApiRanges'))]"
+      },
+      "properties": {
+        "protocol": "Tcp",
+        "sourcePortRange": "*",
+        "destinationPortRange": "443",
+        "sourceAddressPrefix": "[variables('githubApiRanges')[copyIndex()]]",
+        "destinationAddressPrefix": "*",
+        "access": "Allow",
+        "priority": "[add(add(parameters('priorityStart'), length(variables('githubActionsRanges'))), copyIndex())]",
+        "direction": "Inbound",
+        "description": "GitHub API access"
+      }
+    }
+  ]
+} 
