@@ -42,7 +42,7 @@ else {
             Label="Range">
                 @foreach (var i in JumpRangeOptions)
                 {
-                    <MudSelectItem value="@i">@i</MudSelectItem>
+                    <MudSelectItem T="int" value="@i">@i</MudSelectItem>
                 }
             </MudSelect>
         </MudStack>
