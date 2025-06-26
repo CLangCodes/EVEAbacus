@@ -1,0 +1,88 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+      
+      - name: Build backend
+        run: dotnet build --no-restore --configuration Release ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+      
+      - name: Test backend
+        run: dotnet test --no-build --verbosity normal ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./eve-abacus-webui
+      
+      - name: Build frontend
+        run: pnpm build
+        working-directory: ./eve-abacus-webui
+
+  deploy:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            # Navigate to your project directory
+            cd /home/${{ secrets.AZURE_USER }}/EVEAbacusRelease
+            
+            # Pull latest changes
+            git pull origin main
+            
+            # Build and restart backend
+            cd EVEAbacus.WebUI
+            dotnet publish --configuration Release --output /var/www/eveabacus
+            
+            # Restart the service (assuming you have a systemd service)
+            sudo systemctl restart eveabacus
+            
+            # Build and deploy frontend
+            cd ../eve-abacus-webui
+            pnpm install
+            pnpm build
+            
+            # Copy built frontend to nginx directory
+            sudo cp -r .next /var/www/eveabacus-frontend/
+            
+            # Reload nginx
+            sudo systemctl reload nginx
+            
+            echo "Deployment completed successfully!" 
