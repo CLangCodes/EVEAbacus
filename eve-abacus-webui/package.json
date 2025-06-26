@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm run generate-types && next build",
+    "build": "next build",
+    "build:with-types": "pnpm run generate-types && next build",
     "start": "next start",
     "lint": "next lint",
     "generate-types": "openapi-typescript http://localhost:5000/swagger/v1/swagger.json -o src/types/generated.ts --prettier",
