@@ -1,0 +1,39 @@
+﻿@using EVEAbacus.Domain.Models.Calculator
+@using System.Diagnostics
+@if (CalculatorService.ManufBatch != null)
+{
+    <MudTable Items="@CalculatorService.ManufBatch.ProductionRouting"
+              Hover="true" Breakpoint="Breakpoint.Xxl" Loading="@_loading" LoadingProgressColor="Color.Info"
+              Dense="true">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<ProductionRoute, object>(x=>x.BlueprintName)">Blueprint Name</MudTableSortLabel></MudTh>
+            <MudTh>Qty</MudTh>
+            <MudTh>Copies</MudTh>
+            <MudTh>Runs</MudTh>
+            <MudTh>Produced</MudTh>
+            <MudTh>ME</MudTh>
+            <MudTh>TE</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.BlueprintName</MudTd>
+            <MudTd DataLabel="Name">@context.Requisitioned</MudTd>
+            <MudTd DataLabel="Name">@context.Order.Copies</MudTd>
+            <MudTd DataLabel="Name">@context.Order.Runs</MudTd>
+            <MudTd DataLabel="Name">@context.Produced</MudTd>
+            <MudTd DataLabel="Name">@context.Order.ME</MudTd>
+            <MudTd DataLabel="Name">@context.Order.TE</MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+} else
+{
+    <p>Error: No build orders found.</p>
+}
+
+@code {
+    [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
+
+    private bool _loading;
+}

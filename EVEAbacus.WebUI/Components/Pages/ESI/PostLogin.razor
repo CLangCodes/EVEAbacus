@@ -1,0 +1,27 @@
+﻿@page "/post-login"
+@using EVEAbacus.Domain.Models.ESI.Character
+@inject NavigationManager Navigation
+
+<h3>Logging you in...</h3>
+
+@code {
+    private bool _initialized;
+    private string? redirectUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Extract the redirectUrl from query parameters
+        var uri = new Uri(Navigation.Uri);
+        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        redirectUrl = queryParams["redirectUrl"] ?? "/dashboard"; // Default to dashboard if missing
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            Navigation.NavigateTo(redirectUrl!);
+        }
+    }
+}

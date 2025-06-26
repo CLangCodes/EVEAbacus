@@ -1,0 +1,14 @@
+﻿<CascadingValue Value="CalculatorService">
+    <MudGrid>
+        @foreach (var order in CalculatorService.Orders)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <OrderCard Order="order" />
+            </MudItem>
+        }
+    </MudGrid>
+</CascadingValue>
+
+@code {
+    [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
+}

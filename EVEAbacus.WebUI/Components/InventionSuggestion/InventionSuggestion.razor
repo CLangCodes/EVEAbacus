@@ -1,0 +1,94 @@
+﻿@page "/inventionSuggestion"
+@inject CalculatorService CalculatorService
+<h3>Invention Suggestions</h3>
+
+<p>Are you seeking new items to begin R&D on to sell in the market?</p>
+
+<p>Select at least one Encryption Method, and at least two Invention Skills you have trained to level V to quickly discover the best candidates for Blueprint Invention. </p>
+
+@if (CalculatorService != null && _hasInitialized && InventionSkills != null)
+{
+    <MudSelect T="string" 
+    Label="Invention Skills" 
+    MultiSelection="true"
+    @bind-SelectedValues="SelectedInventionSkills" 
+    >
+
+        @foreach (var skill in InventionSkills)
+        {
+            <MudSelectItem T="string" Value="@skill">@skill</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+<MudTable Items="InventionSuggestions" Hover="true" Breakpoint="Breakpoint.Xxl" Loading="@_loading" LoadingProgressColor="Color.Info"
+SortLabel="Sort By" Dense="true"
+FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<string, object>(x=>x)">Blueprint Name</MudTableSortLabel></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Blueprint Name">@context</MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    string[] InventionSkillsSelected = [];
+
+
+    private string _defaultValue = "none";
+    private IEnumerable<string> _selectInventionSkills { get; set; } = new HashSet<string>();
+    public IEnumerable<string> SelectedInventionSkills
+    {
+        get => _selectInventionSkills;
+        set
+        {
+            var newSet = new HashSet<string>(value);
+            if (!_selectInventionSkills.Equals(newSet))
+            {
+                Debug.WriteLine("trigger");
+                _selectInventionSkills = newSet;
+                _ = GetInventionSuggestions();
+                StateHasChanged();
+            }
+        }
+    }
+    private bool _loading;
+    private bool _hasInitialized = false;
+
+    public string[] InventionSkills { get; set; } = [];
+    public IQueryable<string> InventionSuggestions { get; set; }// = Enumerable.Empty<string>().AsQueryable();
+    // public string[] InventionSuggestions { get; set; } = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasInitialized)
+        {
+            _hasInitialized = true;
+            InventionSkills = await CalculatorService.GetInventionSkillsAsync();
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetInventionSuggestions()
+    {
+        var selectedSkills = SelectedInventionSkills.ToArray();
+        Debug.WriteLine($"Selected: {string.Join(", ", selectedSkills)}");
+
+        if (SelectedInventionSkills.Count() > 2)
+        {
+            _loading = true;
+            StateHasChanged();
+
+            var data = await CalculatorService.InventionSuggestions(selectedSkills);
+            InventionSuggestions = data.AsQueryable();
+
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,96 @@
+﻿@using EVEAbacus.Domain.Models.Calculator
+@using System.Diagnostics
+
+@if (CalculatorService.ManufBatch != null)
+{
+    <MudTable Items="CalculatorService.ManufBatch.BillOfMaterials"
+    Hover="true" Breakpoint="Breakpoint.Xxl" Loading="@_loading" LoadingProgressColor="Color.Info"
+    Dense="true">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<BOMLineItem, object>(x=>x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<BOMLineItem, object>(x=>x.Requisitioned)">Qty</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<BOMLineItem, object>(x=>x.LowestSellPrice!)">Avg Sell</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<BOMLineItem, object>(x=>x.SellStation!)">Sold In</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<BOMLineItem, object>(x => x.LowestBuyPrice!)">Avg Buy</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<BOMLineItem, object>(x=>x.BuyStation!)">Bought In</MudTableSortLabel></MudTh>
+        </HeaderContent>
+        
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Requisitioned">@context.Requisitioned</MudTd>
+            <MudTd DataLabel="AverageSellPrice">@($"{context.MarketStats.Where(x => x.AverageSellPrice > 0).MinBy(x => x.AverageSellPrice)?.AverageSellPrice.ToString("N2") ?? "N/A"} Ƶ")</MudTd>
+            <MudTd DataLabel="SellStation">@($"{context.MarketStats.Where(x => x.AverageSellPrice > 0).MinBy(x => x.AverageSellPrice)?.StationName ?? "N/A"}")</MudTd>
+            <MudTd DataLabel="AverageBuyPrice">@($"{context.MarketStats.Where(x => x.AverageBuyPrice > 0).MinBy(x => x.AverageBuyPrice)?.AverageBuyPrice.ToString("N2") ?? "N/A"} Ƶ")</MudTd>
+            <MudTd DataLabel="BuyStation">@($"{context.MarketStats.Where(x => x.AverageBuyPrice > 0).MinBy(x => x.AverageBuyPrice)?.StationName ?? "N/A"}")</MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+    <MudButton OnClick="ExportShoppingList" Variant="Variant.Filled" Color="Color.Primary">
+        Export Shopping List
+    </MudButton>
+    <MudButton OnClick="DownloadShoppingList" Variant="Variant.Filled" Color="Color.Secondary">
+        Download as .txt
+    </MudButton>
+}
+
+@code {
+    [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
+    [Inject] IJSRuntime JSRuntime { get; set; }
+
+    private bool _loading;
+    private bool _hasInitialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasInitialized)
+        {
+            _hasInitialized = true;
+            if (CalculatorService.ManufBatch != null)
+            {
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void ExportShoppingList()
+    {
+        if (CalculatorService.ManufBatch != null)
+        {
+            var shoppingList = CalculatorService.ManufBatch.BillOfMaterialsString;
+
+            if (shoppingList.Any())
+            {
+                var exportText = string.Join("\n", shoppingList);
+                ClipboardCopy(exportText);
+            }
+        }
+    }
+
+    private async Task DownloadShoppingList()
+    {
+        if (CalculatorService.ManufBatch != null)
+        {
+            var shoppingList = CalculatorService.ManufBatch.BillOfMaterialsString;
+
+            if (shoppingList.Any())
+            {
+                var exportText = string.Join("\n", shoppingList);
+                await SaveFile("ShoppingList.txt", exportText);
+            }
+        }
+    }
+
+    private async Task SaveFile(string filename, string content)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+        var base64 = Convert.ToBase64String(bytes);
+        await JSRuntime.InvokeVoidAsync("downloadFile", filename, base64);
+    }
+
+    private async void ClipboardCopy(string text)
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+}

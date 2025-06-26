@@ -1,0 +1,30 @@
+﻿@using EVEAbacus.Domain.Models.ESI.Character
+<h3>Skills</h3>
+@if (Character != null)
+{
+    if (Character.SkillProfile != null)
+    {
+        <MudTable Items="@Character!.SkillProfile!.Skills.AsQueryable()"
+                  Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Level</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.SkillProperty.TypeName</MudTd>
+                <MudTd DataLabel="Name">@context.TrainedSkillLevel</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+
+        </MudTable>
+    }
+    
+}
+
+@code {
+    [CascadingParameter] public CharacterEntity? Character { get; set; }
+    private bool _loading;
+
+}

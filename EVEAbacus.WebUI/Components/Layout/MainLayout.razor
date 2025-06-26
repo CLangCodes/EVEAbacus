@@ -1,0 +1,42 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider 
+FullWidth="false"
+MaxWidth="MaxWidth.ExtraSmall"
+CloseButton="true"
+BackdropClick="true"
+Position="DialogPosition.Center"
+CloseOnEscapeKey="true"
+/>
+<MudSnackbarProvider />
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu ToggleDarkModeEvent="ToggleDarkMode" />
+    </div>
+
+    <main>
+        <div class="top-row px-4" style="background-color: var(--mud-palette-appbar-background) !important;">
+
+            <a href=About style="color: white !important;">About</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    public bool _isDarkMode { get; set; } = true;
+    private MudTheme _theme = new();
+    private void ToggleDarkMode() => _isDarkMode = !_isDarkMode; 
+}

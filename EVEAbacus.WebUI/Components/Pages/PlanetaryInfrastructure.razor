@@ -1,0 +1,226 @@
+﻿@page "/piCalc"
+@using EVEAbacus.Domain.Models.Map
+
+@inject IMapService MapService
+@inject IESIService ESIService
+
+<h3>PI Planet Explorer</h3>
+
+<p>Find the perfect planet to start your infrastructure on in New Eden! 
+    The smaller the planet is, the less CPU/PG you need for minimum length links. 
+    Balance that against resource availabilty, and squeeze the most profit out!</p>
+
+@if (MapService == null || ESIService == null || PlanetTypes == null && _hasInitialized)
+{
+    <p><em>Loading Data... This may take a moment.</em></p>
+}
+else {
+    <MudStack Row Class="align-items-center">
+        @* Where are you looking from? *@
+        <MudStack>
+
+            <MudAutocomplete T="string"
+            Class="min-width-autocomplete"
+            AdornmentIcon="@Icons.Material.Filled.Search"
+            Label="Select Focal System (e.g. Jita, Dodixie)"
+            @bind-Value="@FocalSystemName"
+            SearchFunc="@SearchPlanets"
+            ResetValueOnEmptyText="true"
+            Strict="true"
+            Required="true"
+            FullWidth=false
+            MinCharacters="0"
+            Placeholder="Start typing..."
+            Style="min-width: 300px"
+            RelativeWidth="DropdownWidth.Relative"/>
+        </MudStack>
+        @* How far do you want to look? *@
+        <MudStack Style="width: 50px">
+
+            <MudSelect id="JumpRange"
+            @bind-Value="@SystemJumpRange"
+            Label="Range">
+                @foreach (var i in JumpRangeOptions)
+                {
+                    <MudSelectItem value="@i">@i</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
+        @* What kind of planets are you looking for? *@
+        <MudStack Style="width: 220px">
+            <MudSelect T="string" id="PlanetType"
+            @bind-Value="planetTypeDefault"
+            @bind-SelectedValues="@SelectedPlanetTypes"
+            Clearable=true
+            Dense=true
+            MultiSelection="true"
+            Label="Planet Type">
+
+                @foreach (var plType in MapService.PlanetTypes)
+                {
+                    <MudSelectItem T="string" value="@plType">@plType</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
+        @* What Security Status? *@
+        <MudStack Style="width: 220px">
+            <MudSelect T="string" id="PlanetType"
+            @bind-Value="secStatusDefault"
+            @bind-SelectedValues="@SelectedSecurityStatus"
+            Clearable=true
+            Dense=true
+            MultiSelection="true"
+            Label="Security Status">
+
+                @foreach (var sec in SecurityStatus)
+                {
+                    <MudSelectItem T="string" value="@sec">@sec</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
+    </MudStack>
+
+    if (FocalSystemName != null)
+    {
+        @if (filteredPlanets == null || filteredPlanets.Count() == 0)
+        {
+            <p></p>
+            <p></p>
+            <p>The list is empty. Please adjust your filters, or enter a valid Focal Solar System</p>
+        }
+        else
+        {
+            <MudTable @ref="mudTable" Items="@filteredPlanets" Hover="true" Breakpoint="Breakpoint.Xxl" Loading="@_loading" LoadingProgressColor="Color.Info" 
+            SortLabel="Sort By" Dense="true"
+            FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true"
+            >
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.Name.ItemName)">Planet</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.SolarSystem!.SolarSystemName!)">Solar System</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.Constellation!.ConstellationName!)">Constellation</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.Region.RegionName!)">Region</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.Item.TypeName!)">Planet Type</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.Security!)">Security</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.Radius!)">Radius (km)</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.MinLinkPowerGrid!)">Min Link PG</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Denormalize, object>(x=>x.MinLinkCPU!)">Min Link CPU</MudTableSortLabel></MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="Planet">@context.Name.ItemName</MudTd>
+                    <MudTd DataLabel="Solar System">@context.SolarSystem!.SolarSystemName</MudTd>
+                    <MudTd DataLabel="Constellation">@context.Constellation.ConstellationName</MudTd>
+                    <MudTd DataLabel="Region">@context.Region.RegionName</MudTd>
+                    <MudTd DataLabel="Planet Type">@context.Item.TypeName</MudTd>
+                    <MudTd DataLabel="Security">@(context.Security.HasValue ? $"{Math.Round(context.Security!.Value, 2):0.00}" : "N/A")</MudTd>
+                    <MudTd DataLabel="Radius (km)">@(context.Radius / 1000)</MudTd>
+                    <MudTd DataLabel="Min Link PG">@context.MinLinkPowerGrid</MudTd>
+                    <MudTd DataLabel="Min Link CPU">@context.MinLinkCPU</MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        }
+    }
+}
+
+@code {
+    private bool _loading;
+    private bool _hasInitialized = false;
+    string? TravelFlag = null;
+
+    private string planetTypeDefault = "Nothing selected";
+    private string secStatusDefault = "";
+    private string? _focalSystemName = string.Empty;
+    public string? FocalSystemName
+    { 
+        get => _focalSystemName;
+        set
+        {
+            if (_focalSystemName != value)
+            {
+                _focalSystemName = value;
+                _ = SelectPlanets();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private int _systemJumpRange = 5;
+    int SystemJumpRange
+    {
+        get => _systemJumpRange;
+        set
+        {
+            if (_systemJumpRange != value)
+            {
+                _systemJumpRange = value;
+                _ = SelectPlanets();
+                StateHasChanged();
+            }
+        }
+    }
+    int[] JumpRangeOptions = [0, 1, 2, 3, 4, 5, 10];
+    string? PlanetType;
+    string[]? PlanetTypes;
+    string[] SecurityStatus = [ "High Sec", "Low Sec", "Null Sec"];
+
+    private IEnumerable<string> _selectedPlanetTypes = new HashSet<string>();
+    public IEnumerable<string> SelectedPlanetTypes
+    {
+        get => _selectedPlanetTypes;
+        set
+        {
+            if (!_selectedPlanetTypes.SequenceEqual(value))
+            {
+                _selectedPlanetTypes = value.ToList();
+                SelectPlanets(); 
+                StateHasChanged();
+            }
+        }
+    }
+    private IEnumerable<string> _selectedSecurityStatus = new HashSet<string>();
+    public IEnumerable<string> SelectedSecurityStatus
+    {
+        get => _selectedSecurityStatus;
+        set
+        {
+            if (!_selectedSecurityStatus.SequenceEqual(value))
+            {
+                _selectedSecurityStatus = value.ToList();
+                SelectPlanets(); 
+                StateHasChanged();
+            }
+        }
+    }
+
+    private MudTable<Denormalize>? mudTable;
+    private IQueryable<Denormalize> filteredPlanets = Enumerable.Empty<Denormalize>().AsQueryable();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasInitialized)
+        {
+            _hasInitialized = true;
+            PlanetTypes = MapService.GetPlanetTypeArray();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SelectPlanets()
+    {
+        
+        filteredPlanets = (await MapService.SelectPlanetsAsync(FocalSystemName, SystemJumpRange, SelectedSecurityStatus.ToArray(), SelectedPlanetTypes.ToArray())).AsQueryable();
+        StateHasChanged();
+    }
+    
+    private async Task<IEnumerable<string>> SearchPlanets(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            {
+            return await MapService.SearchSolarSystemNamesAsync();
+            }
+        return await MapService.SearchSolarSystemNamesAsync(value);
+    }
+}

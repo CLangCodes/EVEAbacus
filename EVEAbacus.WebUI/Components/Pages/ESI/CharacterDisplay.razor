@@ -1,0 +1,18 @@
+﻿@using EVEAbacus.Domain.Models.ESI.Character
+
+<h3>CharacterDisplay</h3>
+
+@if (Character != null)
+{
+    
+    <p>Name: @Character.Name</p>
+    <p>Birthday: @Character.Birthday</p>
+    <CascadingValue Value="@Character" >
+        <CharSkills />
+    </CascadingValue>
+    
+}
+
+@code {
+    [CascadingParameter] public CharacterEntity? Character { get; set; }
+}

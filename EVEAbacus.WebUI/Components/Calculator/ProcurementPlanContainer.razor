@@ -1,0 +1,58 @@
+﻿@using EVEAbacus.Domain.Models.Calculator
+
+<MudTable Items="@ProcurementPlan.PurchaseRequisitions.AsQueryable()"
+          Hover="true" Breakpoint="Breakpoint.Xxl" FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true" Dense="true">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Qty</MudTh>
+        <MudTh>Remaining</MudTh>
+        <MudTh>Price (Ƶ)</MudTh>
+        <MudTh>Volume (m<sup>3</sup>)</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
+        <MudTd DataLabel="Remaining">@(context.MarketOrder?.VolumeRemain ?? 0)</MudTd>
+        <MudTd DataLabel="Price">@(context.Price.ToString("N2"))</MudTd>
+        <MudTd DataLabel="Volume">@(((decimal)context.Item.Volume! * context.Quantity).ToString("N2"))  </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+<p>
+    <MudButton OnClick="ExportShoppingList" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">
+        Export Shopping List for @ProcurementPlan.StationName
+    </MudButton>
+</p>
+
+
+@code {
+    [Parameter] public ProcurementPlan ProcurementPlan { get; set; } = default!;
+    [Inject] IJSRuntime JSRuntime { get; set; }
+
+
+
+    private void ExportShoppingList()
+    {
+        var importStrings = ProcurementPlan.MarketImport;
+
+        if (importStrings.Count() > 0)
+        {
+            var shoppingList = importStrings;
+
+            if (shoppingList.Any())
+            {
+                var exportText = string.Join("\n", shoppingList);
+                ClipboardCopy(exportText);
+            }
+        }
+    }
+
+    private async void ClipboardCopy(string text)
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+}

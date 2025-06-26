@@ -1,0 +1,43 @@
+﻿@using EVEAbacus.Domain.Models.Calculator
+@inject ICalcSessionService CalcSessionService
+@inject IOrderService OrderService
+@inject IDialogService DialogService
+
+<CascadingValue Value="CalculatorService">
+    <LocationFilter OnValidEvent="Refresh" />
+
+    <MudButton Disabled="@_isCalculating" StartIcon="@Icons.Material.Outlined.Create" ButtonType="ButtonType.Button" OnClick="() => OpenCreateDialog()">Create an Order</MudButton>
+    
+    <OrderFlexBox OnValidEvent="Refresh" />
+    
+</CascadingValue>
+
+
+@code {
+    [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
+    [Parameter] public EventCallback OnValidEvent { get; set; }
+    private bool _isCalculating = false;
+
+    private async Task Refresh()
+    {
+        await OnValidEvent.InvokeAsync();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters<OrderCreateComp>
+        {
+            { x => x.CalculatorService, CalculatorService }
+        };
+
+        var dialog = await DialogService.ShowAsync<OrderCreateComp>("Create Order", parameters);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is OrderDTO newOrder)
+        {
+            await OrderService.AddOrderAsync(newOrder);
+            await CalcSessionService.SetOrdersAsync(OrderService.Orders);
+            await OnValidEvent.InvokeAsync();
+        }
+    }
+}

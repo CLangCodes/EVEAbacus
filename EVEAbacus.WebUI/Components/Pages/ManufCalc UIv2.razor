@@ -1,0 +1,87 @@
+﻿@page "/manufCalcUI2"
+
+@using EVEAbacus.Domain.Models
+@using EVEAbacus.Domain.Models.Calculator
+@using EVEAbacus.WebUI.Components.Calculator
+
+@inject CalculatorService CalculatorService
+@inject ICalcSessionService CalcSessionService
+@inject IOrderService OrderService
+
+<PageTitle>Manufacturing Calculator</PageTitle>
+
+<MudGrid>
+    <CascadingValue Value="CalculatorService">
+        <MudItem xs="9" md="3">
+            
+            @if (OrderService.Orders == null)
+            {
+                <p><em>Loading...</em></p>
+            }
+            else
+            {
+                <OrdersContainer OnValidEvent="RunCalc" />
+            }
+        </MudItem>
+        <MudItem xs="15" md="9">
+            @if (CalculatorService.Loading)
+            {
+                <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+                <em>This may take a while if the Market Data has not been updated within the last hour.</em>
+            }
+            @if (CalculatorService.ManufBatch == null)
+            {
+                <p>Create an order to calculate your Production Routing and Bill of Materials</p>
+            }
+            else
+            {
+                <MudTabs Outlined="true" Position="@Position" Rounded="true" Border="true"
+                         ApplyEffectsToContainer="true" Class="mt-8" PanelClass="pa-6">
+                    <MudTabPanel Text="Production Routing">
+                        <ProductionRoutingComp />
+                    </MudTabPanel>
+                    <MudTabPanel Text="Bill Of Materials">
+                        <BillOfMaterialsComp />
+                    </MudTabPanel>
+                    <MudTabPanel Text="Supply Plan">
+                        <SupplyPlanContainer SupplyPlan="CalculatorService.ManufBatch.SupplyPlan" />
+                    </MudTabPanel>
+                    <MudTabPanel Text="Financial Analysis">
+                        <MarketAnalysisComp MarketProfile="CalculatorService.ManufBatch.MarketProfile" />
+                    </MudTabPanel>
+                </MudTabs>
+            }
+        </MudItem>
+    </CascadingValue>
+</MudGrid>
+
+
+@code {
+    private bool _loading = false;
+
+    private bool _hasInitialized = false;
+    public Position Position { get; set; } = Position.Top;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasInitialized)
+        {
+            _hasInitialized = true;
+            var sessionOrders = await CalcSessionService.GetOrdersAsync();
+            if (sessionOrders != null) { OrderService.SetOrdersFromStorage(sessionOrders); }
+            await RunCalc();
+        }
+    }
+
+    protected async Task OnValidEventAct()
+    {
+        await RunCalc();
+    }
+
+    protected async Task RunCalc()
+    {
+        
+        CalculatorService.ManufBatch = await CalculatorService.GetManufacturingBatch(OrderService.Orders.ToArray(), CalculatorService.SelectedMarkets.ToArray());
+        StateHasChanged();
+    }
+}

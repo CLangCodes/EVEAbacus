@@ -1,0 +1,56 @@
+﻿@page "/ESI"
+@rendermode InteractiveServer
+
+@using System.Diagnostics
+@using EVEAbacus.Domain.Models.ESI.Character
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.Text.Json
+@using System.IO.Compression
+@using System.Text
+
+@inject NavigationManager Navigation
+@inject ICharacterService CharacterService
+
+<a href="@GetAuthRequestUrl()">
+    <img src="https://eveabacus.com/Images/eve-sso-login-black-large.png" style="cursor: pointer;" />
+</a>
+
+@if (Character != null)
+{
+    <CascadingValue Value="Character">
+        <EVEAbacus.WebUI.Components.Pages.ESI.CharacterDisplay />
+    </CascadingValue>
+}
+
+@code {
+    public CharacterEntity? Character;  
+    string userId = default!;
+
+    private string GetAuthRequestUrl()
+    {
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri.Replace("http://", "https://"));
+        return $"/esi/authrequest?returnUrl={returnUrl}";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // var token = await UserAccessor.GetAccessTokenAsync();
+        // if (token.AccessTokenExpiryTime != null && token.AccessTokenExpiryTime < DateTime.UtcNow)
+        // {
+        //     if (token.RefreshTokenExpiryTime == null || token.RefreshTokenExpiryTime < DateTime.UtcNow)
+        //     {
+        //         Console.WriteLine("Refresh token expired, reauthentication required.");
+
+        //         Navigation.NavigateTo(GetAuthRequestUrl(), forceLoad: true);
+        //         return;
+        //     }
+        //     Navigation.NavigateTo($"/esi/RefreshToken?refreshToken={token.RefreshToken}" +
+        //     "&returnUrl={Uri.EscapeDataString(Navigation.Uri)}", forceLoad: true);
+        //     return;
+        // }
+        // if (token.AccessToken != null)
+        // {
+        //     Character = await CharacterService.GetCharacterAsync(token.AccessToken);
+        // }
+    }
+}
