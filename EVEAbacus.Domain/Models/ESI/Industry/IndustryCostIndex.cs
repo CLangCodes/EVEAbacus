@@ -8,7 +8,7 @@ namespace EVEAbacus.Domain.Models.ESI.Industry
 {
     public class IndustryCostIndex
     {
-        public string Activity { get; set; }
+        public required string Activity { get; set; }
         public float CostIndex { get; set; }
     }
 }

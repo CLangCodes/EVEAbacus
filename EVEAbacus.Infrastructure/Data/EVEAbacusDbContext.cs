@@ -271,7 +271,7 @@ public partial class EVEAbacusDbContext : DbContext
         {
             foreach (var property in entityType.ClrType.GetProperties())
             {
-                if (propertyMappings.TryGetValue(property.Name, out string dbColumnName))
+                if (propertyMappings.TryGetValue(property.Name, out string? dbColumnName) && dbColumnName != null)
                 {
                     modelBuilder.Entity(entityType.ClrType)
                         .Property(property.Name)
@@ -286,7 +286,7 @@ public partial class EVEAbacusDbContext : DbContext
             modelBuilder.Entity<Name>().HasKey(c => c.ItemId);
             entity.HasOne(s => s.Name)
                 .WithOne()
-                .HasPrincipalKey<Denormalize>(s => (Int64)s.ItemId)
+                .HasPrincipalKey<Denormalize>(s => s.ItemId)
                 .HasForeignKey<Name>(s => s.ItemId)
                 .IsRequired(true);
             entity.HasOne(s => s.Item)

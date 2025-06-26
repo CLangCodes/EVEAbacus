@@ -6,7 +6,7 @@ namespace EVEAbacus.Domain.Models.ESI.Industry
     {
         public long ItemId { get; set; }
         public Item? BlueprintProperty { get; set; }
-        public string LocationFlag { get; set; }
+        public required string LocationFlag { get; set; }
         public long LocationId { get; set; }
         public int MaterialEfficiency { get; set; }
         public int Quantity { get; set; } // -1 if BPO, -2 if BPC

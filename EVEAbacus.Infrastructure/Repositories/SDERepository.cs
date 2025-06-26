@@ -45,13 +45,10 @@ namespace EVEAbacus.Infrastructure.Services
             using var context = _dbContextFactory.CreateDbContext();
             return context.invTypes.Any(e => e.TypeId == typeId);
         }
-        async Task<Blueprint> ISDERepository.GetBlueprintAsync(int typeId, byte? activityId)
+        async Task<Blueprint?> ISDERepository.GetBlueprintAsync(int typeId, byte? activityId)
         {
             using var context = _dbContextFactory.CreateDbContext();
-
             var data = await context.industryBlueprints
-                .AsNoTracking()
-                .Include(bp => bp.ItemProperty).ThenInclude(it => it!.Group).ThenInclude(gr => gr!.Category)
                 .Include(bp => bp.BPTimes)
                 .Include(bp => bp.BPSkills).ThenInclude(sk => sk.Skill).ThenInclude(it => it!.Group).ThenInclude(gr => gr!.Category)
                 .Include(bp => bp.BPProducts).ThenInclude(pr => pr.Product).ThenInclude(it => it!.Group).ThenInclude(gr => gr!.Category)
@@ -188,18 +185,14 @@ namespace EVEAbacus.Infrastructure.Services
 
             return filteredData;
         }
-        async Task<int[]> ISDERepository.GetGroupIdsInCategory(int categoryId)
+        async Task<int[]?> ISDERepository.GetGroupIdsInCategory(int categoryId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var result = await context.invGroups
                 .Where(g => g.CategoryId == categoryId)
                 .Select(g => g.GroupId)
                 .ToListAsync();
-            if (result == null)
-            {
-                return null;
-            }
-            return result.ToArray();
+            return result?.ToArray();
         }
         async Task<float> ISDERepository.GetInventionChance(int blueprintTypeId, int productTypeId)
         {
@@ -252,7 +245,7 @@ namespace EVEAbacus.Infrastructure.Services
 
             return results.ToArray();
         }
-        async Task<Item> ISDERepository.GetItemAsync(int typeId)
+        async Task<Item?> ISDERepository.GetItemAsync(int typeId)
         {
             using var context = _dbContextFactory.CreateDbContext();
 
@@ -261,8 +254,7 @@ namespace EVEAbacus.Infrastructure.Services
                 .Include(bp => bp.Group).ThenInclude(gr => gr!.Category)
                 .FirstOrDefaultAsync(b => b.TypeId == typeId);
 
-            if (data == null) { return null; }
-            else { return data; }
+            return data;
         }
         async Task<string?> ISDERepository.GetItemNameAsync(int typeId)
         {
@@ -273,7 +265,7 @@ namespace EVEAbacus.Infrastructure.Services
 
             if (data == null) { return null; } else { return data.TypeName; }
         }
-        async Task<Item[]> ISDERepository.GetItemsInGroup(int groupId)
+        async Task<Item[]?> ISDERepository.GetItemsInGroup(int groupId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.invTypes
@@ -281,7 +273,7 @@ namespace EVEAbacus.Infrastructure.Services
                 .AsNoTracking()
                 .ToListAsync();
 
-            if (data == null) { return null; } else { return data.ToArray(); }
+            return data?.ToArray();
         }
 
         async Task<int?> ISDERepository.GetItemTypeIdAsync(string name)

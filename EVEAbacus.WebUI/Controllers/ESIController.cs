@@ -13,7 +13,7 @@ namespace EVEAbacus.WebUI.Controllers
         private readonly IESIService _esiService;
         private readonly IMarketService _marketService;
         private readonly ICharacterService _characterService;
-        private string _returnUrl;
+        private string? _returnUrl;
 
         public ESIController(IESIService esiService, 
             ICharacterService characterService, IMarketService marketService)
@@ -85,7 +85,7 @@ namespace EVEAbacus.WebUI.Controllers
         {
             int jumps;
             var route = await _esiService.GetRouteAsync(originId, destinationId, flag);
-            jumps = route.Count() - 1;
+            jumps = route?.Count() - 1 ?? -1;
             return Ok(jumps);
         }
     }

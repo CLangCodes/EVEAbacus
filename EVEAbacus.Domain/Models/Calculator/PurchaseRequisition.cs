@@ -17,6 +17,6 @@ namespace EVEAbacus.Domain.Models.Calculator
         public int Quantity { get; set; }
         public MarketOrder? MarketOrder { get; set; }
         public decimal Price { get; set; }
-        public Item Item { get; set; }
+        public required Item Item { get; set; }
     }
 }

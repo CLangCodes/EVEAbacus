@@ -16,16 +16,14 @@ namespace EVEAbacus.Infrastructure.Repositories
         {
             _dbContextFactory = dbContextFactory;
         }
-        async Task<Constellation> IMapRepository.GetConstellation(int id)
+        async Task<Constellation?> IMapRepository.GetConstellation(int id)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapConstellations
                 .AsNoTracking()
                 .FirstOrDefaultAsync(ss => ss.ConstellationId == id);
 
-            if (data == null) { return null; }
-            else { return data; }
-
+            return data;
         }
         async Task<int?> IMapRepository.GetConstellationId(string name)
         {
@@ -48,17 +46,16 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Select(ss => ss.ConstellationName!)
                 .ToArrayAsync();
         }
-        async Task<IQueryable<Constellation>> IMapRepository.GetConstellations()
+        async Task<IQueryable<Constellation>?> IMapRepository.GetConstellations()
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapConstellations
                 .AsNoTracking()
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
-        async Task<IQueryable<Constellation>> IMapRepository.GetConstellationsInRegion(int regionId)
+        async Task<IQueryable<Constellation>?> IMapRepository.GetConstellationsInRegion(int regionId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapConstellations
@@ -66,11 +63,10 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Where(co => co.RegionId == regionId)
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
 
-        async Task<Denormalize> IMapRepository.GetPlanet(int id)
+        async Task<Denormalize?> IMapRepository.GetPlanet(int id)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapDenormalize
@@ -82,8 +78,7 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Include(x => x.Region)
                 .FirstOrDefaultAsync(x => x.ItemId == id);
 
-            if (data == null) { return null; }
-            else { return data; }
+            return data;
         }
         async Task<long?> IMapRepository.GetPlanetId(string name)
         {
@@ -134,7 +129,7 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Select(ss => ss.Name.ItemName!)
                 .ToArrayAsync();
         }
-        async Task<IQueryable<Denormalize>> IMapRepository.GetPlanets()
+        async Task<IQueryable<Denormalize>?> IMapRepository.GetPlanets()
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapDenormalize.Where(x => PlanetTypeIds.Contains((int)x.TypeId!))
@@ -146,8 +141,7 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Include(x => x.Region)
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
         async Task<List<Denormalize>> IMapRepository.GetPlanetsInChunk(int[] solarSystemIds)
         {
@@ -163,7 +157,7 @@ namespace EVEAbacus.Infrastructure.Repositories
                .ToListAsync();
         }
 
-        async Task<IQueryable<Denormalize>> IMapRepository.GetPlanetsInConstellation(
+        async Task<IQueryable<Denormalize>?> IMapRepository.GetPlanetsInConstellation(
             int constellationId)
         {
             using var context = _dbContextFactory.CreateDbContext();
@@ -176,10 +170,9 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Include(x => x.Region)
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
-        async Task<IQueryable<Denormalize>> IMapRepository.GetPlanetsInRegion(
+        async Task<IQueryable<Denormalize>?> IMapRepository.GetPlanetsInRegion(
             int regionId)
         {
             using var context = _dbContextFactory.CreateDbContext();
@@ -192,10 +185,9 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Include(x => x.Region)
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
-        async Task<IQueryable<Denormalize>> IMapRepository.GetPlanetsInSolarSystem(
+        async Task<IQueryable<Denormalize>?> IMapRepository.GetPlanetsInSolarSystem(
             int solarSystemId)
         {
             using var context = _dbContextFactory.CreateDbContext();
@@ -208,19 +200,17 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Include(x => x.Region)
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
 
-        async Task<Region> IMapRepository.GetRegion(int id)
+        async Task<Region?> IMapRepository.GetRegion(int id)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapRegions
                 .AsNoTracking()
                 .FirstOrDefaultAsync(ss => ss.RegionId == id);
 
-            if (data == null) { return null; }
-            else { return data; }
+            return data;
         }
         async Task<int?> IMapRepository.GetRegionId(string name)
         {
@@ -251,26 +241,24 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Select(ss => ss.RegionName!)
                 .ToArrayAsync();
         }
-        async Task<IQueryable<Region>> IMapRepository.GetRegions()
+        async Task<IQueryable<Region>?> IMapRepository.GetRegions()
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapRegions
                 .AsNoTracking()
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
 
-        async Task<SolarSystem> IMapRepository.GetSolarSystem(int id)
+        async Task<SolarSystem?> IMapRepository.GetSolarSystem(int id)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapSolarSystems
                 .AsNoTracking()
                 .FirstOrDefaultAsync(ss => ss.SolarSystemId == id);
 
-            if (data == null) { return null; }
-            else { return data; }
+            return data;
         }
 
         async Task<SolarSystem?> IMapRepository.GetSolarSystemByStationId(int id)
@@ -299,7 +287,7 @@ namespace EVEAbacus.Infrastructure.Repositories
             if (data == null) { return null; }
             else { return data.SolarSystemId; }
         }
-        async Task<int[]> IMapRepository.GetSolarSystemJumps(int solarSystemId)
+        async Task<int[]?> IMapRepository.GetSolarSystemJumps(int solarSystemId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapSolarSystemJumps
@@ -308,8 +296,7 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Select(x => x.ToSolarSystemId)
                 .ToArrayAsync();
 
-            if (data == null) { return null; }
-            else { return data; }
+            return data;
         }
         async Task<string[]> IMapRepository.GetSolarSystemNames()
         {
@@ -343,18 +330,17 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Select(ss => ss.SolarSystemName!)
                 .ToArrayAsync();
         }
-        async Task<IQueryable<SolarSystem>> IMapRepository.GetSolarSystems()
+        async Task<IQueryable<SolarSystem>?> IMapRepository.GetSolarSystems()
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapSolarSystems
                 .AsNoTracking()
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
 
-        async Task<IQueryable<SolarSystem>> IMapRepository.GetSolarSystemsInConstellation(int constellationId)
+        async Task<IQueryable<SolarSystem>?> IMapRepository.GetSolarSystemsInConstellation(int constellationId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapSolarSystems
@@ -362,10 +348,9 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Where(ss => ss.ConstellationId == constellationId)
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
-        async Task<IQueryable<SolarSystem>> IMapRepository.GetSolarSystemsInRegion(int regionId)
+        async Task<IQueryable<SolarSystem>?> IMapRepository.GetSolarSystemsInRegion(int regionId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.mapSolarSystems
@@ -373,8 +358,7 @@ namespace EVEAbacus.Infrastructure.Repositories
                 .Where(ss => ss.RegionId == regionId)
                 .ToListAsync();
 
-            if (data == null) { return null; }
-            else { return data.AsQueryable(); }
+            return data?.AsQueryable();
         }
 
         async Task<float?> IMapRepository.GetSolarSystemSecurityStatus(int solarSystemId)

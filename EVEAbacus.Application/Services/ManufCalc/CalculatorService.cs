@@ -225,7 +225,7 @@ public class CalculatorService
     public async Task<ManufBatch> GetManufacturingBatch(Order[] orders, string[] stationNames)
     {
         if (orders == null || orders.Length == 0)
-            return null;
+            throw new ArgumentException("Orders cannot be null or empty", nameof(orders));
 
         Loading = true;
         await SetStationIds(stationNames);
@@ -256,7 +256,7 @@ public class CalculatorService
         {
             Console.WriteLine(ex.Message);
             Loading = false;
-            return null;
+            throw new InvalidOperationException("Failed to create manufacturing batch", ex);
         }
     }
 

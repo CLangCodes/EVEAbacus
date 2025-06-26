@@ -10,7 +10,7 @@ namespace EVEAbacus.Application.Interfaces
         Task<int?> CanThisBeBuiltAsync(int typeId);
         bool DoesBlueprintExist(int blueprintTypeId);
         bool DoesItemExist(int typeId);
-        Task<Blueprint> GetBlueprintAsync(int typeId, byte? activityId);
+        Task<Blueprint?> GetBlueprintAsync(int typeId, byte? activityId);
         Task<int?> GetBlueprintIdByProductIdAsync(int productId);
         Task<string[]> GetBlueprintNamesAsync(string searchTerm);
         Task<List<BPMaterial>?> GetBuildableBlueprintMaterialsAsync(int typeId);
@@ -18,12 +18,12 @@ namespace EVEAbacus.Application.Interfaces
         Task<List<BPProduct>?> GetBlueprintProductsAsync(int typeId, byte? activityId);
         Task<List<BPSkill>?> GetBlueprintSkillsAsync(int typeId, byte? activityId);
         Task<List<BPTime>?> GetBlueprintTimesAsync(int typeId, byte? activityId);
-        Task<int[]> GetGroupIdsInCategory(int categoryId);
+        Task<int[]?> GetGroupIdsInCategory(int categoryId);
         Task<string[]> GetInventionSkillsAsync();
         Task<string[]> GetInventionTargetsBySkillsAsync(int[] skillIds);
-        Task<Item> GetItemAsync(int typeId);
+        Task<Item?> GetItemAsync(int typeId);
         Task<string?> GetItemNameAsync(int typeId);
-        Task<Item[]> GetItemsInGroup(int groupId);
+        Task<Item[]?> GetItemsInGroup(int groupId);
         Task<int?> GetItemTypeIdAsync(string name);
         Task<int?> GetProductIdByBlueprintIdAsync(int typeId, byte activityId);
         Task<float> GetInventionChance(int blueprintTypeId, int productTypeId);

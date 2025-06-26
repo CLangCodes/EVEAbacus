@@ -106,53 +106,48 @@ namespace EVEAbacus.Infrastructure.Repositories
             else { return []; }
         }
 
-        async Task<MarketOrder> IMarketRepository.GetMarketOrderAsync(long orderId)
+        async Task<MarketOrder?> IMarketRepository.GetMarketOrderAsync(long orderId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.MarketOrders
                 .FirstOrDefaultAsync(mkt => mkt.OrderId == orderId);
-            if (data != null) { return data; }
-            else { return null; }
+            return data;
         }
 
-        async Task<List<MarketOrder>> IMarketRepository.GetMarketOrdersAsync(int typeId, int regionId)
+        async Task<List<MarketOrder>?> IMarketRepository.GetMarketOrdersAsync(int typeId, int regionId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.MarketOrders
                 .Where(mkt => mkt.TypeId == typeId
                 && mkt.RegionId == regionId)
                 .ToListAsync();
-            if (data != null) { return data; }
-            else { return null; }
+            return data;
         }
 
-        async Task<List<MarketOrder>> IMarketRepository.GetMarketOrdersAsync(int typeId, long stationId)
+        async Task<List<MarketOrder>?> IMarketRepository.GetMarketOrdersAsync(int typeId, long stationId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.MarketOrders
                 .Where(mkt => mkt.TypeId == typeId
                 && mkt.LocationId == stationId)
                 .ToListAsync();
-            if (data != null) { return data; }
-            else { return null; }
+            return data;
         }
 
-        async Task<MarketRegionHistory> IMarketRepository.GetMarketRegionHistoryAsync(int typeId, int regionId)
+        async Task<MarketRegionHistory?> IMarketRepository.GetMarketRegionHistoryAsync(int typeId, int regionId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.MarketRegionHistories
                 .FirstOrDefaultAsync(mrh => mrh.RegionId == regionId && mrh.TypeId == typeId);
-            if (data != null) { return data; } 
-            else { return null; }
+            return data;
         }
 
-        async Task<MarketStat> IMarketRepository.GetMarketStatAsync(int typeId, long stationId)
+        async Task<MarketStat?> IMarketRepository.GetMarketStatAsync(int typeId, long stationId)
         {
             using var context = _dbContextFactory.CreateDbContext();
             var data = await context.MarketStats
                 .FirstOrDefaultAsync(mrh => mrh.StationId == stationId && mrh.TypeId == typeId);
-            if (data != null) { return data; }
-            else { return null; }
+            return data;
         }
 
         async Task IMarketRepository.PurgeMarketOrders()

@@ -8,11 +8,11 @@ namespace EVEAbacus.Domain.Models.ESI.PI
 {
     public class PIPlanet
     {
-        public string LastUpdate { get; set; }
+        public required string LastUpdate { get; set; }
         public int NumPins { get; set; }
         public int OwnerId { get; set; }
         public int PlanetId { get; set; }
-        public string PlanetType { get; set; }
+        public required string PlanetType { get; set; }
         public int SolarSystemId { get; set; }
         public int UpgradeLevel { get; set; }
     }

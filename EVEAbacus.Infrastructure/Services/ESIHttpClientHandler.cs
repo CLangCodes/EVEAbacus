@@ -16,14 +16,14 @@ namespace EVEAbacus.Infrastructure.Services
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            string cacheKey = request.RequestUri.ToString();
+            string cacheKey = request.RequestUri?.ToString() ?? string.Empty;
             Console.WriteLine($"ESIHttpClientHandler: Processing request for {cacheKey}");
 
             // Check if we have a cached ETag for this URL
-            if (_cache.TryGetValue($"{cacheKey}_etag", out string etag))
+            if (_cache.TryGetValue($"{cacheKey}_etag", out string? etag) && !string.IsNullOrEmpty(etag))
             {
                 Console.WriteLine($"ESIHttpClientHandler: Found cached ETag for {cacheKey}");
-                request.Headers.IfNoneMatch.Add(new EntityTagHeaderValue(etag));
+                request.Headers.IfNoneMatch.Add(new EntityTagHeaderValue(etag!));
             }
 
             var response = await base.SendAsync(request, cancellationToken);
@@ -33,7 +33,13 @@ namespace EVEAbacus.Infrastructure.Services
             if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
             {
                 Console.WriteLine($"ESIHttpClientHandler: Using cached response for {cacheKey}");
-                return _cache.Get<HttpResponseMessage>($"{cacheKey}_response");
+                var cachedResponse = _cache.Get<HttpResponseMessage>($"{cacheKey}_response");
+                if (cachedResponse != null)
+                {
+                    return cachedResponse;
+                }
+                // If no cached response, return a new empty response with 304 status
+                return new HttpResponseMessage(System.Net.HttpStatusCode.NotModified);
             }
 
             // Cache successful responses

@@ -14,6 +14,7 @@
         var uri = new Uri(Navigation.Uri);
         var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
         redirectUrl = queryParams["redirectUrl"] ?? "/dashboard"; // Default to dashboard if missing
+        await Task.CompletedTask; // Add await to satisfy async requirement
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -23,5 +24,6 @@
             _initialized = true;
             Navigation.NavigateTo(redirectUrl!);
         }
+        await Task.CompletedTask; // Add await to satisfy async requirement
     }
 }

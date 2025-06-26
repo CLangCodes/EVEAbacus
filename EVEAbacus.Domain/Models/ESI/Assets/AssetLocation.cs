@@ -10,6 +10,6 @@ namespace EVEAbacus.Domain.Models.ESI.Assets
     public class AssetLocation
     {
         public long ItemId { get; set; }
-        public Position Position { get; set; }
+        public required Position Position { get; set; }
     }
 }

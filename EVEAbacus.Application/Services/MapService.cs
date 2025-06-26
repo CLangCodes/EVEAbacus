@@ -56,7 +56,7 @@ namespace EVEAbacus.Application.Services
             _mapRepository = mapRepository;
             _eSIService = eSIService;
         }
-        async Task<Constellation> IMapService.GetConstellation(
+        async Task<Constellation?> IMapService.GetConstellation(
             int id, int? focalId, string? routeFlag)
         {
             return await _mapRepository.GetConstellation(id);
@@ -69,11 +69,11 @@ namespace EVEAbacus.Application.Services
         {
             return await _mapRepository.GetConstellationNamesInRegion(regionId);
         }
-        async Task<IQueryable<Constellation>> IMapService.GetConstellations()
+        async Task<IQueryable<Constellation>?> IMapService.GetConstellations()
         {
             return await _mapRepository.GetConstellations();
         }
-        async Task<IQueryable<Constellation>> IMapService.GetConstellationsInRegion(
+        async Task<IQueryable<Constellation>?> IMapService.GetConstellationsInRegion(
             int regionID)
         {
             var constellations = await _mapRepository.GetConstellationsInRegion(regionID);
@@ -84,13 +84,13 @@ namespace EVEAbacus.Application.Services
         {
             return MarketHubRegionIds;
         }
-        async Task<Denormalize> IMapService.GetPlanet(
+        async Task<Denormalize?> IMapService.GetPlanet(
             int id, int? focalId, string? routeFlag)
         {
             var planet = await _mapRepository.GetPlanet(id);
-            if (focalId != null)
+            if (planet?.SolarSystem != null && focalId != null)
             {
-                planet.SolarSystem!.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
+                planet.SolarSystem.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
                 (int)planet.SolarSystemId!, (int)focalId!, routeFlag);
             }
             return planet;
@@ -115,73 +115,88 @@ namespace EVEAbacus.Application.Services
         {
             return await _mapRepository.GetPlanetNamesInSolarSystem(solarSystemId);
         }
-        async Task<IQueryable<Denormalize>> IMapService.GetPlanets(
+        async Task<IQueryable<Denormalize>?> IMapService.GetPlanets(
             int? focalId, string? routeFlag)
         {
             var planets = await _mapRepository.GetPlanets();
-            if (focalId != null)
+            if (planets != null && focalId != null)
             {
                 foreach (var p in planets)
                 {
-                    p.SolarSystem!.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
-                        (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    if (p.SolarSystem != null)
+                    {
+                        p.SolarSystem.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
+                            (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    }
                 }
             }
             return planets;
         }
-        async Task<IQueryable<Denormalize>> IMapService.GetPlanets(
+        async Task<IQueryable<Denormalize>?> IMapService.GetPlanets(
             string focalSystemName, string? routeFlag, int range)
         {
             var planetId = await _mapRepository.GetPlanetId(focalSystemName);
             var planets = await _mapRepository.GetPlanets();
-            if (planetId != null)
+            if (planets != null && planetId != null)
             {
                 foreach (var p in planets)
                 {
-                    p.SolarSystem!.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
-                        (int)p.SolarSystemId!, (int)planetId, routeFlag);
+                    if (p.SolarSystem != null)
+                    {
+                        p.SolarSystem.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
+                            (int)p.SolarSystemId!, (int)planetId, routeFlag);
+                    }
                 }
             }
             return planets;
         }
-        async Task<IQueryable<Denormalize>> IMapService.GetPlanetsInConstellation(
+        async Task<IQueryable<Denormalize>?> IMapService.GetPlanetsInConstellation(
             int constellationId, int? focalId, string? routeFlag)
         {
             var planets = await _mapRepository.GetPlanetsInConstellation(constellationId);
-            if (focalId != null)
+            if (planets != null && focalId != null)
             {
                 foreach (var p in planets)
                 {
-                    p.SolarSystem!.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
-                        (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    if (p.SolarSystem != null)
+                    {
+                        p.SolarSystem.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
+                            (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    }
                 }
             }
             return planets;
         }
-        async Task<IQueryable<Denormalize>> IMapService.GetPlanetsInRegion(
+        async Task<IQueryable<Denormalize>?> IMapService.GetPlanetsInRegion(
             int regionId, int? focalId, string? routeFlag)
         {
             var planets = await _mapRepository.GetPlanetsInRegion(regionId);
-            if (focalId != null)
+            if (planets != null && focalId != null)
             {
                 foreach (var p in planets)
                 {
-                    p.SolarSystem!.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
-                        (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    if (p.SolarSystem != null)
+                    {
+                        p.SolarSystem.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
+                            (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    }
                 }
             }
             return planets;
         }
-        async Task<IQueryable<Denormalize>> IMapService.GetPlanetsInSolarSystem(
+        async Task<IQueryable<Denormalize>?> IMapService.GetPlanetsInSolarSystem(
             int solarSystemId, int? focalId, string? routeFlag)
         {
             var planets = await _mapRepository.GetPlanetsInSolarSystem(solarSystemId);
-            if (focalId != null)
+            if (planets != null && focalId != null)
             {
                 foreach (var p in planets)
                 {
-                    p.SolarSystem!.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
-                        (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    if (p.SolarSystem != null)
+                    {
+                        p.SolarSystem.JumpDistance = await _eSIService.GetNumberOfJumpsAsync(
+                            (int)p.SolarSystemId!, (int)focalId, routeFlag);
+                    }
                 }
             }
             return planets;
@@ -190,7 +205,7 @@ namespace EVEAbacus.Application.Services
         {
             return planetTypeArray;
         }
-        async Task<Region> IMapService.GetRegion(int id)
+        async Task<Region?> IMapService.GetRegion(int id)
         {
             return await _mapRepository.GetRegion(id);
         }
@@ -206,12 +221,12 @@ namespace EVEAbacus.Application.Services
         {
             return await _mapRepository.GetRegionNames();
         }
-        async Task<IQueryable<Region>> IMapService.GetRegions()
+        async Task<IQueryable<Region>?> IMapService.GetRegions()
         {
             return await _mapRepository.GetRegions();
         }
 
-        async Task<SolarSystem> IMapService.GetSolarSystem(int id)
+        async Task<SolarSystem?> IMapService.GetSolarSystem(int id)
         {
             return await _mapRepository.GetSolarSystem(id);
         }
@@ -238,11 +253,11 @@ namespace EVEAbacus.Application.Services
         {
             return await _mapRepository.GetSolarSystemNamesInRegion(regionId);
         }
-        async Task<IQueryable<SolarSystem>> IMapService.GetSolarSystems(
+        async Task<IQueryable<SolarSystem>?> IMapService.GetSolarSystems(
             int? focalId, string? routeFlag)
         {
             var solarSystems = await _mapRepository.GetSolarSystems();
-            if (focalId != null)
+            if (solarSystems != null && focalId != null)
             {
                 foreach (var s in solarSystems)
                 {
@@ -252,12 +267,12 @@ namespace EVEAbacus.Application.Services
             }
             return solarSystems;
         }
-        async Task<IQueryable<SolarSystem>> IMapService.GetSolarSystemsInConstellation(
+        async Task<IQueryable<SolarSystem>?> IMapService.GetSolarSystemsInConstellation(
             int constellationId, int? focalId, string? routeFlag)
         {
             var solarSystems = await _mapRepository.GetSolarSystemsInConstellation(
                 constellationId);
-            if (focalId != null)
+            if (solarSystems != null && focalId != null)
             {
                 foreach (var s in solarSystems)
                 {
@@ -267,11 +282,11 @@ namespace EVEAbacus.Application.Services
             }
             return solarSystems;
         }
-        async Task<IQueryable<SolarSystem>> IMapService.GetSolarSystemsInRegion(
+        async Task<IQueryable<SolarSystem>?> IMapService.GetSolarSystemsInRegion(
             int regionId, int? focalId, string? routeFlag)
         {
             var solarSystems = await _mapRepository.GetSolarSystemsInRegion(regionId);
-            if (focalId != null)
+            if (solarSystems != null && focalId != null)
             {
                 foreach (var s in solarSystems)
                 {
@@ -314,12 +329,15 @@ namespace EVEAbacus.Application.Services
                     int currentSystem = toProcess.Dequeue();
                     var jumpList = await _mapRepository.GetSolarSystemJumps(currentSystem);
 
-                    foreach (var system in jumpList)
+                    if (jumpList != null)
                     {
-                        if (!visitedSystems.Contains(system))
+                        foreach (var system in jumpList)
                         {
-                            visitedSystems.Add(system);
-                            toProcess.Enqueue(system);
+                            if (!visitedSystems.Contains(system))
+                            {
+                                visitedSystems.Add(system);
+                                toProcess.Enqueue(system);
+                            }
                         }
                     }
                 }

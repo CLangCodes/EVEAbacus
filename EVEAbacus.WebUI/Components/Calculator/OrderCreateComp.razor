@@ -27,7 +27,7 @@
                         <MudSelectItem Value="@Convert.ToByte(bp)">@bp</MudSelectItem>
                     }
                 </MudSelect>
-                <MudGrid Class="mt-4" GutterSize="3">
+                <MudGrid Class="mt-4">
                     <MudItem xs="12" sm="6">
                         <MudNumericField Label="Copies" HelperText="Number of BPCs"
                         @bind-Value="OrderDTO.Copies" For="@(() => OrderDTO.Copies)"

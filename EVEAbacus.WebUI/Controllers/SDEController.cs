@@ -35,7 +35,7 @@ namespace EVEAbacus.WebUI.Controllers
         [HttpGet("blueprintProdOfInvention")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<bool>> BlueprintProdOfInvention(
+        public ActionResult<bool> BlueprintProdOfInvention(
             [FromQuery, SwaggerParameter(
                 Description = "TypeID of the blueprint to check",
                 Required = true

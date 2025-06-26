@@ -78,6 +78,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Exception: {ex.Message}");
                 // Log exception here
                 return default;
             }
@@ -134,6 +135,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Exception: {ex.Message}");
                 // Log exception here
                 return default;
             }

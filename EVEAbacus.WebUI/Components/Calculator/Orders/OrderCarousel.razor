@@ -1,8 +1,8 @@
 ﻿@using EVEAbacus.Domain.Models.Calculator
 
 <CascadingValue Value="CalculatorService">
-    <MudCarousel T="Order" Class="mud-width-full" @ref="_carousel" 
-    ItemsSource="@CalculatorService.Orders" Style="height:200px;"
+    <MudCarousel TData="Order" Class="mud-width-full" @ref="_carousel" 
+    ItemsSource="@(CalculatorService?.Orders ?? Enumerable.Empty<Order>())" Style="height:200px;"
     ShowArrows="true" ShowBullets="false" EnableSwipeGesture="true" AutoCycle="false">
         <ItemTemplate>
             <OrderCard Order="@context" />
@@ -11,6 +11,6 @@
 </CascadingValue>
 
 @code {
-    [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
-    private MudCarousel<Order> _carousel;
+    [CascadingParameter] public CalculatorService? CalculatorService { get; set; }
+    public MudCarousel<Order>? _carousel;
 }

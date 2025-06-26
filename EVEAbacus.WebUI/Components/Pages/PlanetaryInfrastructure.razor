@@ -209,14 +209,17 @@ else {
 
     private async Task SelectPlanets()
     {
+        _loading = true;
+        StateHasChanged();
         if (string.IsNullOrEmpty(FocalSystemName))
         {
             filteredPlanets = Enumerable.Empty<Denormalize>().AsQueryable();
+            _loading = false;
             StateHasChanged();
             return;
         }
-        
         filteredPlanets = (await MapService.SelectPlanetsAsync(FocalSystemName, SystemJumpRange, SelectedSecurityStatus.ToArray(), SelectedPlanetTypes.ToArray())).AsQueryable();
+        _loading = false;
         StateHasChanged();
     }
     

@@ -9,6 +9,6 @@ namespace EVEAbacus.Domain.Models.ESI.Assets
     public class AssetName
     {
         public long ItemId { get; set; }
-        public string Name { get; set; }
+        public required string Name { get; set; }
     }
 }

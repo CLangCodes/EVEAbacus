@@ -82,6 +82,11 @@ namespace EVEAbacus.Infrastructure.Services
             var _redirectUri = _configuration["ESISettings:CallbackUrl"];
 #endif
 
+            if (string.IsNullOrEmpty(_clientId) || string.IsNullOrEmpty(_redirectUri))
+            {
+                throw new InvalidOperationException("ESI configuration is missing required values");
+            }
+
             Debug.WriteLine($"LogScopes: {Uri.EscapeDataString(string.Join(" ", _scopes))}");
             string authorizationUrl = $"https://login.eveonline.com/v2/oauth/authorize/?" +
                                    $"response_type=code&client_id={_clientId}&redirect_uri={Uri.EscapeDataString(_redirectUri)}&scope={Uri.EscapeDataString(string.Join(" ", _scopes))}";
@@ -89,7 +94,7 @@ namespace EVEAbacus.Infrastructure.Services
             return authorizationUrl;
         }
 
-        async Task<OAuthTokenResponse> IESIService.ExchangeAuthCodeForTokensAsync(OAuthExchangeRequest oAuthExchangeRequest)
+        async Task<OAuthTokenResponse?> IESIService.ExchangeAuthCodeForTokensAsync(OAuthExchangeRequest oAuthExchangeRequest)
         {
 #if !RELEASE
             
@@ -122,7 +127,7 @@ namespace EVEAbacus.Infrastructure.Services
             var responseContent = await response.Content.ReadAsStringAsync();
             var tokenResponse = JsonConvert.DeserializeObject<OAuthTokenResponse>(responseContent);
 
-            var principal = await ((IESIService)this).ValidateTokenAsync(tokenResponse.AccessToken);
+            var principal = await ((IESIService)this).ValidateTokenAsync(tokenResponse?.AccessToken ?? "");
             if (principal == null)
             {
                 return null;
@@ -131,7 +136,7 @@ namespace EVEAbacus.Infrastructure.Services
             return tokenResponse;
         }
 
-        async Task<OAuthTokenResponse> IESIService.RefreshAccessToken(string refreshToken)
+        async Task<OAuthTokenResponse?> IESIService.RefreshAccessToken(string refreshToken)
         {
             //var clientId = _configuration["ESISettings:ClientId"];
             //var clientSecret = _configuration["ESISettings:SecretKey"];
@@ -172,7 +177,7 @@ namespace EVEAbacus.Infrastructure.Services
             var responseContent = await response.Content.ReadAsStringAsync();
             var tokenResponse = JsonConvert.DeserializeObject<OAuthTokenResponse>(responseContent);
 
-            var principal = await ((IESIService)this).ValidateTokenAsync(tokenResponse.AccessToken);
+            var principal = await ((IESIService)this).ValidateTokenAsync(tokenResponse?.AccessToken ?? "");
             if (principal == null)
             {
                 return null;
@@ -183,7 +188,14 @@ namespace EVEAbacus.Infrastructure.Services
 
         async Task<ESIVerificationResponse?> IESIService.GetCharacterVerificationResponseAsync(string accessToken)
         {
-            var verificationResponse = new ESIVerificationResponse();
+            var verificationResponse = new ESIVerificationResponse
+            {
+                CharacterName = string.Empty,
+                Scopes = string.Empty,
+                TokenType = string.Empty,
+                CharacterOwnerHash = string.Empty,
+                IntellectualProperty = string.Empty
+            };
 
             try
             {
@@ -257,7 +269,7 @@ namespace EVEAbacus.Infrastructure.Services
             return jsonWebKeySet.Keys.Cast<SecurityKey>();
         }
 
-        async Task<CharacterAttribute> IESIService.GetCharacterAttributesAsync(string accessToken, int characterId)
+        async Task<CharacterAttribute?> IESIService.GetCharacterAttributesAsync(string accessToken, int characterId)
         {
             try
             {
@@ -265,6 +277,10 @@ namespace EVEAbacus.Infrastructure.Services
                 string cacheKey = $"character_attributes_{characterId}";
 
                 var characterAttributeDTO = await _eSIClient.GetAuthorizedFromESIAsync<CharacterAttributeDTO>(endpoint, accessToken, cacheKey, TimeSpan.FromMinutes(5));
+                if (characterAttributeDTO == null)
+                {
+                    return null;
+                }
                 var characterAttribute = characterAttributeDTO.ToCharacterAttribute();
                 return characterAttribute;
             }
@@ -275,7 +291,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
         
-        async Task<List<SkillQueue>> IESIService.GetCharacterSkillQueueAsync(string accessToken, int characterId)
+        async Task<List<SkillQueue>?> IESIService.GetCharacterSkillQueueAsync(string accessToken, int characterId)
         {
             try
             {
@@ -293,7 +309,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
 
-        async Task<CharacterSkills> IESIService.GetCharacterSkillsAsync(string accessToken, int characterId)
+        async Task<CharacterSkills?> IESIService.GetCharacterSkillsAsync(string accessToken, int characterId)
         {
             try
             {
@@ -307,7 +323,11 @@ namespace EVEAbacus.Infrastructure.Services
                 {
                     foreach (var skill in characterSkills.Skills)
                     {
-                        skill.SkillProperty = await _sDERepository.GetItemAsync(skill.SkillId);
+                        var skillItem = await _sDERepository.GetItemAsync(skill.SkillId);
+                        if (skillItem != null)
+                        {
+                            skill.SkillProperty = skillItem;
+                        }
                     }
                     return characterSkills;
                 }
@@ -320,7 +340,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
 
-        async Task<List<BlueprintEntity>> IESIService.GetCharacterBlueprintsAsync(string accessToken, int characterId)
+        async Task<List<BlueprintEntity>?> IESIService.GetCharacterBlueprintsAsync(string accessToken, int characterId)
         {
             try
             {
@@ -338,7 +358,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
 
-        async Task<List<CharacterStanding>> IESIService.GetCharacterStandingsAsync(string accessToken, int characterId)
+        async Task<List<CharacterStanding>?> IESIService.GetCharacterStandingsAsync(string accessToken, int characterId)
         {
             try
             {
@@ -356,7 +376,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
 
-        async Task<List<IndustryJob>> IESIService.GetCharacterIndustryJobsAsync(string accessToken, int characterId)
+        async Task<List<IndustryJob>?> IESIService.GetCharacterIndustryJobsAsync(string accessToken, int characterId)
         {
             try
             {
@@ -374,7 +394,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
         
-        async Task<List<CharacterMiningLedger>> IESIService.GetCharacterMiningLedgerAsync(string accessToken, int characterId)
+        async Task<List<CharacterMiningLedger>?> IESIService.GetCharacterMiningLedgerAsync(string accessToken, int characterId)
         {
             try
             {
@@ -423,7 +443,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
 
-        async Task<List<int>> IESIService.GetRouteAsync(int originSystemId, int destinationSystemId, string? flag)
+        async Task<List<int>?> IESIService.GetRouteAsync(int originSystemId, int destinationSystemId, string? flag)
         {
             try
             {
@@ -461,7 +481,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
 
-        async Task<List<MarketRegionHistory>> IESIService.GetMarketRegionHistoriesAsync(int[] regionIds, int typeId)
+        async Task<List<MarketRegionHistory>?> IESIService.GetMarketRegionHistoriesAsync(int[] regionIds, int typeId)
         {
             try {
                 List<MarketRegionHistory> marketRegionHistories = new List<MarketRegionHistory>();
@@ -487,7 +507,7 @@ namespace EVEAbacus.Infrastructure.Services
             }
         }
 
-        async Task<List<MarketOrder>> IESIService.GetMarketOrdersAsync(int regionId, string? orderType, int? typeId, int? page)
+        async Task<List<MarketOrder>?> IESIService.GetMarketOrdersAsync(int regionId, string? orderType, int? typeId, int? page)
         {
             try
             {

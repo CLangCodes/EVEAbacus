@@ -37,7 +37,8 @@ namespace EVEAbacus.Application.Services
         }
         async Task<Blueprint> ISDEService.GetBlueprintAsync(int typeId, byte? activityId)
         {
-            return await _sdeRepository.GetBlueprintAsync(typeId, activityId);
+            var result = await _sdeRepository.GetBlueprintAsync(typeId, activityId);
+            return result ?? throw new InvalidOperationException($"Blueprint with TypeId {typeId} not found");
         }
         async Task<int?> ISDEService.GetBlueprintIdByProductIdAsync(int productId)
         {
@@ -67,7 +68,8 @@ namespace EVEAbacus.Application.Services
         }
         async Task<int[]> ISDEService.GetGroupIdsInCategory(int categoryId)
         {
-            return await _sdeRepository.GetGroupIdsInCategory(categoryId);
+            var result = await _sdeRepository.GetGroupIdsInCategory(categoryId);
+            return result ?? Array.Empty<int>();
         }
         async Task<float> ISDEService.GetInventionChance(int blueprintTypeId, int productTypeId)
         {
@@ -83,7 +85,8 @@ namespace EVEAbacus.Application.Services
         }
         async Task<Item> ISDEService.GetItemAsync(int typeId)
         {
-            return await _sdeRepository.GetItemAsync(typeId);
+            var result = await _sdeRepository.GetItemAsync(typeId);
+            return result ?? throw new InvalidOperationException($"Item with TypeId {typeId} not found");
         }
         async Task<string?> ISDEService.GetItemNameAsync(int typeId)
         {
@@ -92,7 +95,8 @@ namespace EVEAbacus.Application.Services
 
         async Task<Item[]> ISDEService.GetItemsInGroup(int groupId)
         {
-            return await _sdeRepository.GetItemsInGroup(groupId);
+            var result = await _sdeRepository.GetItemsInGroup(groupId);
+            return result ?? Array.Empty<Item>();
         }
 
         async Task<int?> ISDEService.GetItemTypeIdAsync(string name)

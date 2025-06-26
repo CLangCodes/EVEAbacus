@@ -57,7 +57,7 @@ namespace EVEAbacus.WebUI.Controllers
         }
 
         /// <summary>
-        /// Returns a list of blueprints suitable for invention based on character's R&D skills
+        /// Returns a list of blueprints suitable for invention based on character's Research and Development skills
         /// </summary>
         [SwaggerOperation(
             Summary = "Returns a list of blueprints suitable for invention based on character's R&D skills",

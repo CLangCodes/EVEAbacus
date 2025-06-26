@@ -31,7 +31,7 @@
 
 @code {
     [Parameter] public ProcurementPlan ProcurementPlan { get; set; } = default!;
-    [Inject] IJSRuntime JSRuntime { get; set; }
+    [Inject] public IJSRuntime? JSRuntime { get; set; }
 
 
 
@@ -53,6 +53,7 @@
 
     private async void ClipboardCopy(string text)
     {
-        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        if (JSRuntime != null)
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
     }
 }

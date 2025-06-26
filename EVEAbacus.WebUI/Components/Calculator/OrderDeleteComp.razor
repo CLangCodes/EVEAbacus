@@ -14,12 +14,12 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] public IMudDialogInstance? MudDialog { get; set; }
     private void Submit() 
     {
-        MudDialog.Close(DialogResult.Ok(true));
+        MudDialog?.Close(DialogResult.Ok(true));
     }
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel() => MudDialog?.Cancel();
 
     [Parameter] public OrderDTO? OrderDTO { get; set; }
 }

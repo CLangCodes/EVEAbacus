@@ -11,9 +11,9 @@ namespace EVEAbacus.Domain.Models.ESI.Assets
         public bool IsBlueprintCopy { get; set; }
         public bool IsSingleton { get; set; }
         public long ItemId { get; set; }
-        public string LocationFlag { get; set; }
+        public required string LocationFlag { get; set; }
         public long LocationId { get; set; }
-        public string LocationType { get; set; }
+        public required string LocationType { get; set; }
         public int Quantiy { get; set; }
         public int TypeId { get; set; }
     }
