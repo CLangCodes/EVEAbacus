@@ -67,15 +67,15 @@ if (-not $nsg) {
     exit 1
 }
 
-# Add GitHub Actions runner ranges
+# Add GitHub Actions runner ranges for HTTPS (port 443)
 foreach ($range in $githubActionsRanges) {
-    $ruleName = "GitHubActions-$($range.Replace('/', '-').Replace('.', '-'))"
+    $ruleName = "GitHubActions-HTTPS-$($range.Replace('/', '-').Replace('.', '-'))"
     
-    Write-Host "Adding rule: $ruleName for range: $range" -ForegroundColor Yellow
+    Write-Host "Adding HTTPS rule: $ruleName for range: $range" -ForegroundColor Yellow
     
     $securityRule = New-AzNetworkSecurityRuleConfig `
         -Name $ruleName `
-        -Description "$Description - GitHub Actions Runner" `
+        -Description "$Description - GitHub Actions Runner (HTTPS)" `
         -Access Allow `
         -Protocol Tcp `
         -Direction Inbound `
@@ -89,15 +89,37 @@ foreach ($range in $githubActionsRanges) {
     $Priority++
 }
 
-# Add GitHub API ranges
-foreach ($range in $githubApiRanges) {
-    $ruleName = "GitHubAPI-$($range.Replace('/', '-').Replace('.', '-'))"
+# Add GitHub Actions runner ranges for SSH (port 22)
+foreach ($range in $githubActionsRanges) {
+    $ruleName = "GitHubActions-SSH-$($range.Replace('/', '-').Replace('.', '-'))"
     
-    Write-Host "Adding rule: $ruleName for range: $range" -ForegroundColor Yellow
+    Write-Host "Adding SSH rule: $ruleName for range: $range" -ForegroundColor Yellow
     
     $securityRule = New-AzNetworkSecurityRuleConfig `
         -Name $ruleName `
-        -Description "$Description - GitHub API" `
+        -Description "$Description - GitHub Actions Runner (SSH)" `
+        -Access Allow `
+        -Protocol Tcp `
+        -Direction Inbound `
+        -Priority $Priority `
+        -SourceAddressPrefix $range `
+        -SourcePortRange * `
+        -DestinationAddressPrefix * `
+        -DestinationPortRange 22
+    
+    $nsg.SecurityRules.Add($securityRule)
+    $Priority++
+}
+
+# Add GitHub API ranges for HTTPS (port 443)
+foreach ($range in $githubApiRanges) {
+    $ruleName = "GitHubAPI-HTTPS-$($range.Replace('/', '-').Replace('.', '-'))"
+    
+    Write-Host "Adding GitHub API HTTPS rule: $ruleName for range: $range" -ForegroundColor Yellow
+    
+    $securityRule = New-AzNetworkSecurityRuleConfig `
+        -Name $ruleName `
+        -Description "$Description - GitHub API (HTTPS)" `
         -Access Allow `
         -Protocol Tcp `
         -Direction Inbound `
@@ -116,4 +138,5 @@ Write-Host "Updating NSG with new rules..." -ForegroundColor Cyan
 Set-AzNetworkSecurityGroup -NetworkSecurityGroup $nsg
 
 Write-Host "Successfully added all GitHub Actions IP ranges to NSG!" -ForegroundColor Green
-Write-Host "Total rules added: $($githubActionsRanges.Count + $githubApiRanges.Count)" -ForegroundColor Cyan 
+Write-Host "Total rules added: $((($githubActionsRanges.Count * 2) + $githubApiRanges.Count))" -ForegroundColor Cyan
+Write-Host "Rules include both HTTPS (443) and SSH (22) ports" -ForegroundColor Cyan 
