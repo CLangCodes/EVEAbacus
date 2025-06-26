@@ -24,8 +24,6 @@
 @code {
     [Parameter] public required Order Order { get; set; }
     [Parameter] public EventCallback OnValidEvent { get; set; }
-    private bool _loading;
-    private bool _isCalculating = false;
 
     private bool _deleteOpen;
 

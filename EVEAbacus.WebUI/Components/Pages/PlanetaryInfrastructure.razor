@@ -128,7 +128,6 @@ else {
 @code {
     private bool _loading;
     private bool _hasInitialized = false;
-    string? TravelFlag = null;
 
     private string planetTypeDefault = "Nothing selected";
     private string secStatusDefault = "";
@@ -141,7 +140,7 @@ else {
             if (_focalSystemName != value)
             {
                 _focalSystemName = value;
-                _ = SelectPlanets();
+                _ = Task.Run(async () => await SelectPlanets());
                 StateHasChanged();
             }
         }
@@ -156,13 +155,12 @@ else {
             if (_systemJumpRange != value)
             {
                 _systemJumpRange = value;
-                _ = SelectPlanets();
+                _ = Task.Run(async () => await SelectPlanets());
                 StateHasChanged();
             }
         }
     }
     int[] JumpRangeOptions = [0, 1, 2, 3, 4, 5, 10];
-    string? PlanetType;
     string[]? PlanetTypes;
     string[] SecurityStatus = [ "High Sec", "Low Sec", "Null Sec"];
 
@@ -175,7 +173,7 @@ else {
             if (!_selectedPlanetTypes.SequenceEqual(value))
             {
                 _selectedPlanetTypes = value.ToList();
-                SelectPlanets(); 
+                _ = Task.Run(async () => await SelectPlanets());
                 StateHasChanged();
             }
         }
@@ -189,7 +187,7 @@ else {
             if (!_selectedSecurityStatus.SequenceEqual(value))
             {
                 _selectedSecurityStatus = value.ToList();
-                SelectPlanets(); 
+                _ = Task.Run(async () => await SelectPlanets());
                 StateHasChanged();
             }
         }
@@ -198,7 +196,7 @@ else {
     private MudTable<Denormalize>? mudTable;
     private IQueryable<Denormalize> filteredPlanets = Enumerable.Empty<Denormalize>().AsQueryable();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !_hasInitialized)
         {
@@ -206,10 +204,17 @@ else {
             PlanetTypes = MapService.GetPlanetTypeArray();
             StateHasChanged();
         }
+        return Task.CompletedTask;
     }
 
     private async Task SelectPlanets()
     {
+        if (string.IsNullOrEmpty(FocalSystemName))
+        {
+            filteredPlanets = Enumerable.Empty<Denormalize>().AsQueryable();
+            StateHasChanged();
+            return;
+        }
         
         filteredPlanets = (await MapService.SelectPlanetsAsync(FocalSystemName, SystemJumpRange, SelectedSecurityStatus.ToArray(), SelectedPlanetTypes.ToArray())).AsQueryable();
         StateHasChanged();

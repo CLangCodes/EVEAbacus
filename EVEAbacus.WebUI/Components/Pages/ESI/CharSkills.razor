@@ -5,7 +5,7 @@
     if (Character.SkillProfile != null)
     {
         <MudTable Items="@Character!.SkillProfile!.Skills.AsQueryable()"
-                  Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+                  Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info">
             <HeaderContent>
                 <MudTh>Name</MudTh>
                 <MudTh>Level</MudTh>
@@ -25,6 +25,5 @@
 
 @code {
     [CascadingParameter] public CharacterEntity? Character { get; set; }
-    private bool _loading;
 
 }

@@ -13,6 +13,27 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EVEAbacus.Infrastructure", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EVEAbacus.WebUI", "EVEAbacus.WebUI\EVEAbacus.WebUI.csproj", "{45C9C526-DA0E-49B4-86F5-C9607034315E}"
 EndProject
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "eve-abacus-webui", "eve-abacus-webui\", "{220CAF95-94C4-5F71-02ED-A04E68AA162D}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_57028"
+		Debug.AspNetCompiler.PhysicalPath = "eve-abacus-webui\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_57028\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/localhost_57028"
+		Release.AspNetCompiler.PhysicalPath = "eve-abacus-webui\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_57028\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "57028"
+		SlnRelativePath = "eve-abacus-webui\"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +56,10 @@ Global
 		{45C9C526-DA0E-49B4-86F5-C9607034315E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45C9C526-DA0E-49B4-86F5-C9607034315E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45C9C526-DA0E-49B4-86F5-C9607034315E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{220CAF95-94C4-5F71-02ED-A04E68AA162D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{220CAF95-94C4-5F71-02ED-A04E68AA162D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{220CAF95-94C4-5F71-02ED-A04E68AA162D}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{220CAF95-94C4-5F71-02ED-A04E68AA162D}.Release|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

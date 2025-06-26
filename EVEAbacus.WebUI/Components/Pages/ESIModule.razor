@@ -23,8 +23,7 @@
 }
 
 @code {
-    public CharacterEntity? Character;  
-    string userId = default!;
+    public CharacterEntity? Character;
 
     private string GetAuthRequestUrl()
     {
@@ -32,7 +31,7 @@
         return $"/esi/authrequest?returnUrl={returnUrl}";
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         // var token = await UserAccessor.GetAccessTokenAsync();
         // if (token.AccessTokenExpiryTime != null && token.AccessTokenExpiryTime < DateTime.UtcNow)
@@ -52,5 +51,6 @@
         // {
         //     Character = await CharacterService.GetCharacterAsync(token.AccessToken);
         // }
+        return Task.CompletedTask;
     }
 }

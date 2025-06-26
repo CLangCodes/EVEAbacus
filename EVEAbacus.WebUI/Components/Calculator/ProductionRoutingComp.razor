@@ -1,12 +1,12 @@
 ﻿@using EVEAbacus.Domain.Models.Calculator
 @using System.Diagnostics
-@if (CalculatorService.ManufBatch != null)
+@if (CalculatorService.ManufBatch?.ProductionRouting != null)
 {
     <MudTable Items="@CalculatorService.ManufBatch.ProductionRouting"
-              Hover="true" Breakpoint="Breakpoint.Xxl" Loading="@_loading" LoadingProgressColor="Color.Info"
+              Hover="true" Breakpoint="Breakpoint.Xxl" LoadingProgressColor="Color.Info"
               Dense="true">
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<ProductionRoute, object>(x=>x.BlueprintName)">Blueprint Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<ProductionRoute, object>(x=>x.BlueprintName ?? string.Empty)">Blueprint Name</MudTableSortLabel></MudTh>
             <MudTh>Qty</MudTh>
             <MudTh>Copies</MudTh>
             <MudTh>Runs</MudTh>
@@ -15,13 +15,13 @@
             <MudTh>TE</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Name">@context.BlueprintName</MudTd>
+            <MudTd DataLabel="Name">@(context.BlueprintName ?? "N/A")</MudTd>
             <MudTd DataLabel="Name">@context.Requisitioned</MudTd>
-            <MudTd DataLabel="Name">@context.Order.Copies</MudTd>
-            <MudTd DataLabel="Name">@context.Order.Runs</MudTd>
+            <MudTd DataLabel="Name">@(context.Order?.Copies ?? 0)</MudTd>
+            <MudTd DataLabel="Name">@(context.Order?.Runs ?? 0)</MudTd>
             <MudTd DataLabel="Name">@context.Produced</MudTd>
-            <MudTd DataLabel="Name">@context.Order.ME</MudTd>
-            <MudTd DataLabel="Name">@context.Order.TE</MudTd>
+            <MudTd DataLabel="Name">@(context.Order?.ME ?? 0)</MudTd>
+            <MudTd DataLabel="Name">@(context.Order?.TE ?? 0)</MudTd>
         </RowTemplate>
         <PagerContent>
             <MudTablePager />
@@ -34,6 +34,4 @@
 
 @code {
     [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
-
-    private bool _loading;
 }

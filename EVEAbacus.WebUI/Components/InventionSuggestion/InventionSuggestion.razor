@@ -38,8 +38,6 @@ FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true">
 @code {
     string[] InventionSkillsSelected = [];
 
-
-    private string _defaultValue = "none";
     private IEnumerable<string> _selectInventionSkills { get; set; } = new HashSet<string>();
     public IEnumerable<string> SelectedInventionSkills
     {
@@ -51,7 +49,7 @@ FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true">
             {
                 Debug.WriteLine("trigger");
                 _selectInventionSkills = newSet;
-                _ = GetInventionSuggestions();
+                _ = Task.Run(async () => await GetInventionSuggestions());
                 StateHasChanged();
             }
         }
@@ -60,8 +58,7 @@ FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true">
     private bool _hasInitialized = false;
 
     public string[] InventionSkills { get; set; } = [];
-    public IQueryable<string> InventionSuggestions { get; set; }// = Enumerable.Empty<string>().AsQueryable();
-    // public string[] InventionSuggestions { get; set; } = [];
+    public IQueryable<string> InventionSuggestions { get; set; } = Enumerable.Empty<string>().AsQueryable();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

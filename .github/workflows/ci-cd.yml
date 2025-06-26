@@ -56,6 +56,7 @@ jobs:
       
       - name: Deploy to Azure VM
         uses: appleboy/ssh-action@v1.0.0
+        # Note: Secrets are intentionally accessed in this context for SSH deployment
         with:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}

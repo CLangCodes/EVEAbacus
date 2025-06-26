@@ -4,7 +4,7 @@
 @if (CalculatorService.ManufBatch != null)
 {
     <MudTable Items="CalculatorService.ManufBatch.BillOfMaterials"
-    Hover="true" Breakpoint="Breakpoint.Xxl" Loading="@_loading" LoadingProgressColor="Color.Info"
+    Hover="true" Breakpoint="Breakpoint.Xxl" LoadingProgressColor="Color.Info"
     Dense="true">
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<BOMLineItem, object>(x=>x.Name)">Name</MudTableSortLabel></MudTh>
@@ -37,12 +37,11 @@
 
 @code {
     [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
-    [Inject] IJSRuntime JSRuntime { get; set; }
+    [Inject] required public IJSRuntime JSRuntime { get; set; }
 
-    private bool _loading;
     private bool _hasInitialized = false;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !_hasInitialized)
         {
@@ -52,6 +51,7 @@
                 StateHasChanged();
             }
         }
+        return Task.CompletedTask;
     }
 
     private void ExportShoppingList()
