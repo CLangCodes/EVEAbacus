@@ -137,18 +137,47 @@ jobs:
               echo "Frontend source files found, building on server..."
               cd /var/www/eveabacus/frontend
               
+              # Install dependencies with better rate limit handling
+              echo "Installing frontend dependencies..."
+              
               # Install pnpm if not available
               if ! command -v pnpm &> /dev/null; then
+                echo "Installing pnpm..."
                 npm install -g pnpm
               fi
               
-              # Install dependencies
-              echo "Installing frontend dependencies..."
-              pnpm install --frozen-lockfile
+              # Try pnpm first, fallback to npm if rate limited
+              if command -v pnpm &> /dev/null; then
+                echo "Using pnpm for dependency installation..."
+                # Add retry logic for pnpm
+                for i in {1..3}; do
+                  if pnpm install --frozen-lockfile --network-timeout=60000; then
+                    echo "pnpm install successful"
+                    break
+                  else
+                    echo "pnpm install failed (attempt $i/3), trying npm..."
+                    if npm install --prefer-offline --no-audit; then
+                      echo "npm install successful"
+                      break
+                    fi
+                    if [ $i -lt 3 ]; then
+                      echo "Waiting 30 seconds before retry..."
+                      sleep 30
+                    fi
+                  fi
+                done
+              else
+                echo "pnpm not available, using npm..."
+                npm install --prefer-offline --no-audit
+              fi
               
               # Build the frontend
               echo "Building frontend..."
-              pnpm build
+              if command -v pnpm &> /dev/null && [ -f "pnpm-lock.yaml" ]; then
+                pnpm build
+              else
+                npm run build
+              fi
               
               # Check if standalone directory exists
               if [ -d "/var/www/eveabacus/frontend/.next/standalone" ]; then
