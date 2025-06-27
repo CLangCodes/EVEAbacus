@@ -109,6 +109,23 @@ jobs:
             # Restart the backend service
             sudo systemctl restart eveabacus
             
+            # Clean up and prepare frontend directory
+            echo "Preparing frontend directory..."
+            sudo rm -rf /var/www/eveabacus/frontend
+            sudo mkdir -p /var/www/eveabacus/frontend
+            
+            # Move frontend files to the correct location
+            if [ -d "/var/www/eveabacus/eve-abacus-webui" ]; then
+              echo "Moving frontend files to frontend directory..."
+              # Clean up any existing build artifacts that might cause permission issues
+              sudo rm -rf /var/www/eveabacus/eve-abacus-webui/.next
+              sudo rm -rf /var/www/eveabacus/eve-abacus-webui/node_modules
+              sudo mv /var/www/eveabacus/eve-abacus-webui/* /var/www/eveabacus/frontend/
+              sudo rmdir /var/www/eveabacus/eve-abacus-webui
+            fi
+            
+            sudo chown -R www-data:www-data /var/www/eveabacus/frontend
+            
             # Re-enable frontend service for standalone mode
             sudo systemctl enable eveabacus-frontend 2>/dev/null || true
             sudo systemctl restart eveabacus-frontend 2>/dev/null || true
@@ -168,6 +185,6 @@ jobs:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "eve-abacus-webui/src,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml,eve-abacus-webui/tsconfig.json,eve-abacus-webui/postcss.config.mjs,eve-abacus-webui/eslint.config.mjs"
-          target: "/var/www/eveabacus/frontend/"
-          strip_components: 1 
+          source: "eve-abacus-webui"
+          target: "/var/www/eveabacus/"
+          strip_components: 0 
