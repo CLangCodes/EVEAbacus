@@ -121,7 +121,8 @@ jobs:
               sudo rmdir /tmp/frontend-temp
             fi
             
-            sudo chown -R www-data:www-data /var/www/eveabacus/frontend
+            # Set correct ownership - eveabacus user owns the files
+            sudo chown -R eveabacus:eveabacus /var/www/eveabacus/frontend
             sudo chmod -R 755 /var/www/eveabacus/frontend
             
             # Re-enable frontend service for standalone mode
