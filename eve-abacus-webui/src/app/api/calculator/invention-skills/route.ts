@@ -14,7 +14,7 @@ import { backendService } from '../../../../lib/backendService';
  *       200:
  *         description: List of invention skill names
  *         content:
- *           application/json:
+ *             application/json:
  *             schema:
  *               type: array
  *               items:

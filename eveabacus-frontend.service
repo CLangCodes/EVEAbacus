@@ -4,7 +4,6 @@ After=network.target
 
 [Service]
 WorkingDirectory=/var/www/eveabacus/frontend
-ExecStartPre=/bin/bash -c 'if [ -f "/var/www/eveabacus/frontend/.next/standalone/server.js" ]; then echo "Using standalone server"; else echo "Standalone server not found - using static files"; exit 1; fi'
 ExecStart=/usr/bin/node /var/www/eveabacus/frontend/.next/standalone/server.js
 Restart=always
 RestartSec=10

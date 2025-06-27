@@ -44,7 +44,7 @@ jobs:
         working-directory: ./eve-abacus-webui
       
       - name: Build frontend
-        run: pnpm build && pnpm export
+        run: pnpm build
         working-directory: ./eve-abacus-webui
 
   deploy:
@@ -109,14 +109,14 @@ jobs:
             # Restart the backend service
             sudo systemctl restart eveabacus
             
-            # Disable frontend service since we're using static files
-            sudo systemctl stop eveabacus-frontend 2>/dev/null || true
-            sudo systemctl disable eveabacus-frontend 2>/dev/null || true
+            # Re-enable frontend service for standalone mode
+            sudo systemctl enable eveabacus-frontend 2>/dev/null || true
+            sudo systemctl restart eveabacus-frontend 2>/dev/null || true
             
             # Check if frontend files exist and copy them
             echo "Checking for frontend files..."
             
-            if [ -d "/var/www/eveabacus/frontend/out" ]; then
+            if [ -d "/var/www/eveabacus/frontend/.next" ]; then
               # Install frontend dependencies if node_modules doesn't exist
               if [ ! -d "/var/www/eveabacus/frontend/node_modules" ]; then
                 echo "Installing frontend dependencies..."
@@ -127,15 +127,21 @@ jobs:
                 pnpm install --frozen-lockfile
               fi
               
-              # Check what's in the out directory
-              echo "Contents of /var/www/eveabacus/frontend/out/:"
-              ls -la /var/www/eveabacus/frontend/out/
+              # Check what's in the .next directory
+              echo "Contents of /var/www/eveabacus/frontend/.next/:"
+              ls -la /var/www/eveabacus/frontend/.next/
               
-              # Copy static frontend files to web root
-              sudo cp -r /var/www/eveabacus/frontend/out/* /var/www/html/
-              echo "Static frontend files copied successfully from /var/www/eveabacus/frontend/out/"
+              # Check if standalone directory exists
+              if [ -d "/var/www/eveabacus/frontend/.next/standalone" ]; then
+                echo "Standalone directory found - frontend service should work"
+                ls -la /var/www/eveabacus/frontend/.next/standalone/
+              else
+                echo "Standalone directory not found - check build configuration"
+              fi
+              
+              echo "Frontend files deployed successfully"
             else
-              echo "Frontend out directory not found at /var/www/eveabacus/frontend/out"
+              echo "Frontend .next directory not found at /var/www/eveabacus/frontend/.next"
               # List contents to debug
               echo "Contents of /var/www/eveabacus/:"
               ls -la /var/www/eveabacus/
@@ -158,6 +164,6 @@ jobs:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "eve-abacus-webui/out,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml"
+          source: "eve-abacus-webui/.next,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml"
           target: "/var/www/eveabacus/frontend/"
           strip_components: 1 
