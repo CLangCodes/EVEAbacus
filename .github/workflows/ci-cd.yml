@@ -90,6 +90,9 @@ jobs:
             # Restart the service (assuming you have a systemd service)
             sudo systemctl restart eveabacus
             
+            # Copy built frontend to web root (adjust path as needed for your nginx config)
+            sudo cp -r /var/www/eve-abacus-webui/.next /var/www/html/
+            
             # Reload nginx
             sudo systemctl reload nginx
             
@@ -101,6 +104,6 @@ jobs:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "eve-abacus-webui/.next"
-          target: "/var/www/eveabacus/"
-          strip_components: 1 
+          source: "eve-abacus-webui"
+          target: "/var/www/"
+          strip_components: 0 
