@@ -54,9 +54,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./eve-abacus-webui
+      
+      - name: Build frontend
+        run: pnpm build
+        working-directory: ./eve-abacus-webui
+      
       - name: Deploy to Azure VM
         uses: appleboy/ssh-action@v1.0.0
-        # Note: Secrets are intentionally accessed in this context for SSH deployment
         with:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
@@ -65,7 +80,6 @@ jobs:
             # Navigate to your project directory
             cd /var/www/eveabacus
             
-
             # Pull latest changes
             git pull origin main
             
@@ -76,15 +90,17 @@ jobs:
             # Restart the service (assuming you have a systemd service)
             sudo systemctl restart eveabacus
             
-            # Build and deploy frontend
-            cd ../eve-abacus-webui
-            pnpm install
-            pnpm build
-            
-            # Copy built frontend to nginx directory
-            sudo cp -r .next /var/www/eveabacus/
-            
             # Reload nginx
             sudo systemctl reload nginx
             
-            echo "Deployment completed successfully!" 
+            echo "Deployment completed successfully!"
+      
+      - name: Copy frontend files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          source: "eve-abacus-webui/.next"
+          target: "/var/www/eveabacus/"
+          strip_components: 1 
