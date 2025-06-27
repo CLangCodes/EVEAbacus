@@ -173,7 +173,7 @@ jobs:
               # Build the frontend
               echo "Building frontend..."
               if command -v pnpm &> /dev/null && [ -f "pnpm-lock.yaml" ]; then
-                pnpm build
+                pnpm run build
               else
                 npm run build
               fi
