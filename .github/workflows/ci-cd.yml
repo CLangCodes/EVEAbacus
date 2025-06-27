@@ -111,25 +111,21 @@ jobs:
             
             # Check if frontend files exist and copy them
             echo "Checking for frontend files..."
-            echo "Contents of /var/www/:"
-            ls -la /var/www/
             
-            if [ -d "/var/www/eve-abacus-webui/.next" ]; then
+            if [ -d "/var/www/eveabacus/frontend/.next" ]; then
               # Copy built frontend to web root (adjust path as needed for your nginx config)
-              sudo cp -r /var/www/eve-abacus-webui/.next /var/www/html/
-              echo "Frontend files copied successfully from /var/www/eve-abacus-webui/.next"
-            elif [ -d "/var/www/eveabacus/.next" ]; then
-              # Frontend files were copied to backend directory, copy them to web root
-              sudo cp -r /var/www/eveabacus/.next /var/www/html/
-              echo "Frontend files copied successfully from backend directory"
+              sudo cp -r /var/www/eveabacus/frontend/.next /var/www/html/
+              echo "Frontend files copied successfully from /var/www/eveabacus/frontend/.next"
             else
-              echo "Frontend .next directory not found"
+              echo "Frontend .next directory not found at /var/www/eveabacus/frontend/.next"
               # List contents to debug
-              if [ -d "/var/www/eve-abacus-webui" ]; then
-                echo "Contents of /var/www/eve-abacus-webui/:"
-                ls -la /var/www/eve-abacus-webui/
+              echo "Contents of /var/www/eveabacus/:"
+              ls -la /var/www/eveabacus/
+              if [ -d "/var/www/eveabacus/frontend" ]; then
+                echo "Contents of /var/www/eveabacus/frontend/:"
+                ls -la /var/www/eveabacus/frontend/
               else
-                echo "/var/www/eve-abacus-webui/ directory does not exist"
+                echo "/var/www/eveabacus/frontend/ directory does not exist"
               fi
             fi
             
@@ -144,6 +140,6 @@ jobs:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "eve-abacus-webui"
-          target: "/var/www/"
-          strip_components: 0 
+          source: "eve-abacus-webui/.next,eve-abacus-webui/node_modules,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml"
+          target: "/var/www/eveabacus/frontend/"
+          strip_components: 1 
