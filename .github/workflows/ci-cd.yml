@@ -114,6 +114,16 @@ jobs:
             echo "Checking for frontend files..."
             
             if [ -d "/var/www/eveabacus/frontend/.next" ]; then
+              # Install frontend dependencies if node_modules doesn't exist
+              if [ ! -d "/var/www/eveabacus/frontend/node_modules" ]; then
+                echo "Installing frontend dependencies..."
+                cd /var/www/eveabacus/frontend
+                if ! command -v pnpm &> /dev/null; then
+                  npm install -g pnpm
+                fi
+                pnpm install --frozen-lockfile
+              fi
+              
               # Copy built frontend to web root (adjust path as needed for your nginx config)
               sudo cp -r /var/www/eveabacus/frontend/.next /var/www/html/
               echo "Frontend files copied successfully from /var/www/eveabacus/frontend/.next"
@@ -141,6 +151,6 @@ jobs:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "eve-abacus-webui/.next,eve-abacus-webui/node_modules,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml"
+          source: "eve-abacus-webui/.next,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml"
           target: "/var/www/eveabacus/frontend/"
           strip_components: 1 
