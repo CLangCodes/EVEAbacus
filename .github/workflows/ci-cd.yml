@@ -113,23 +113,25 @@ jobs:
             sudo systemctl enable eveabacus-frontend 2>/dev/null || true
             sudo systemctl restart eveabacus-frontend 2>/dev/null || true
             
-            # Check if frontend files exist and copy them
+            # Check if frontend files exist and build them
             echo "Checking for frontend files..."
             
-            if [ -d "/var/www/eveabacus/frontend/.next" ]; then
-              # Install frontend dependencies if node_modules doesn't exist
-              if [ ! -d "/var/www/eveabacus/frontend/node_modules" ]; then
-                echo "Installing frontend dependencies..."
-                cd /var/www/eveabacus/frontend
-                if ! command -v pnpm &> /dev/null; then
-                  npm install -g pnpm
-                fi
-                pnpm install --frozen-lockfile
+            if [ -d "/var/www/eveabacus/frontend/src" ]; then
+              echo "Frontend source files found, building on server..."
+              cd /var/www/eveabacus/frontend
+              
+              # Install pnpm if not available
+              if ! command -v pnpm &> /dev/null; then
+                npm install -g pnpm
               fi
               
-              # Check what's in the .next directory
-              echo "Contents of /var/www/eveabacus/frontend/.next/:"
-              ls -la /var/www/eveabacus/frontend/.next/
+              # Install dependencies
+              echo "Installing frontend dependencies..."
+              pnpm install --frozen-lockfile
+              
+              # Build the frontend
+              echo "Building frontend..."
+              pnpm build
               
               # Check if standalone directory exists
               if [ -d "/var/www/eveabacus/frontend/.next/standalone" ]; then
@@ -137,11 +139,13 @@ jobs:
                 ls -la /var/www/eveabacus/frontend/.next/standalone/
               else
                 echo "Standalone directory not found - check build configuration"
+                echo "Contents of .next directory:"
+                ls -la /var/www/eveabacus/frontend/.next/
               fi
               
-              echo "Frontend files deployed successfully"
+              echo "Frontend built successfully"
             else
-              echo "Frontend .next directory not found at /var/www/eveabacus/frontend/.next"
+              echo "Frontend source files not found at /var/www/eveabacus/frontend/src"
               # List contents to debug
               echo "Contents of /var/www/eveabacus/:"
               ls -la /var/www/eveabacus/
@@ -164,6 +168,6 @@ jobs:
           host: ${{ secrets.AZURE_HOST }}
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "eve-abacus-webui/.next,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml"
+          source: "eve-abacus-webui/src,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml,eve-abacus-webui/tsconfig.json,eve-abacus-webui/postcss.config.mjs,eve-abacus-webui/eslint.config.mjs"
           target: "/var/www/eveabacus/frontend/"
           strip_components: 1 
