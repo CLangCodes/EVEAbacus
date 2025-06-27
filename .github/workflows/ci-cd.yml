@@ -106,8 +106,9 @@ jobs:
               echo "Skipping backend build."
             fi
             
-            # Restart the service (assuming you have a systemd service)
+            # Restart the services
             sudo systemctl restart eveabacus
+            sudo systemctl restart eveabacus-frontend
             
             # Check if frontend files exist and copy them
             echo "Checking for frontend files..."

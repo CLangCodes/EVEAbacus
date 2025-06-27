@@ -1,0 +1,16 @@
+[Unit]
+Description=EVE Abacus Next.js Frontend
+After=network.target
+
+[Service]
+WorkingDirectory=/var/www/eveabacus/frontend
+ExecStart=/usr/bin/node /var/www/eveabacus/frontend/.next/standalone/server.js
+Restart=always
+RestartSec=10
+SyslogIdentifier=eveabacus-frontend
+User=www-data
+Environment=NODE_ENV=production
+Environment=PORT=3001
+
+[Install]
+WantedBy=multi-user.target 
