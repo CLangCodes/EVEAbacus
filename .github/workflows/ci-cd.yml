@@ -77,21 +77,53 @@ jobs:
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
-            # Navigate to your project directory
+            # Check current directory structure
+            echo "Current directory: $(pwd)"
+            echo "Contents of /var/www/:"
+            ls -la /var/www/
+            
+            # Check if we're in the right directory and if git repo exists
             cd /var/www/eveabacus
             
-            # Pull latest changes
-            git pull origin main
+            if [ ! -d ".git" ]; then
+              echo "Git repository not found. Skipping git pull."
+            else
+              # Pull latest changes
+              git pull origin main
+            fi
             
-            # Build and restart backend
-            cd EVEAbacus.WebUI
-            dotnet publish --configuration Release --output /var/www/eveabacus
+            # Check if backend directory exists - try different possible locations
+            if [ -d "EVEAbacus.WebUI" ]; then
+              echo "Found EVEAbacus.WebUI directory"
+              cd EVEAbacus.WebUI
+              dotnet publish --configuration Release --output /var/www/eveabacus
+            elif [ -f "EVEAbacus.WebUI.csproj" ]; then
+              echo "Found EVEAbacus.WebUI.csproj in current directory"
+              dotnet publish --configuration Release --output /var/www/eveabacus
+            else
+              echo "Backend project not found. Current directory contents:"
+              ls -la
+              echo "Skipping backend build."
+            fi
             
             # Restart the service (assuming you have a systemd service)
             sudo systemctl restart eveabacus
             
-            # Copy built frontend to web root (adjust path as needed for your nginx config)
-            sudo cp -r /var/www/eve-abacus-webui/.next /var/www/html/
+            # Check if frontend files exist and copy them
+            if [ -d "/var/www/eve-abacus-webui/.next" ]; then
+              # Copy built frontend to web root (adjust path as needed for your nginx config)
+              sudo cp -r /var/www/eve-abacus-webui/.next /var/www/html/
+              echo "Frontend files copied successfully"
+            else
+              echo "Frontend .next directory not found at /var/www/eve-abacus-webui/.next"
+              # List contents to debug
+              echo "Contents of /var/www/:"
+              ls -la /var/www/
+              if [ -d "/var/www/eve-abacus-webui" ]; then
+                echo "Contents of /var/www/eve-abacus-webui/:"
+                ls -la /var/www/eve-abacus-webui/
+              fi
+            fi
             
             # Reload nginx
             sudo systemctl reload nginx
