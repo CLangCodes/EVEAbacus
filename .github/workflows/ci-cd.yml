@@ -113,7 +113,16 @@ jobs:
             echo "Preparing frontend directory..."
             sudo rm -rf /var/www/eveabacus/frontend
             sudo mkdir -p /var/www/eveabacus/frontend
+            
+            # Move files from temporary location
+            if [ -d "/tmp/frontend-temp" ]; then
+              echo "Moving files from temporary location..."
+              sudo mv /tmp/frontend-temp/* /var/www/eveabacus/frontend/
+              sudo rmdir /tmp/frontend-temp
+            fi
+            
             sudo chown -R www-data:www-data /var/www/eveabacus/frontend
+            sudo chmod -R 755 /var/www/eveabacus/frontend
             
             # Re-enable frontend service for standalone mode
             sudo systemctl enable eveabacus-frontend 2>/dev/null || true
@@ -204,5 +213,5 @@ jobs:
           username: ${{ secrets.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           source: "eve-abacus-webui/src,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml,eve-abacus-webui/tsconfig.json,eve-abacus-webui/postcss.config.mjs,eve-abacus-webui/eslint.config.mjs,eve-abacus-webui/next-env.d.ts"
-          target: "/var/www/eveabacus/frontend/"
+          target: "/tmp/frontend-temp/"
           strip_components: 1 
