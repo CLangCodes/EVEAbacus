@@ -63,9 +63,9 @@ jobs:
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
             # Navigate to your project directory
-            cd /home/${{ secrets.AZURE_USER }}/EVEAbacusRelease
+            cd /var/www/eveabacus
             
-            
+
             # Pull latest changes
             git pull origin main
             
