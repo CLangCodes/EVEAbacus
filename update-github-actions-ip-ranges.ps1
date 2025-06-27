@@ -1,5 +1,5 @@
-# Update GitHub Actions IP ranges in Azure NSG
-# This script gets the latest IP ranges from GitHub API and updates the NSG
+# Update GitHub Actions SSH IP ranges in Azure NSG
+# This script gets the latest GitHub Actions IP ranges and updates the NSG for SSH only
 
 param(
     [Parameter(Mandatory=$true)]
@@ -14,11 +14,10 @@ Write-Host "Getting latest GitHub Actions IP ranges..." -ForegroundColor Green
 # Get the latest GitHub Actions IP ranges
 $githubMeta = Invoke-RestMethod -Uri "https://api.github.com/meta"
 
-# Extract the actions IP ranges (both IPv4 and IPv6)
+# Extract the actions IP ranges (IPv4 only)
 $actionsIPv4 = $githubMeta.actions
-$actionsIPv6 = $githubMeta.actions_ipv6
 
-Write-Host "Found $($actionsIPv4.Count) IPv4 ranges and $($actionsIPv6.Count) IPv6 ranges" -ForegroundColor Yellow
+Write-Host "Found $($actionsIPv4.Count) IPv4 ranges" -ForegroundColor Yellow
 
 # Get the NSG
 $nsg = Get-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroupName -Name $NSGName
@@ -30,7 +29,7 @@ if (-not $nsg) {
 
 Write-Host "Updating NSG: $NSGName" -ForegroundColor Green
 
-# Remove existing GitHub Actions rules
+# Remove existing GitHub Actions SSH/HTTPS rules
 $existingRules = $nsg.SecurityRules | Where-Object { $_.Name -like "*GitHubActions*" }
 foreach ($rule in $existingRules) {
     Write-Host "Removing existing rule: $($rule.Name)" -ForegroundColor Yellow
@@ -43,22 +42,6 @@ if ($tempRule) {
     Write-Host "Removing temporary rule: TEMP-AllowAllSSH" -ForegroundColor Yellow
     Remove-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $nsg -Name "TEMP-AllowAllSSH"
 }
-
-# Add new GitHub Actions rules for HTTPS (port 443)
-Write-Host "Adding GitHub Actions HTTPS rule..." -ForegroundColor Green
-$httpsRule = New-AzNetworkSecurityRuleConfig `
-    -Name "GitHubActions-HTTPS" `
-    -Description "Allow GitHub Actions IP ranges for HTTPS" `
-    -Access Allow `
-    -Protocol Tcp `
-    -Direction Inbound `
-    -Priority 100 `
-    -SourceAddressPrefix $actionsIPv4 `
-    -SourcePortRange * `
-    -DestinationAddressPrefix * `
-    -DestinationPortRange 443
-
-$nsg.SecurityRules.Add($httpsRule)
 
 # Add new GitHub Actions rules for SSH (port 22)
 Write-Host "Adding GitHub Actions SSH rule..." -ForegroundColor Green
@@ -77,13 +60,12 @@ $sshRule = New-AzNetworkSecurityRuleConfig `
 $nsg.SecurityRules.Add($sshRule)
 
 # Update the NSG
-Write-Host "Updating NSG with new rules..." -ForegroundColor Green
+Write-Host "Updating NSG with new SSH rule..." -ForegroundColor Green
 Set-AzNetworkSecurityGroup -NetworkSecurityGroup $nsg
 
-Write-Host "✅ Successfully updated NSG with latest GitHub Actions IP ranges!" -ForegroundColor Green
-Write-Host "Added rules:" -ForegroundColor Cyan
-Write-Host "  - GitHubActions-HTTPS (Priority 100) - Port 443" -ForegroundColor Cyan
+Write-Host "✅ Successfully updated NSG with latest GitHub Actions SSH IP ranges!" -ForegroundColor Green
+Write-Host "Added rule:" -ForegroundColor Cyan
 Write-Host "  - GitHubActions-SSH (Priority 101) - Port 22" -ForegroundColor Cyan
-Write-Host "Removed temporary rule: TEMP-AllowAllSSH" -ForegroundColor Cyan
+Write-Host "Removed any HTTPS or temporary rules" -ForegroundColor Cyan
 
 Write-Host "`nYou can now test your GitHub Actions deployment!" -ForegroundColor Green 
