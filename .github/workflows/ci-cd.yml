@@ -65,6 +65,7 @@ jobs:
             # Navigate to your project directory
             cd /home/${{ secrets.AZURE_USER }}/EVEAbacusRelease
             
+            
             # Pull latest changes
             git pull origin main
             
