@@ -110,18 +110,26 @@ jobs:
             sudo systemctl restart eveabacus
             
             # Check if frontend files exist and copy them
+            echo "Checking for frontend files..."
+            echo "Contents of /var/www/:"
+            ls -la /var/www/
+            
             if [ -d "/var/www/eve-abacus-webui/.next" ]; then
               # Copy built frontend to web root (adjust path as needed for your nginx config)
               sudo cp -r /var/www/eve-abacus-webui/.next /var/www/html/
-              echo "Frontend files copied successfully"
+              echo "Frontend files copied successfully from /var/www/eve-abacus-webui/.next"
+            elif [ -d "/var/www/eveabacus/.next" ]; then
+              # Frontend files were copied to backend directory, copy them to web root
+              sudo cp -r /var/www/eveabacus/.next /var/www/html/
+              echo "Frontend files copied successfully from backend directory"
             else
-              echo "Frontend .next directory not found at /var/www/eve-abacus-webui/.next"
+              echo "Frontend .next directory not found"
               # List contents to debug
-              echo "Contents of /var/www/:"
-              ls -la /var/www/
               if [ -d "/var/www/eve-abacus-webui" ]; then
                 echo "Contents of /var/www/eve-abacus-webui/:"
                 ls -la /var/www/eve-abacus-webui/
+              else
+                echo "/var/www/eve-abacus-webui/ directory does not exist"
               fi
             fi
             
