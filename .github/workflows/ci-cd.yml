@@ -160,9 +160,44 @@ jobs:
           echo "Available VMs in resource group ${{ env.RESOURCE_GROUP }}:"
           az vm list --resource-group ${{ env.RESOURCE_GROUP }} --query "[].{Name:name, Status:powerState}" -o table
       
+      - name: Copy artifacts to VM
+        run: |
+          # Copy backend artifacts to VM
+          echo "Copying backend artifacts..."
+          tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
+          az vm run-command invoke \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
+            --command-id RunShellScript \
+            --scripts "
+              rm -rf /tmp/backend-artifacts
+              mkdir -p /tmp/backend-artifacts
+              cd /tmp/backend-artifacts
+              tar -xzf /tmp/backend-artifacts.tar.gz
+              rm /tmp/backend-artifacts.tar.gz
+            " \
+            --scripts @backend-artifacts.tar.gz
+          
+          # Copy frontend artifacts to VM
+          echo "Copying frontend artifacts..."
+          tar -czf frontend-artifacts.tar.gz -C ./frontend-artifacts .
+          az vm run-command invoke \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
+            --command-id RunShellScript \
+            --scripts "
+              rm -rf /tmp/frontend-artifacts
+              mkdir -p /tmp/frontend-artifacts
+              cd /tmp/frontend-artifacts
+              tar -xzf /tmp/frontend-artifacts.tar.gz
+              rm /tmp/frontend-artifacts.tar.gz
+            " \
+            --scripts @frontend-artifacts.tar.gz
+      
       - name: Deploy to Azure VM
         run: |
           # Stop services
+          echo "Stopping services..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -173,6 +208,7 @@ jobs:
             "
           
           # Deploy backend
+          echo "Deploying backend..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -185,6 +221,7 @@ jobs:
             "
           
           # Deploy frontend
+          echo "Deploying frontend..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -202,6 +239,7 @@ jobs:
             "
           
           # Start services
+          echo "Starting services..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -210,45 +248,4 @@ jobs:
               sudo systemctl start eveabacus
               sudo systemctl start eveabacus-frontend
               sudo systemctl reload nginx
-            "
-      
-      - name: Copy artifacts to VM
-        run: |
-          # Copy backend artifacts to VM
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "rm -rf /tmp/backend-artifacts"
-          
-          # Use az vm run-command to copy files
-          tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              mkdir -p /tmp/backend-artifacts
-              cd /tmp/backend-artifacts
-              tar -xzf /tmp/backend-artifacts.tar.gz
-            " \
-            --scripts @backend-artifacts.tar.gz
-          
-          # Copy frontend artifacts to VM
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "rm -rf /tmp/frontend-artifacts"
-          
-          tar -czf frontend-artifacts.tar.gz -C ./frontend-artifacts .
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              mkdir -p /tmp/frontend-artifacts
-              cd /tmp/frontend-artifacts
-              tar -xzf /tmp/frontend-artifacts.tar.gz
-            " \
-            --scripts @frontend-artifacts.tar.gz 
+            " 
