@@ -82,6 +82,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       
+      - name: Setup Next.js cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./eve-abacus-webui/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-
+      
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         working-directory: ./eve-abacus-webui
@@ -90,11 +100,31 @@ jobs:
         run: pnpm build
         working-directory: ./eve-abacus-webui
       
+      - name: Check if build artifacts exist
+        run: |
+          if [ ! -d "./eve-abacus-webui/.next" ]; then
+            echo "❌ Frontend build failed - .next directory not found"
+            exit 1
+          fi
+          echo "✅ Frontend build artifacts found"
+          ls -la ./eve-abacus-webui/.next/
+          
+          # Check for standalone output
+          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
+            echo "✅ Standalone output found"
+            ls -la ./eve-abacus-webui/.next/standalone/
+          else
+            echo "⚠️  Standalone output not found, using regular .next directory"
+          fi
+        working-directory: ./
+      
       - name: Upload frontend artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-artifacts
-          path: ./eve-abacus-webui/.next
+          path: |
+            ./eve-abacus-webui/.next
+            ./eve-abacus-webui/public
           retention-days: 1
 
   # Deploy to production
@@ -150,7 +180,25 @@ jobs:
             # Deploy frontend
             echo "Deploying frontend..."
             sudo mkdir -p /var/www/eveabacus/frontend
-            sudo cp -r /tmp/frontend-artifacts/* /var/www/eveabacus/frontend/
+            
+            # Debug: Check what artifacts we have
+            echo "Frontend artifacts contents:"
+            ls -la /tmp/frontend-artifacts/
+            if [ -d "/tmp/frontend-artifacts/.next" ]; then
+              echo ".next directory contents:"
+              ls -la /tmp/frontend-artifacts/.next/
+            fi
+            
+            # Check if we have standalone output
+            if [ -d "/tmp/frontend-artifacts/.next/standalone" ]; then
+              echo "Using standalone output..."
+              sudo cp -r /tmp/frontend-artifacts/.next/standalone/* /var/www/eveabacus/frontend/
+            else
+              echo "Using regular .next output..."
+              sudo cp -r /tmp/frontend-artifacts/.next /var/www/eveabacus/frontend/
+              sudo cp -r /tmp/frontend-artifacts/public /var/www/eveabacus/frontend/
+            fi
+            
             sudo chown -R eveabacus:eveabacus /var/www/eveabacus/frontend
             sudo chmod -R 755 /var/www/eveabacus/frontend
             
