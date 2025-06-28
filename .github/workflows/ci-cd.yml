@@ -159,12 +159,6 @@ jobs:
             
             echo "Starting deployment..."
             
-            # Create backup of current deployment
-            if [ -d "/var/www/eveabacus" ]; then
-              echo "Creating backup..."
-              sudo cp -r /var/www/eveabacus /var/www/eveabacus.backup.$(date +%Y%m%d_%H%M%S)
-            fi
-            
             # Stop services before deployment
             echo "Stopping services..."
             sudo systemctl stop eveabacus 2>/dev/null || true
@@ -228,10 +222,6 @@ jobs:
             # Reload nginx
             echo "Reloading nginx..."
             sudo systemctl reload nginx
-            
-            # Clean up old backups (keep last 5)
-            echo "Cleaning up old backups..."
-            sudo find /var/www -name "eveabacus.backup.*" -type d | sort | head -n -5 | xargs -r sudo rm -rf
             
             echo "✅ Deployment completed successfully!"
       
