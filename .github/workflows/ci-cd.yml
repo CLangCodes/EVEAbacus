@@ -6,16 +6,32 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20'
+  AZURE_HOST: ${{ secrets.AZURE_HOST }}
+  AZURE_USER: ${{ secrets.AZURE_USER }}
+
 jobs:
+  # Build and test backend
   build-backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Cache .NET dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
       
       - name: Restore dependencies
         run: dotnet restore ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
@@ -25,19 +41,47 @@ jobs:
       
       - name: Test backend
         run: dotnet test --no-build --verbosity normal ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+      
+      - name: Publish backend
+        run: dotnet publish --configuration Release --output ./publish-backend ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+      
+      - name: Upload backend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifacts
+          path: ./publish-backend
+          retention-days: 1
 
+  # Build frontend
   build-frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
       
       - name: Install pnpm
-        run: npm install -g pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,173 +90,118 @@ jobs:
       - name: Build frontend
         run: pnpm build
         working-directory: ./eve-abacus-webui
+      
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifacts
+          path: ./eve-abacus-webui/.next
+          retention-days: 1
 
+  # Deploy to production
   deploy:
     needs: [build-backend, build-frontend]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20'
+          name: backend-artifacts
+          path: ./backend-artifacts
       
-      - name: Install pnpm
-        run: npm install -g pnpm
-      
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: ./eve-abacus-webui
-      
-      - name: Build frontend
-        run: pnpm build
-        working-directory: ./eve-abacus-webui
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-artifacts
+          path: ./frontend-artifacts
       
       - name: Deploy to Azure VM
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.AZURE_HOST }}
-          username: ${{ secrets.AZURE_USER }}
+          host: ${{ env.AZURE_HOST }}
+          username: ${{ env.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
-            # Check current directory structure
-            echo "Current directory: $(pwd)"
-            echo "Contents of /var/www/:"
-            ls -la /var/www/
+            set -e  # Exit on any error
             
-            # Check if we're in the right directory and if git repo exists
-            cd /var/www/eveabacus
+            echo "Starting deployment..."
             
-            if [ ! -d ".git" ]; then
-              echo "Git repository not found. Skipping git pull."
-            else
-              # Pull latest changes
-              git pull origin main
+            # Create backup of current deployment
+            if [ -d "/var/www/eveabacus" ]; then
+              echo "Creating backup..."
+              sudo cp -r /var/www/eveabacus /var/www/eveabacus.backup.$(date +%Y%m%d_%H%M%S)
             fi
             
-            # Check if backend directory exists - try different possible locations
-            if [ -d "EVEAbacus.WebUI" ]; then
-              echo "Found EVEAbacus.WebUI directory"
-              cd EVEAbacus.WebUI
-              dotnet publish --configuration Release --output /var/www/eveabacus
-            elif [ -f "EVEAbacus.WebUI.csproj" ]; then
-              echo "Found EVEAbacus.WebUI.csproj in current directory"
-              dotnet publish --configuration Release --output /var/www/eveabacus
-            else
-              echo "Backend project not found. Current directory contents:"
-              ls -la
-              echo "Skipping backend build."
-            fi
+            # Stop services before deployment
+            echo "Stopping services..."
+            sudo systemctl stop eveabacus 2>/dev/null || true
+            sudo systemctl stop eveabacus-frontend 2>/dev/null || true
             
-            # Restart the backend service
-            sudo systemctl restart eveabacus
+            # Deploy backend
+            echo "Deploying backend..."
+            sudo mkdir -p /var/www/eveabacus
+            sudo cp -r /tmp/backend-artifacts/* /var/www/eveabacus/
+            sudo chown -R eveabacus:eveabacus /var/www/eveabacus
+            sudo chmod -R 755 /var/www/eveabacus
             
-            # Clean up and prepare frontend directory
-            echo "Preparing frontend directory..."
-            sudo rm -rf /var/www/eveabacus/frontend
+            # Deploy frontend
+            echo "Deploying frontend..."
             sudo mkdir -p /var/www/eveabacus/frontend
-            
-            # Move files from temporary location
-            if [ -d "/tmp/frontend-temp" ]; then
-              echo "Moving files from temporary location..."
-              sudo mv /tmp/frontend-temp/* /var/www/eveabacus/frontend/
-              sudo rmdir /tmp/frontend-temp
-            fi
-            
-            # Set correct ownership - eveabacus user owns the files
+            sudo cp -r /tmp/frontend-artifacts/* /var/www/eveabacus/frontend/
             sudo chown -R eveabacus:eveabacus /var/www/eveabacus/frontend
             sudo chmod -R 755 /var/www/eveabacus/frontend
             
-            # Re-enable frontend service for standalone mode
-            sudo systemctl enable eveabacus-frontend 2>/dev/null || true
-            sudo systemctl restart eveabacus-frontend 2>/dev/null || true
+            # Start services
+            echo "Starting services..."
+            sudo systemctl start eveabacus
+            sudo systemctl start eveabacus-frontend
             
-            # Check if frontend files exist and build them
-            echo "Checking for frontend files..."
-            
-            if [ -d "/var/www/eveabacus/frontend/src" ]; then
-              echo "Frontend source files found, building on server..."
-              cd /var/www/eveabacus/frontend
-              
-              # Install dependencies with better rate limit handling
-              echo "Installing frontend dependencies..."
-              
-              # Install pnpm if not available
-              if ! command -v pnpm &> /dev/null; then
-                echo "Installing pnpm..."
-                npm install -g pnpm
-              fi
-              
-              # Try pnpm first, fallback to npm if rate limited
-              if command -v pnpm &> /dev/null; then
-                echo "Using pnpm for dependency installation..."
-                # Add retry logic for pnpm
-                for i in {1..3}; do
-                  if pnpm install --frozen-lockfile --network-timeout=60000; then
-                    echo "pnpm install successful"
-                    break
-                  else
-                    echo "pnpm install failed (attempt $i/3), trying npm..."
-                    if npm install --prefer-offline --no-audit; then
-                      echo "npm install successful"
-                      break
-                    fi
-                    if [ $i -lt 3 ]; then
-                      echo "Waiting 30 seconds before retry..."
-                      sleep 30
-                    fi
-                  fi
-                done
-              else
-                echo "pnpm not available, using npm..."
-                npm install --prefer-offline --no-audit
-              fi
-              
-              # Build the frontend
-              echo "Building frontend..."
-              if command -v pnpm &> /dev/null && [ -f "pnpm-lock.yaml" ]; then
-                pnpm run build
-              else
-                npm run build
-              fi
-              
-              # Check if standalone directory exists
-              if [ -d "/var/www/eveabacus/frontend/.next/standalone" ]; then
-                echo "Standalone directory found - frontend service should work"
-                ls -la /var/www/eveabacus/frontend/.next/standalone/
-              else
-                echo "Standalone directory not found - check build configuration"
-                echo "Contents of .next directory:"
-                ls -la /var/www/eveabacus/frontend/.next/
-              fi
-              
-              echo "Frontend built successfully"
+            # Verify services are running
+            echo "Verifying services..."
+            if sudo systemctl is-active --quiet eveabacus; then
+              echo "✅ Backend service is running"
             else
-              echo "Frontend source files not found at /var/www/eveabacus/frontend/src"
-              # List contents to debug
-              echo "Contents of /var/www/eveabacus/:"
-              ls -la /var/www/eveabacus/
-              if [ -d "/var/www/eveabacus/frontend" ]; then
-                echo "Contents of /var/www/eveabacus/frontend/:"
-                ls -la /var/www/eveabacus/frontend/
-              else
-                echo "/var/www/eveabacus/frontend/ directory does not exist"
-              fi
+              echo "❌ Backend service failed to start"
+              sudo systemctl status eveabacus
+              exit 1
+            fi
+            
+            if sudo systemctl is-active --quiet eveabacus-frontend; then
+              echo "✅ Frontend service is running"
+            else
+              echo "❌ Frontend service failed to start"
+              sudo systemctl status eveabacus-frontend
+              exit 1
             fi
             
             # Reload nginx
+            echo "Reloading nginx..."
             sudo systemctl reload nginx
             
-            echo "Deployment completed successfully!"
+            # Clean up old backups (keep last 5)
+            echo "Cleaning up old backups..."
+            sudo find /var/www -name "eveabacus.backup.*" -type d | sort | head -n -5 | xargs -r sudo rm -rf
+            
+            echo "✅ Deployment completed successfully!"
       
-      - name: Copy frontend files to server
+      - name: Copy backend artifacts to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.AZURE_HOST }}
-          username: ${{ secrets.AZURE_USER }}
+          host: ${{ env.AZURE_HOST }}
+          username: ${{ env.AZURE_USER }}
           key: ${{ secrets.AZURE_SSH_KEY }}
-          source: "eve-abacus-webui/src,eve-abacus-webui/public,eve-abacus-webui/next.config.ts,eve-abacus-webui/package.json,eve-abacus-webui/package-lock.json,eve-abacus-webui/pnpm-lock.yaml,eve-abacus-webui/tsconfig.json,eve-abacus-webui/postcss.config.mjs,eve-abacus-webui/eslint.config.mjs,eve-abacus-webui/next-env.d.ts"
-          target: "/tmp/frontend-temp/"
-          strip_components: 1 
+          source: "backend-artifacts/"
+          target: "/tmp/"
+      
+      - name: Copy frontend artifacts to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.AZURE_HOST }}
+          username: ${{ env.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          source: "frontend-artifacts/"
+          target: "/tmp/" 
