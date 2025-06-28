@@ -11,6 +11,8 @@ env:
   NODE_VERSION: '20'
   AZURE_HOST: ${{ secrets.AZURE_HOST }}
   AZURE_USER: ${{ secrets.AZURE_USER }}
+  RESOURCE_GROUP: 'EVEAbacus'
+  VM_NAME: ${{ secrets.VM_NAME }}
 
 jobs:
   # Build and test backend
@@ -153,12 +155,17 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
+      - name: List available VMs
+        run: |
+          echo "Available VMs in resource group ${{ env.RESOURCE_GROUP }}:"
+          az vm list --resource-group ${{ env.RESOURCE_GROUP }} --query "[].{Name:name, Status:powerState}" -o table
+      
       - name: Deploy to Azure VM
         run: |
           # Stop services
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
               sudo systemctl stop eveabacus 2>/dev/null || true
@@ -167,8 +174,8 @@ jobs:
           
           # Deploy backend
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
               sudo mkdir -p /var/www/eveabacus
@@ -179,8 +186,8 @@ jobs:
           
           # Deploy frontend
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
               sudo mkdir -p /var/www/eveabacus/frontend
@@ -196,8 +203,8 @@ jobs:
           
           # Start services
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
               sudo systemctl start eveabacus
@@ -209,16 +216,16 @@ jobs:
         run: |
           # Copy backend artifacts to VM
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "rm -rf /tmp/backend-artifacts"
           
           # Use az vm run-command to copy files
           tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
               mkdir -p /tmp/backend-artifacts
@@ -229,15 +236,15 @@ jobs:
           
           # Copy frontend artifacts to VM
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "rm -rf /tmp/frontend-artifacts"
           
           tar -czf frontend-artifacts.tar.gz -C ./frontend-artifacts .
           az vm run-command invoke \
-            --resource-group EVEAbacus \
-            --name EVEAbacus-vm \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
               mkdir -p /tmp/frontend-artifacts
