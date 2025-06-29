@@ -12,7 +12,7 @@
 </CascadingValue>
 
 <MudTable Items="@OrderService.Orders.AsQueryable()" 
-        Hover="true" Breakpoint="Breakpoint.Xxl" LoadingProgressColor="Color.Info"
+        Hover="true" Breakpoint="Breakpoint.Xxl"  Loading="@_loading" LoadingProgressColor="Color.Info"
         FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true"
         Dense="true" >
     <HeaderContent>
@@ -43,6 +43,7 @@
 @code {
     [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
     [Parameter] public EventCallback OnValidEvent { get; set; }
+    private bool _loading;
     private bool _isCalculating = false;
 
     private bool _createOpen;

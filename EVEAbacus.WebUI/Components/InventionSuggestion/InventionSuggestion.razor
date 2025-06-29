@@ -38,6 +38,7 @@ FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true">
 @code {
     string[] InventionSkillsSelected = [];
 
+    private string _defaultValue = "none";
     private IEnumerable<string> _selectInventionSkills { get; set; } = new HashSet<string>();
     public IEnumerable<string> SelectedInventionSkills
     {
@@ -49,7 +50,7 @@ FixedHeader="true" FixedFooter="true" HorizontalScrollbar="true">
             {
                 Debug.WriteLine("trigger");
                 _selectInventionSkills = newSet;
-                _ = Task.Run(async () => await GetInventionSuggestions());
+                _ = GetInventionSuggestions();
                 StateHasChanged();
             }
         }

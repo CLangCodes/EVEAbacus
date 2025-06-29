@@ -3,7 +3,7 @@
 @if (CalculatorService.ManufBatch?.ProductionRouting != null)
 {
     <MudTable Items="@CalculatorService.ManufBatch.ProductionRouting"
-              Hover="true" Breakpoint="Breakpoint.Xxl" LoadingProgressColor="Color.Info"
+              Hover="true" Breakpoint="Breakpoint.Xxl" Loading="@_loading" LoadingProgressColor="Color.Info"
               Dense="true">
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<ProductionRoute, object>(x=>x.BlueprintName ?? string.Empty)">Blueprint Name</MudTableSortLabel></MudTh>
@@ -34,4 +34,6 @@
 
 @code {
     [CascadingParameter] required public CalculatorService CalculatorService { get; set; }
+    
+    private bool _loading;
 }

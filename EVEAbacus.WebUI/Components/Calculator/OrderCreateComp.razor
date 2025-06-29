@@ -63,6 +63,7 @@
     [Parameter] required public CalculatorService CalculatorService { get; set; }
     [CascadingParameter] required public IMudDialogInstance MudDialog { get; set; }
 
+    private bool _hasInitialized = false;
     private OrderDTO OrderDTO { get; set; } = new();
     private int? bpTypeId;
     private int? productTypeId;

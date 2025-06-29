@@ -67,8 +67,12 @@
         {
             _hasInitialized = true;
             var sessionOrders = await CalcSessionService.GetOrdersAsync();
-            if (sessionOrders != null) { OrderService.SetOrdersFromStorage(sessionOrders); }
-            await RunCalc();
+            if (sessionOrders != null && sessionOrders.Count > 0) 
+            { 
+                OrderService.SetOrdersFromStorage(sessionOrders);
+                // Only run calculation if we have orders
+                await RunCalc();
+            }
         }
     }
 
@@ -79,8 +83,17 @@
 
     protected async Task RunCalc()
     {
+        // Check if orders exist before running calculation
+        if (OrderService.Orders == null || OrderService.Orders.Count == 0)
+        {
+            Console.WriteLine("No orders available for calculation");
+            return;
+        }
         
-        CalculatorService.ManufBatch = await CalculatorService.GetManufacturingBatch(OrderService.Orders.ToArray(), CalculatorService.SelectedMarkets.ToArray());
+        // Ensure SelectedMarkets is not null
+        var selectedMarkets = CalculatorService.SelectedMarkets?.ToArray() ?? new string[0];
+        
+        CalculatorService.ManufBatch = await CalculatorService.GetManufacturingBatch(OrderService.Orders.ToArray(), selectedMarkets);
         StateHasChanged();
     }
 }
