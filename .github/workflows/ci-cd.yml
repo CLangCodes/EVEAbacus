@@ -205,7 +205,7 @@ jobs:
           
           # Create storage account for large files
           echo "Setting up storage for large files..."
-          STORAGE_ACCOUNT_NAME="eveabacusdeploy$(date +%s)"
+          STORAGE_ACCOUNT_NAME="eve$(date +%s)"
           az storage account create \
             --name $STORAGE_ACCOUNT_NAME \
             --resource-group ${{ env.RESOURCE_GROUP }} \
