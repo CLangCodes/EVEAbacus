@@ -316,7 +316,7 @@ jobs:
             ${{ runner.os }}-nextjs-
       
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
         working-directory: ./eve-abacus-webui
       
       - name: Build frontend
