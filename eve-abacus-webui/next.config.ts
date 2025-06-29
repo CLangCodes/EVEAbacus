@@ -12,6 +12,18 @@ const nextConfig: NextConfig = {
         outputModule: false,
       };
     }
+    
+    // Ensure styled-jsx is not excluded from the build
+    if (isServer) {
+      config.externals = config.externals || [];
+      // Remove styled-jsx from externals if it's there
+      if (Array.isArray(config.externals)) {
+        config.externals = config.externals.filter((external: any) => 
+          typeof external === 'string' ? external !== 'styled-jsx' : true
+        );
+      }
+    }
+    
     return config;
   },
   /* config options here */

@@ -343,6 +343,18 @@ jobs:
             echo ""
             echo "📁 Static directory:"
             ls -la ./eve-abacus-webui/.next/static/ || echo "static directory not found"
+            echo ""
+            echo "📁 Standalone directory:"
+            ls -la ./eve-abacus-webui/.next/standalone/ || echo "standalone directory not found"
+            echo ""
+            echo "📁 Checking standalone .next directory:"
+            ls -la ./eve-abacus-webui/.next/standalone/.next/ || echo "standalone .next directory not found"
+            echo ""
+            echo "📁 Checking standalone BUILD_ID:"
+            ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "standalone BUILD_ID not found"
+            echo ""
+            echo "📁 Checking standalone static directory:"
+            ls -la ./eve-abacus-webui/.next/standalone/.next/static/ || echo "standalone static directory not found"
           else
             echo "❌ .next directory not found - build may have failed"
             echo "📁 Checking for any build artifacts:"
@@ -451,14 +463,47 @@ jobs:
             echo "📁 Checking for BUILD_ID in original standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found in original standalone"
             
-            # Copy the standalone directory first
+            # Copy the standalone directory as-is
             cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
             echo "✅ standalone directory copied"
             
-            # Now copy the .next directory to the standalone directory to preserve BUILD_ID and dependencies
-            echo "📁 Copying .next directory to standalone for dependencies..."
-            cp -r ./eve-abacus-webui/.next ./frontend-build/standalone/
-            echo "✅ .next directory copied to standalone"
+            # Copy all necessary files from .next to ensure complete functionality
+            echo "📁 Copying all necessary .next files..."
+            
+            # Create .next directory if it doesn't exist in standalone
+            mkdir -p ./frontend-build/standalone/.next
+            
+            # Copy static assets (CSS, JS bundles, images)
+            if [ -d "./eve-abacus-webui/.next/static" ]; then
+              cp -r ./eve-abacus-webui/.next/static ./frontend-build/standalone/.next/
+              echo "✅ static directory copied"
+            else
+              echo "❌ static directory not found"
+            fi
+            
+            # Copy server directory (server-side components)
+            if [ -d "./eve-abacus-webui/.next/server" ]; then
+              cp -r ./eve-abacus-webui/.next/server ./frontend-build/standalone/.next/
+              echo "✅ server directory copied"
+            else
+              echo "❌ server directory not found"
+            fi
+            
+            # Copy any other important directories that might exist
+            for dir in "cache" "trace" "types"; do
+              if [ -d "./eve-abacus-webui/.next/$dir" ]; then
+                cp -r "./eve-abacus-webui/.next/$dir" "./frontend-build/standalone/.next/"
+                echo "✅ $dir directory copied"
+              fi
+            done
+            
+            # Copy BUILD_ID if it doesn't already exist in standalone
+            if [ ! -f "./frontend-build/standalone/.next/BUILD_ID" ] && [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
+              cp ./eve-abacus-webui/.next/BUILD_ID ./frontend-build/standalone/.next/
+              echo "✅ BUILD_ID copied"
+            else
+              echo "ℹ️ BUILD_ID already exists or not found"
+            fi
             
             echo "📁 Verifying standalone directory was copied:"
             ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
@@ -468,6 +513,8 @@ jobs:
             ls -la ./frontend-build/standalone/.next/ || echo ".next directory not found in standalone"
             echo "📁 Checking BUILD_ID in standalone .next:"
             ls -la ./frontend-build/standalone/.next/BUILD_ID || echo "BUILD_ID not found in standalone .next"
+            echo "📁 Checking static directory in standalone .next:"
+            ls -la ./frontend-build/standalone/.next/static/ || echo "static directory not found in standalone .next"
             echo "📁 Checking node_modules in standalone:"
             ls -la ./frontend-build/standalone/node_modules/ | head -5 || echo "node_modules not found in standalone"
             echo "📁 Checking for styled-jsx specifically:"
@@ -647,6 +694,8 @@ jobs:
               ls -la /var/www/eveabacus/frontend/standalone/server.js || echo 'server.js not found'
               echo '📁 Checking for BUILD_ID file:'
               ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo 'BUILD_ID not found'
+              echo '📁 Checking for .next directory:'
+              ls -la /var/www/eveabacus/frontend/standalone/.next/ || echo '.next directory not found'
               echo '📁 Checking standalone node_modules:'
               ls -la /var/www/eveabacus/frontend/standalone/node_modules/ | head -5 || echo 'node_modules not found'
               echo '📁 Checking for styled-jsx:'
