@@ -130,13 +130,18 @@ jobs:
           ls -la ./eve-abacus-webui/public/
         working-directory: ./
       
+      - name: Prepare frontend artifacts
+        run: |
+          mkdir -p ./frontend-build
+          cp -r ./eve-abacus-webui/.next ./frontend-build/
+          cp -r ./eve-abacus-webui/public ./frontend-build/
+        working-directory: ./
+      
       - name: Upload frontend artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-artifacts
-          path: |
-            ./eve-abacus-webui/.next
-            ./eve-abacus-webui/public
+          path: ./frontend-build
           retention-days: 1
 
   # Deploy to production
@@ -159,6 +164,21 @@ jobs:
         with:
           name: frontend-artifacts
           path: ./frontend-artifacts
+      
+      - name: Debug downloaded artifacts
+        run: |
+          echo "🔍 Checking downloaded artifacts..."
+          echo "Backend artifacts:"
+          ls -la ./backend-artifacts/ || echo "Backend artifacts not found"
+          echo ""
+          echo "Frontend artifacts:"
+          ls -la ./frontend-artifacts/ || echo "Frontend artifacts not found"
+          echo ""
+          echo "Frontend .next directory:"
+          ls -la ./frontend-artifacts/.next/ || echo ".next directory not found"
+          echo ""
+          echo "Frontend public directory:"
+          ls -la ./frontend-artifacts/public/ || echo "public directory not found"
       
       - name: Azure Login
         uses: azure/login@v2
@@ -183,61 +203,128 @@ jobs:
               sudo systemctl stop eveabacus-frontend 2>/dev/null || true
             "
           
-          # Deploy backend using SCP for large files
-          echo "Deploying backend..."
+          # Create storage account for large files
+          echo "Setting up storage for large files..."
+          STORAGE_ACCOUNT_NAME="eveabacusdeploy$(date +%s)"
+          az storage account create \
+            --name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --location eastus \
+            --sku Standard_LRS \
+            --kind StorageV2
+          
+          # Get storage key
+          STORAGE_KEY=$(az storage account keys list \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query '[0].value' -o tsv)
+          
+          # Create container
+          az storage container create \
+            --name deployments \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY
+          
+          # Upload backend artifacts
+          echo "Uploading backend artifacts..."
+          tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
+          az storage blob upload \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY \
+            --container-name deployments \
+            --name backend-artifacts.tar.gz \
+            --file backend-artifacts.tar.gz
+          
+          # Upload frontend artifacts
+          echo "Uploading frontend artifacts..."
+          tar -czf frontend-artifacts.tar.gz -C ./frontend-artifacts .
+          az storage blob upload \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY \
+            --container-name deployments \
+            --name frontend-artifacts.tar.gz \
+            --file frontend-artifacts.tar.gz
+          
+          # Deploy backend from storage
+          echo "Deploying backend from storage..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
+              echo '🔍 Starting backend deployment...'
               sudo mkdir -p /var/www/eveabacus
               sudo rm -rf /var/www/eveabacus/*
-            "
-          
-          # Copy backend files in chunks
-          tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
               cd /tmp
-              tar -xzf /tmp/backend-artifacts.tar.gz -C /var/www/eveabacus/
+              echo '📥 Downloading backend artifacts...'
+              az storage blob download \
+                --account-name $STORAGE_ACCOUNT_NAME \
+                --account-key $STORAGE_KEY \
+                --container-name deployments \
+                --name backend-artifacts.tar.gz \
+                --file backend-artifacts.tar.gz
+              echo '📦 Extracting backend artifacts...'
+              tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
+              echo '🔧 Setting permissions...'
               sudo chown -R eveabacus:eveabacus /var/www/eveabacus
               sudo chmod -R 755 /var/www/eveabacus
-            " \
-            --scripts @backend-artifacts.tar.gz
-          
-          # Deploy frontend - only copy built artifacts
-          echo "Deploying frontend..."
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              sudo mkdir -p /var/www/eveabacus/frontend
-              sudo rm -rf /var/www/eveabacus/frontend/*
+              echo '📁 Backend deployment contents:'
+              ls -la /var/www/eveabacus/
+              rm backend-artifacts.tar.gz
+              echo '✅ Backend deployment complete'
             "
           
-          # Create frontend artifacts tar with only built files
-          tar -czf frontend-built.tar.gz -C ./frontend-artifacts .
+          # Deploy frontend from storage
+          echo "Deploying frontend from storage..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
+              echo '🔍 Starting frontend deployment...'
+              sudo mkdir -p /var/www/eveabacus/frontend
+              sudo rm -rf /var/www/eveabacus/frontend/*
               cd /tmp
-              tar -xzf /tmp/frontend-built.tar.gz
-              if [ -d '/tmp/.next/standalone' ]; then
-                sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/
+              echo '📥 Downloading frontend artifacts...'
+              az storage blob download \
+                --account-name $STORAGE_ACCOUNT_NAME \
+                --account-key $STORAGE_KEY \
+                --container-name deployments \
+                --name frontend-artifacts.tar.gz \
+                --file frontend-artifacts.tar.gz
+              echo '📦 Extracting frontend artifacts...'
+              tar -xzf frontend-artifacts.tar.gz
+              echo '📁 Extracted frontend contents:'
+              ls -la /tmp/
+              echo '📁 frontend-build directory contents:'
+              ls -la /tmp/frontend-build/ || echo 'frontend-build directory not found'
+              echo '📁 .next directory contents:'
+              ls -la /tmp/frontend-build/.next/ || echo '.next directory not found'
+              echo '📁 public directory contents:'
+              ls -la /tmp/frontend-build/public/ || echo 'public directory not found'
+              if [ -d '/tmp/frontend-build/.next/standalone' ]; then
+                echo '🚀 Using standalone build...'
+                sudo cp -r /tmp/frontend-build/.next/standalone/* /var/www/eveabacus/frontend/
               else
-                sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
-                sudo cp -r /tmp/public /var/www/eveabacus/frontend/
+                echo '📁 Using regular build...'
+                sudo cp -r /tmp/frontend-build/.next /var/www/eveabacus/frontend/
+                sudo cp -r /tmp/frontend-build/public /var/www/eveabacus/frontend/
               fi
+              echo '🔧 Setting permissions...'
               sudo chown -R eveabacus:eveabacus /var/www/eveabacus/frontend
               sudo chmod -R 755 /var/www/eveabacus/frontend
-            " \
-            --scripts @frontend-built.tar.gz
+              echo '📁 Frontend deployment contents:'
+              ls -la /var/www/eveabacus/frontend/
+              rm frontend-artifacts.tar.gz
+              echo '✅ Frontend deployment complete'
+            "
+          
+          # Clean up storage account
+          echo "Cleaning up storage account..."
+          az storage account delete \
+            --name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --yes
           
           # Start services
           echo "Starting services..."
