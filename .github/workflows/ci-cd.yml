@@ -556,20 +556,10 @@ jobs:
               sudo echo '[Service]' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'WorkingDirectory=/var/www/eveabacus/frontend' >> /etc/systemd/system/eveabacusfrontend.service
               
-              # Check if standalone server.js exists, otherwise use pnpm start
-              if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
-                echo '🚀 Using standalone server.js'
-                sudo echo 'ExecStart=/usr/bin/node /var/www/eveabacus/frontend/server.js' >> /etc/systemd/system/eveabacusfrontend.service
-              elif [ -f '/var/www/eveabacus/frontend/standalone/server.js' ]; then
-                echo '🚀 Using standalone server.js from standalone directory'
-                sudo echo 'ExecStart=/usr/bin/node /var/www/eveabacus/frontend/standalone/server.js' >> /etc/systemd/system/eveabacusfrontend.service
-              else
-                echo '📁 Using pnpm start with complete .next directory'
-                # Add debugging before starting the service
-                sudo echo 'ExecStartPre=/bin/bash -c "echo \"🔍 Debugging .next directory before start:\" && ls -la /var/www/eveabacus/frontend/.next/ && echo \"📁 Checking for BUILD_ID:\" && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo \"BUILD_ID not found\" && echo \"📁 Checking for server directory:\" && ls -la /var/www/eveabacus/frontend/.next/server/ || echo \"server directory not found\""' >> /etc/systemd/system/eveabacusfrontend.service
-                sudo echo 'ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start' >> /etc/systemd/system/eveabacusfrontend.service
-              fi
-              
+              # Always add debugging and use pnpm start for now
+              echo '📁 Using pnpm start with debugging'
+              sudo echo 'ExecStartPre=/bin/bash -c "echo \"🔍 Debugging .next directory before start:\" && ls -la /var/www/eveabacus/frontend/.next/ && echo \"📁 Checking for BUILD_ID:\" && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo \"BUILD_ID not found\" && echo \"📁 Checking for server directory:\" && ls -la /var/www/eveabacus/frontend/.next/server/ || echo \"server directory not found\""' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'Restart=always' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'RestartSec=10' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'SyslogIdentifier=eveabacusfrontend' >> /etc/systemd/system/eveabacusfrontend.service
@@ -579,10 +569,6 @@ jobs:
               sudo echo '' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo '[Install]' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'WantedBy=multi-user.target' >> /etc/systemd/system/eveabacusfrontend.service
-              
-              # Debug: Show the created service file
-              echo '📄 Created service file contents:'
-              cat /etc/systemd/system/eveabacusfrontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
