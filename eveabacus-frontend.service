@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 WorkingDirectory=/var/www/eveabacus/frontend
-ExecStartPre=/bin/bash -c "ls -la /var/www/eveabacus/frontend/.next/ && echo BUILD_ID check: && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo BUILD_ID not found"
-ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start
+ExecStartPre=/bin/bash -c "ls -la /var/www/eveabacus/frontend/standalone/ && echo BUILD_ID check: && ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo BUILD_ID not found"
+ExecStart=/var/www/eveabacus/frontend/standalone/server.js
 Restart=always
 RestartSec=10
 SyslogIdentifier=eveabacus-frontend
