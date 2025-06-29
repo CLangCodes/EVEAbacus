@@ -99,7 +99,7 @@ jobs:
           
           # Create storage account for large files
           echo "Setting up storage for backend deployment..."
-          STORAGE_ACCOUNT_NAME="eveabacusbackend$(date +%s)"
+          STORAGE_ACCOUNT_NAME="evebackend$(date +%s)"
           az storage account create \
             --name $STORAGE_ACCOUNT_NAME \
             --resource-group ${{ env.RESOURCE_GROUP }} \
@@ -356,7 +356,7 @@ jobs:
           
           # Create storage account for large files
           echo "Setting up storage for frontend deployment..."
-          STORAGE_ACCOUNT_NAME="eveabacusfrontend$(date +%s)"
+          STORAGE_ACCOUNT_NAME="evefrontend$(date +%s)"
           az storage account create \
             --name $STORAGE_ACCOUNT_NAME \
             --resource-group ${{ env.RESOURCE_GROUP }} \
