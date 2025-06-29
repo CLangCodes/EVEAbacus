@@ -162,64 +162,44 @@ jobs:
               echo '📁 Checking tar file contents before extraction:'
               tar -tzf backend-artifacts.tar.gz | head -20
               echo '📦 Extracting with verbose output:'
-              tar -xzf backend-artifacts.tar.gz
+              tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
               echo '📁 Extracted backend contents:'
-              ls -la /tmp/
-              echo '📁 Checking for .next directory specifically:'
-              find /tmp -name ".next" -type d 2>/dev/null || echo "No .next directory found"
-              echo '📁 .next directory contents:'
-              ls -la /tmp/.next/ || echo '.next directory not found'
-              echo '📁 Server directory:'
-              ls -la /tmp/server/ || echo 'server directory not found'
-              echo '📁 Static directory:'
-              ls -la /tmp/static/ || echo 'static directory not found'
-              echo '📁 package.json and pnpm-lock.yaml:'
-              ls -la /tmp/package.json /tmp/pnpm-lock.yaml 2>/dev/null || echo 'package.json or pnpm-lock.yaml not found'
-              echo '📁 Checking for systemd service file:'
-              ls -la /tmp/eveabacus-backend.service || echo 'eveabacus-backend.service not found'
-              
-              # Copy all backend files
-              echo '📁 Copying all backend files...'
-              sudo cp -r /tmp/.next /var/www/eveabacus/ 2>/dev/null || echo 'Failed to copy .next directory'
-              sudo cp -r /tmp/server /var/www/eveabacus/ 2>/dev/null || echo 'Failed to copy server directory'
-              sudo cp -r /tmp/static /var/www/eveabacus/ 2>/dev/null || echo 'Failed to copy static directory'
-              sudo cp /tmp/package.json /var/www/eveabacus/ 2>/dev/null || echo 'Failed to copy package.json'
-              sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/ 2>/dev/null || echo 'Failed to copy pnpm-lock.yaml'
-              sudo cp /tmp/eveabacus-backend.service /var/www/eveabacus/ 2>/dev/null || echo 'Failed to copy service file'
-              
-              echo '📁 Backend files copied:'
               ls -la /var/www/eveabacus/
+              echo '📁 Checking for .NET DLL files:'
+              find /var/www/eveabacus -name "*.dll" | head -5 || echo "No DLL files found"
+              echo '📁 Checking for EVEAbacus.WebUI.dll specifically:'
+              ls -la /var/www/eveabacus/EVEAbacus.WebUI.dll || echo 'EVEAbacus.WebUI.dll not found'
+              echo '📁 Checking for systemd service file:'
+              ls -la /var/www/eveabacus/eveabacus-backend.service || echo 'eveabacus-backend.service not found'
               
-              # Install dependencies for production build
-              echo '📦 Installing dependencies for production build...'
-              cd /var/www/eveabacus
-              sudo pnpm install --prod --frozen-lockfile
-              echo '✅ Dependencies installed'
-              echo '📁 Checking node_modules after install:'
-              ls -la /var/www/eveabacus/node_modules/.bin/ | grep next || echo 'next not found in node_modules/.bin'
+              # Copy systemd service file
+              echo '📁 Copying systemd service file...'
+              sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus-backend.service
+              sudo chmod 644 /etc/systemd/system/eveabacus-backend.service
               
-              # Debug: Check .next directory structure
-              echo '📁 Debugging .next directory structure:'
-              ls -la /var/www/eveabacus/.next/ || echo '.next directory not found after copy'
-              echo '📁 Checking for build-id file:'
-              ls -la /var/www/eveabacus/.next/BUILD_ID || echo 'BUILD_ID not found'
-              echo '📁 Checking for server directory:'
-              ls -la /var/www/eveabacus/server/ || echo 'server directory not found'
-              echo '📁 Checking for static directory:'
-              ls -la /var/www/eveabacus/static/ || echo 'static directory not found'
+              # Add the connection string environment variable from GitHub secrets
+              echo '🔧 Adding database connection string from secrets...'
+              sudo sed -i '/Environment=ASPNETCORE_URLS/a Environment=ConnectionStrings__EVEAbacus=${{ secrets.CONNECTIONSTRINGS__BACKEND }}' /etc/systemd/system/eveabacus-backend.service
+              
+              # Add the Redis password environment variable from GitHub secrets
+              echo '🔧 Adding Redis password from secrets...'
+              sudo sed -i '/Environment=ConnectionStrings__EVEAbacus/a Environment=REDIS__PASSWORD=${{ secrets.REDIS__PASSWORD }}' /etc/systemd/system/eveabacus-backend.service
+              
+              # Debug: Show the final service file configuration
+              echo '📋 Final service configuration:'
+              sudo cat /etc/systemd/system/eveabacus-backend.service
               
               echo '🔧 Setting permissions...'
               sudo chown -R eveabacus:eveabacus /var/www/eveabacus
               sudo chmod -R 755 /var/www/eveabacus
               echo '📁 Final backend deployment contents:'
               ls -la /var/www/eveabacus/
-              echo '📁 Checking if .next directory exists:'
-              ls -la /var/www/eveabacus/.next/ || echo '.next directory not found after copy'
-              echo '📁 Checking if package.json exists:'
-              ls -la /var/www/eveabacus/package.json || echo 'package.json not found after copy'
-              echo '📁 Checking if pnpm is available:'
-              which pnpm || echo 'pnpm not found in PATH'
-              /usr/local/lib/node_modules/pnpm/bin/pnpm.cjs --version || echo 'pnpm.cjs not found or not working'
+              echo '📁 Checking if EVEAbacus.WebUI.dll exists:'
+              ls -la /var/www/eveabacus/EVEAbacus.WebUI.dll || echo 'EVEAbacus.WebUI.dll not found after copy'
+              echo '📁 Checking if dotnet is available:'
+              which dotnet || echo 'dotnet not found in PATH'
+              dotnet --version || echo 'dotnet version check failed'
+              sudo systemctl daemon-reload
               rm -f backend-artifacts.tar.gz
               echo '✅ Backend deployment complete'
             "
