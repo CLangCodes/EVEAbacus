@@ -54,9 +54,167 @@ jobs:
           path: ./publish-backend
           retention-days: 1
 
-  # Build frontend
-  build-frontend:
+  # Deploy backend to production
+  deploy-backend:
+    needs: [build-backend]
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifacts
+          path: ./backend-artifacts
+      
+      - name: Debug downloaded artifacts
+        run: |
+          echo "🔍 Checking downloaded artifacts..."
+          echo "Backend artifacts:"
+          ls -la ./backend-artifacts/ || echo "Backend artifacts not found"
+      
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: List available VMs
+        run: |
+          echo "Available VMs in resource group ${{ env.RESOURCE_GROUP }}:"
+          az vm list --resource-group ${{ env.RESOURCE_GROUP }} --query "[].{Name:name, Status:powerState}" -o table
+      
+      - name: Deploy backend to Azure VM
+        run: |
+          # Stop backend service
+          echo "Stopping backend service..."
+          az vm run-command invoke \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
+            --command-id RunShellScript \
+            --scripts "
+              sudo systemctl stop eveabacus 2>/dev/null || true
+            "
+          
+          # Create storage account for large files
+          echo "Setting up storage for backend deployment..."
+          STORAGE_ACCOUNT_NAME="eveabacusbackend$(date +%s)"
+          az storage account create \
+            --name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --location eastus \
+            --sku Standard_LRS \
+            --kind StorageV2
+          
+          # Get storage key
+          STORAGE_KEY=$(az storage account keys list \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query '[0].value' -o tsv)
+          
+          # Create container
+          az storage container create \
+            --name deployments \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY
+          
+          # Upload backend artifacts
+          echo "Uploading backend artifacts..."
+          tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
+          az storage blob upload \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY \
+            --container-name deployments \
+            --name backend-artifacts.tar.gz \
+            --file backend-artifacts.tar.gz
+          
+          # Deploy backend from storage
+          echo "Deploying backend from storage..."
+          # Generate SAS token for backend artifacts
+          BACKEND_SAS=$(az storage blob generate-sas \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY \
+            --container-name deployments \
+            --name backend-artifacts.tar.gz \
+            --permissions r \
+            --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
+            --full-uri \
+            --output tsv)
+          
+          az vm run-command invoke \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
+            --command-id RunShellScript \
+            --scripts "
+              echo '🔍 Starting backend deployment...'
+              sudo mkdir -p /var/www/eveabacus
+              sudo rm -rf /var/www/eveabacus/*
+              cd /tmp
+              echo '📥 Downloading backend artifacts...'
+              curl -L -o backend-artifacts.tar.gz \"$BACKEND_SAS\"
+              echo '📦 Extracting backend artifacts...'
+              tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
+              echo '🔧 Setting permissions...'
+              sudo chown -R eveabacus:eveabacus /var/www/eveabacus
+              sudo chmod -R 755 /var/www/eveabacus
+              echo '📁 Backend deployment contents:'
+              ls -la /var/www/eveabacus/
+              rm -f backend-artifacts.tar.gz
+              echo '✅ Backend deployment complete'
+            "
+          
+          # Clean up storage account
+          echo "Cleaning up storage account..."
+          az storage account delete \
+            --name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --yes
+          
+          # Start backend service
+          echo "Starting backend service..."
+          az vm run-command invoke \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
+            --command-id RunShellScript \
+            --scripts "
+              echo '🔧 Starting backend service...'
+              # Start backend service if it exists
+              if systemctl list-unit-files | grep -q eveabacus.service; then
+                echo '🚀 Starting eveabacus service...'
+                sudo systemctl start eveabacus
+                echo '⏳ Waiting for backend to be ready...'
+                sleep 10
+                echo '✅ Backend service started'
+              else
+                echo '⚠️  eveabacus service not found'
+              fi
+            "
+          
+          # Wait for backend to be ready
+          echo "Waiting for backend to be ready..."
+          az vm run-command invoke \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.VM_NAME }} \
+            --command-id RunShellScript \
+            --scripts "
+              echo '🔍 Checking if backend is ready...'
+              for i in {1..30}; do
+                if curl -f http://localhost:5000/health 2>/dev/null; then
+                  echo '✅ Backend is ready!'
+                  exit 0
+                fi
+                echo '⏳ Waiting for backend to be ready... (attempt $i/30)'
+                sleep 5
+              done
+              echo '⚠️  Backend may not be fully ready, but continuing...'
+            "
+
+  # Build frontend (after backend is deployed and running)
+  build-frontend:
+    needs: [deploy-backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -152,20 +310,14 @@ jobs:
           path: ./frontend-build
           retention-days: 1
 
-  # Deploy to production
-  deploy:
-    needs: [build-backend, build-frontend]
+  # Deploy frontend to production
+  deploy-frontend:
+    needs: [build-frontend]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Download backend artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-artifacts
-          path: ./backend-artifacts
       
       - name: Download frontend artifacts
         uses: actions/download-artifact@v4
@@ -176,9 +328,6 @@ jobs:
       - name: Debug downloaded artifacts
         run: |
           echo "🔍 Checking downloaded artifacts..."
-          echo "Backend artifacts:"
-          ls -la ./backend-artifacts/ || echo "Backend artifacts not found"
-          echo ""
           echo "Frontend artifacts:"
           ls -la ./frontend-artifacts/ || echo "Frontend artifacts not found"
           echo ""
@@ -193,27 +342,21 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: List available VMs
+      - name: Deploy frontend to Azure VM
         run: |
-          echo "Available VMs in resource group ${{ env.RESOURCE_GROUP }}:"
-          az vm list --resource-group ${{ env.RESOURCE_GROUP }} --query "[].{Name:name, Status:powerState}" -o table
-      
-      - name: Deploy to Azure VM
-        run: |
-          # Stop services
-          echo "Stopping services..."
+          # Stop frontend service
+          echo "Stopping frontend service..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              sudo systemctl stop eveabacus 2>/dev/null || true
-              sudo systemctl stop eveabacusfrontend 2>/dev/null || true
+              sudo systemctl stop eveabacus-frontend 2>/dev/null || true
             "
           
           # Create storage account for large files
-          echo "Setting up storage for large files..."
-          STORAGE_ACCOUNT_NAME="eve$(date +%s)"
+          echo "Setting up storage for frontend deployment..."
+          STORAGE_ACCOUNT_NAME="eveabacusfrontend$(date +%s)"
           az storage account create \
             --name $STORAGE_ACCOUNT_NAME \
             --resource-group ${{ env.RESOURCE_GROUP }} \
@@ -233,16 +376,6 @@ jobs:
             --account-name $STORAGE_ACCOUNT_NAME \
             --account-key $STORAGE_KEY
           
-          # Upload backend artifacts
-          echo "Uploading backend artifacts..."
-          tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
-          az storage blob upload \
-            --account-name $STORAGE_ACCOUNT_NAME \
-            --account-key $STORAGE_KEY \
-            --container-name deployments \
-            --name backend-artifacts.tar.gz \
-            --file backend-artifacts.tar.gz
-          
           # Upload frontend artifacts
           echo "Uploading frontend artifacts..."
           tar -czf frontend-artifacts.tar.gz -C ./frontend-artifacts .
@@ -252,41 +385,6 @@ jobs:
             --container-name deployments \
             --name frontend-artifacts.tar.gz \
             --file frontend-artifacts.tar.gz
-          
-          # Deploy backend from storage
-          echo "Deploying backend from storage..."
-          # Generate SAS token for backend artifacts
-          BACKEND_SAS=$(az storage blob generate-sas \
-            --account-name $STORAGE_ACCOUNT_NAME \
-            --account-key $STORAGE_KEY \
-            --container-name deployments \
-            --name backend-artifacts.tar.gz \
-            --permissions r \
-            --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
-            --full-uri \
-            --output tsv)
-          
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              echo '🔍 Starting backend deployment...'
-              sudo mkdir -p /var/www/eveabacus
-              sudo rm -rf /var/www/eveabacus/*
-              cd /tmp
-              echo '📥 Downloading backend artifacts...'
-              curl -L -o backend-artifacts.tar.gz \"$BACKEND_SAS\"
-              echo '📦 Extracting backend artifacts...'
-              tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
-              echo '🔧 Setting permissions...'
-              sudo chown -R eveabacus:eveabacus /var/www/eveabacus
-              sudo chmod -R 755 /var/www/eveabacus
-              echo '📁 Backend deployment contents:'
-              ls -la /var/www/eveabacus/
-              rm -f backend-artifacts.tar.gz
-              echo '✅ Backend deployment complete'
-            "
           
           # Deploy frontend from storage
           echo "Deploying frontend from storage..."
@@ -346,22 +444,14 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --yes
           
-          # Start services
-          echo "Starting services..."
+          # Start frontend service and reload nginx
+          echo "Starting frontend service and reloading nginx..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              echo '🔧 Starting services...'
-              # Start backend service if it exists
-              if systemctl list-unit-files | grep -q eveabacus.service; then
-                echo '🚀 Starting eveabacus service...'
-                sudo systemctl start eveabacus
-              else
-                echo '⚠️  eveabacus service not found'
-              fi
-              
+              echo '🔧 Starting frontend service and reloading nginx...'
               # Start frontend service if it exists
               if systemctl list-unit-files | grep -q eveabacus-frontend.service; then
                 echo '🚀 Starting eveabacus-frontend service...'
@@ -378,5 +468,5 @@ jobs:
                 echo '⚠️  nginx service not found'
               fi
               
-              echo '✅ Service startup complete'
+              echo '✅ Frontend deployment and service startup complete'
             " 
