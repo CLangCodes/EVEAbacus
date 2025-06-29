@@ -283,7 +283,7 @@ namespace EVEAbacus.Application.Services
             return solarSystems;
         }
         async Task<IQueryable<SolarSystem>?> IMapService.GetSolarSystemsInRegion(
-            int regionId, int? focalId, string? routeFlag)
+            int regionId, int? focalId = null, string? routeFlag = null)
         {
             var solarSystems = await _mapRepository.GetSolarSystemsInRegion(regionId);
             if (solarSystems != null && focalId != null)
@@ -298,7 +298,7 @@ namespace EVEAbacus.Application.Services
         }
 
         async Task IMapService.LoadMapDb(
-            int? focalId, string? routeFlag)
+            int? focalId = null, string? routeFlag = "shortest")
         {
             ((IMapService)this).Planets = await ((IMapService)this).GetPlanets(focalId, routeFlag);
             ((IMapService)this).Regions = await ((IMapService)this).GetRegions();

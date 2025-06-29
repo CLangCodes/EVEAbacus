@@ -140,7 +140,7 @@ else {
             if (_focalSystemName != value)
             {
                 _focalSystemName = value;
-                _ = Task.Run(async () => await SelectPlanets());
+                SelectPlanets();
                 StateHasChanged();
             }
         }
@@ -155,7 +155,7 @@ else {
             if (_systemJumpRange != value)
             {
                 _systemJumpRange = value;
-                _ = Task.Run(async () => await SelectPlanets());
+                SelectPlanets();
                 StateHasChanged();
             }
         }
@@ -173,7 +173,7 @@ else {
             if (!_selectedPlanetTypes.SequenceEqual(value))
             {
                 _selectedPlanetTypes = value.ToList();
-                _ = Task.Run(async () => await SelectPlanets());
+                SelectPlanets();
                 StateHasChanged();
             }
         }
@@ -187,7 +187,7 @@ else {
             if (!_selectedSecurityStatus.SequenceEqual(value))
             {
                 _selectedSecurityStatus = value.ToList();
-                _ = Task.Run(async () => await SelectPlanets());
+                SelectPlanets();
                 StateHasChanged();
             }
         }
