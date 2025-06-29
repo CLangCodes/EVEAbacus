@@ -5,7 +5,7 @@ This repository contains systemd service files for the EVE Abacus application co
 ## Service Files
 
 ### `eveabacus-backend.service`
-- **Service Name**: `eveabacus`
+- **Service Name**: `eveabacus-backend`
 - **Description**: EVE Abacus Backend API
 - **Working Directory**: `/var/www/eveabacus`
 - **Executable**: `/usr/bin/dotnet EVEAbacus.WebUI.dll`
@@ -14,7 +14,7 @@ This repository contains systemd service files for the EVE Abacus application co
 - **Environment**: Production
 
 ### `eveabacus-frontend.service`
-- **Service Name**: `eveabacusfrontend`
+- **Service Name**: `eveabacus-frontend`
 - **Description**: EVE Abacus Next.js Frontend
 - **Working Directory**: `/var/www/eveabacus/frontend`
 - **Executable**: `/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start`
@@ -42,31 +42,31 @@ To manually manage services on the production server:
 
 ```bash
 # Check service status
-sudo systemctl status eveabacus
-sudo systemctl status eveabacusfrontend
+sudo systemctl status eveabacus-backend
+sudo systemctl status eveabacus-frontend
 
 # Start services
-sudo systemctl start eveabacus
-sudo systemctl start eveabacusfrontend
+sudo systemctl start eveabacus-backend
+sudo systemctl start eveabacus-frontend
 
 # Stop services
-sudo systemctl stop eveabacus
-sudo systemctl stop eveabacusfrontend
+sudo systemctl stop eveabacus-backend
+sudo systemctl stop eveabacus-frontend
 
 # Restart services
-sudo systemctl restart eveabacus
-sudo systemctl restart eveabacusfrontend
+sudo systemctl restart eveabacus-backend
+sudo systemctl restart eveabacus-frontend
 
 # View logs
-sudo journalctl -u eveabacus -f
-sudo journalctl -u eveabacusfrontend -f
+sudo journalctl -u eveabacus-backend -f
+sudo journalctl -u eveabacus-frontend -f
 ```
 
 ## Troubleshooting
 
 If services fail to start:
 
-1. Check the service file syntax: `sudo systemctl cat eveabacusfrontend`
-2. View detailed logs: `sudo journalctl -u eveabacusfrontend -n 50`
-3. Check file permissions: `ls -la /etc/systemd/system/eveabacusfrontend.service`
+1. Check the service file syntax: `sudo systemctl cat eveabacus-frontend`
+2. View detailed logs: `sudo journalctl -u eveabacus-frontend -n 50`
+3. Check file permissions: `ls -la /etc/systemd/system/eveabacus-frontend.service`
 4. Verify working directory exists: `ls -la /var/www/eveabacus/frontend/` 

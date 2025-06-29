@@ -101,7 +101,7 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              sudo systemctl stop eveabacus 2>/dev/null || true
+              sudo systemctl stop eveabacus-backend 2>/dev/null || true
             "
           
           # Create storage account for large files
@@ -170,12 +170,12 @@ jobs:
               
               # Copy systemd service file
               echo '📁 Copying systemd service file...'
-              sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus.service
-              sudo chmod 644 /etc/systemd/system/eveabacus.service
+              sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus-backend.service
+              sudo chmod 644 /etc/systemd/system/eveabacus-backend.service
               
               # Update the connection string with the correct password
               echo '🔧 Updating database connection string...'
-              sudo sed -i 's/Password=your_password_here;/Password=${{ secrets.DB_PASSWORD }};/g' /etc/systemd/system/eveabacus.service
+              sudo sed -i 's/Password=your_password_here;/Password=${{ secrets.DB_PASSWORD }};/g' /etc/systemd/system/eveabacus-backend.service
               
               sudo systemctl daemon-reload
               
@@ -199,14 +199,14 @@ jobs:
             --scripts "
               echo '🔧 Starting backend service...'
               # Start backend service if it exists
-              if systemctl list-unit-files | grep -q eveabacus.service; then
-                echo '🚀 Starting eveabacus service...'
-                sudo systemctl start eveabacus
+              if systemctl list-unit-files | grep -q eveabacus-backend.service; then
+                echo '🚀 Starting eveabacus-backend service...'
+                sudo systemctl start eveabacus-backend
                 echo '⏳ Waiting for backend to be ready...'
                 sleep 10
                 echo '✅ Backend service started'
               else
-                echo '⚠️  eveabacus service not found'
+                echo '⚠️  eveabacus-backend service not found'
               fi
             "
           
@@ -219,13 +219,13 @@ jobs:
             --scripts "
               echo '🔍 Checking if backend is ready...'
               echo '📋 Checking backend service status:'
-              sudo systemctl status eveabacus || echo 'Backend service not found or failed'
+              sudo systemctl status eveabacus-backend || echo 'Backend service not found or failed'
               echo '📋 Checking backend service logs:'
-              sudo journalctl -u eveabacus -n 10 --no-pager || echo 'No backend service logs found'
+              sudo journalctl -u eveabacus-backend -n 10 --no-pager || echo 'No backend service logs found'
               echo '📋 Checking if port 5000 is listening:'
               sudo netstat -tlnp | grep :5000 || echo 'Port 5000 not listening'
               echo '📋 Checking backend process:'
-              ps aux | grep eveabacus || echo 'No eveabacus process found'
+              ps aux | grep eveabacus-backend || echo 'No eveabacus-backend process found'
               
               for i in {1..30}; do
                 echo '🔍 Attempt $i: Testing backend health endpoint...'
@@ -242,7 +242,7 @@ jobs:
               done
               echo '⚠️  Backend may not be fully ready, but continuing...'
               echo '📋 Final backend service status:'
-              sudo systemctl status eveabacus || echo 'Backend service not found'
+              sudo systemctl status eveabacus-backend || echo 'Backend service not found'
             "
           
           echo "✅ Backend deployment completed successfully"
@@ -528,7 +528,7 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              sudo systemctl stop eveabacusfrontend 2>/dev/null || true
+              sudo systemctl stop eveabacus-frontend 2>/dev/null || true
             "
           
           # Create storage account for large files
@@ -669,38 +669,38 @@ jobs:
               
               # Update the service configuration
               echo '🔧 Updating frontend service configuration...'
-              sudo systemctl stop eveabacusfrontend 2>/dev/null || true
-              sudo rm -f /etc/systemd/system/eveabacusfrontend.service
+              sudo systemctl stop eveabacus-frontend 2>/dev/null || true
+              sudo rm -f /etc/systemd/system/eveabacus-frontend.service
               
               # Copy the service file from the repository
               echo '📁 Copying systemd service file...'
-              sudo cp /var/www/eveabacus/frontend/eveabacus-frontend.service /etc/systemd/system/eveabacusfrontend.service
-              sudo chmod 644 /etc/systemd/system/eveabacusfrontend.service
+              sudo cp /var/www/eveabacus/frontend/eveabacus-frontend.service /etc/systemd/system/eveabacus-frontend.service
+              sudo chmod 644 /etc/systemd/system/eveabacus-frontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
               
               # Start frontend service if it exists
-              if systemctl list-unit-files | grep -q eveabacusfrontend.service; then
-                echo '🚀 Starting eveabacusfrontend service...'
-                sudo systemctl start eveabacusfrontend
+              if systemctl list-unit-files | grep -q eveabacus-frontend.service; then
+                echo '🚀 Starting eveabacus-frontend service...'
+                sudo systemctl start eveabacus-frontend
                 echo '⏳ Waiting for frontend service to start...'
                 sleep 5
-                if systemctl is-active --quiet eveabacusfrontend; then
+                if systemctl is-active --quiet eveabacus-frontend; then
                   echo '✅ Frontend service started successfully'
                 else
                   echo '⚠️  Frontend service failed to start'
                   echo '📋 Service status:'
-                  sudo systemctl status eveabacusfrontend
+                  sudo systemctl status eveabacus-frontend
                   echo '📋 Recent logs:'
-                  sudo journalctl -u eveabacusfrontend -n 20 --no-pager
+                  sudo journalctl -u eveabacus-frontend -n 20 --no-pager
                   echo '📋 Checking if files exist:'
                   ls -la /var/www/eveabacus/frontend/ || echo 'Frontend directory not found'
                   ls -la /var/www/eveabacus/frontend/.next/ || echo '.next directory not found'
                   ls -la /var/www/eveabacus/frontend/package.json || echo 'package.json not found'
                 fi
               else
-                echo '⚠️  eveabacusfrontend service not found'
+                echo '⚠️  eveabacus-frontend service not found'
               fi
               
               # Reload nginx if it exists
