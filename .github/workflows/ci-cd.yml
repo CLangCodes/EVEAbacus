@@ -274,6 +274,39 @@ jobs:
         run: pnpm build
         working-directory: ./eve-abacus-webui
       
+      - name: Debug build output
+        run: |
+          echo "🔍 Debugging frontend build output..."
+          echo "📁 Current directory: $(pwd)"
+          echo "📁 eve-abacus-webui directory contents:"
+          ls -la ./eve-abacus-webui/
+          echo ""
+          echo "📁 .next directory exists:"
+          if [ -d "./eve-abacus-webui/.next" ]; then
+            echo "✅ .next directory found"
+            ls -la ./eve-abacus-webui/.next/
+            echo ""
+            echo "📁 BUILD_ID file:"
+            ls -la ./eve-abacus-webui/.next/BUILD_ID || echo "BUILD_ID not found"
+            echo ""
+            echo "📁 Server directory:"
+            ls -la ./eve-abacus-webui/.next/server/ || echo "server directory not found"
+            echo ""
+            echo "📁 Static directory:"
+            ls -la ./eve-abacus-webui/.next/static/ || echo "static directory not found"
+          else
+            echo "❌ .next directory not found - build may have failed"
+            echo "📁 Checking for any build artifacts:"
+            find ./eve-abacus-webui -name "*.js" -o -name "*.json" | head -10
+          fi
+          echo ""
+          echo "📁 package.json exists:"
+          ls -la ./eve-abacus-webui/package.json || echo "package.json not found"
+          echo ""
+          echo "📁 public directory exists:"
+          ls -la ./eve-abacus-webui/public/ || echo "public directory not found"
+        working-directory: ./
+      
       - name: Check if build artifacts exist
         run: |
           if [ ! -d "./eve-abacus-webui/.next" ]; then
@@ -357,27 +390,70 @@ jobs:
       
       - name: Prepare frontend artifacts
         run: |
+          echo "🔍 Preparing frontend artifacts..."
+          echo "📁 Current directory: $(pwd)"
+          echo "📁 eve-abacus-webui directory contents:"
+          ls -la ./eve-abacus-webui/
+          
           mkdir -p ./frontend-build
+          echo "📁 Created frontend-build directory"
+          
           # Always copy the complete .next directory for production builds
-          cp -r ./eve-abacus-webui/.next ./frontend-build/
-          cp -r ./eve-abacus-webui/public ./frontend-build/
-          cp ./eve-abacus-webui/package.json ./frontend-build/
-          cp ./eve-abacus-webui/pnpm-lock.yaml ./frontend-build/
+          echo "📁 Copying .next directory..."
+          if [ -d "./eve-abacus-webui/.next" ]; then
+            cp -r ./eve-abacus-webui/.next ./frontend-build/
+            echo "✅ .next directory copied"
+          else
+            echo "❌ .next directory not found - cannot copy"
+          fi
+          
+          echo "📁 Copying public directory..."
+          if [ -d "./eve-abacus-webui/public" ]; then
+            cp -r ./eve-abacus-webui/public ./frontend-build/
+            echo "✅ public directory copied"
+          else
+            echo "❌ public directory not found - cannot copy"
+          fi
+          
+          echo "📁 Copying package.json..."
+          if [ -f "./eve-abacus-webui/package.json" ]; then
+            cp ./eve-abacus-webui/package.json ./frontend-build/
+            echo "✅ package.json copied"
+          else
+            echo "❌ package.json not found - cannot copy"
+          fi
+          
+          echo "📁 Copying pnpm-lock.yaml..."
+          if [ -f "./eve-abacus-webui/pnpm-lock.yaml" ]; then
+            cp ./eve-abacus-webui/pnpm-lock.yaml ./frontend-build/
+            echo "✅ pnpm-lock.yaml copied"
+          else
+            echo "❌ pnpm-lock.yaml not found - cannot copy"
+          fi
           
           # Copy systemd service files
-          cp ./eveabacus-frontend.service ./frontend-build/
+          echo "📁 Copying systemd service file..."
+          if [ -f "./eveabacus-frontend.service" ]; then
+            cp ./eveabacus-frontend.service ./frontend-build/
+            echo "✅ eveabacus-frontend.service copied"
+          else
+            echo "❌ eveabacus-frontend.service not found - cannot copy"
+          fi
           
           # If standalone exists, also copy it for potential use
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
             echo "🚀 Standalone build also available"
             mkdir -p ./frontend-build/standalone
             cp -r ./eve-abacus-webui/.next/standalone/* ./frontend-build/standalone/
+            echo "✅ standalone directory copied"
+          else
+            echo "⚠️  Standalone directory not found"
           fi
           
           echo "📁 Final frontend artifacts:"
           ls -la ./frontend-build/
           echo "📁 .next directory contents:"
-          ls -la ./frontend-build/.next/
+          ls -la ./frontend-build/.next/ || echo ".next directory not found in frontend-build"
         working-directory: ./
       
       - name: Upload frontend artifacts
