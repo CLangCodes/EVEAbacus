@@ -280,11 +280,15 @@ jobs:
               echo "⚠️  server.js not found in standalone build"
               echo "📁 Available files in standalone:"
               find ./eve-abacus-webui/.next/standalone -type f -name "*.js" | head -10
+              echo "📁 All files in standalone:"
+              ls -la ./eve-abacus-webui/.next/standalone/
             fi
           else
             echo "⚠️  Standalone output not found, using regular .next directory"
             echo "📁 Available files in .next:"
             find ./eve-abacus-webui/.next -type f -name "*.js" | head -10
+            echo "📁 All directories in .next:"
+            ls -la ./eve-abacus-webui/.next/
           fi
         working-directory: ./
       
@@ -324,6 +328,7 @@ jobs:
           fi
           # Always include package.json for pnpm start to work
           cp ./eve-abacus-webui/package.json ./frontend-build/
+          cp ./eve-abacus-webui/pnpm-lock.yaml ./frontend-build/
           echo "📁 Final frontend artifacts:"
           ls -la ./frontend-build/
         working-directory: ./
@@ -443,18 +448,50 @@ jobs:
               ls -la /tmp/.next/ || echo '.next directory not found'
               echo '📁 public directory contents:'
               ls -la /tmp/public/ || echo 'public directory not found'
+              echo '📁 Checking for standalone directory:'
+              ls -la /tmp/.next/standalone/ || echo 'standalone directory not found'
               if [ -d '/tmp/.next/standalone' ]; then
-                echo '🚀 Using standalone build...'
-                sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/
-                echo '📁 Standalone contents copied:'
-                ls -la /var/www/eveabacus/frontend/
+                echo '🚀 Standalone directory found, checking contents:'
+                ls -la /tmp/.next/standalone/
+                if [ -f '/tmp/.next/standalone/server.js' ]; then
+                  echo '✅ server.js found in standalone'
+                  sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/
+                  echo '📁 Standalone contents copied:'
+                  ls -la /var/www/eveabacus/frontend/
+                else
+                  echo '⚠️  server.js not found in standalone'
+                  echo '📁 Using regular build instead...'
+                  sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
+                  sudo cp -r /tmp/public /var/www/eveabacus/frontend/
+                  sudo cp /tmp/package.json /var/www/eveabacus/frontend/
+                  sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/frontend/
+                  echo '📁 Regular build contents copied:'
+                  ls -la /var/www/eveabacus/frontend/
+                  
+                  # Install dependencies for regular build
+                  echo '📦 Installing dependencies for regular build...'
+                  cd /var/www/eveabacus/frontend
+                  sudo pnpm install --prod --frozen-lockfile
+                  echo '✅ Dependencies installed'
+                  echo '📁 Checking node_modules after install:'
+                  ls -la /var/www/eveabacus/frontend/node_modules/.bin/ | grep next || echo 'next not found in node_modules/.bin'
+                fi
               else
-                echo '📁 Using regular build...'
+                echo '📁 No standalone directory found, using regular build...'
                 sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
                 sudo cp -r /tmp/public /var/www/eveabacus/frontend/
                 sudo cp /tmp/package.json /var/www/eveabacus/frontend/
+                sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/frontend/
                 echo '📁 Regular build contents copied:'
                 ls -la /var/www/eveabacus/frontend/
+                
+                # Install dependencies for regular build
+                echo '📦 Installing dependencies for regular build...'
+                cd /var/www/eveabacus/frontend
+                sudo pnpm install --prod --frozen-lockfile
+                echo '✅ Dependencies installed'
+                echo '📁 Checking node_modules after install:'
+                ls -la /var/www/eveabacus/frontend/node_modules/.bin/ | grep next || echo 'next not found in node_modules/.bin'
               fi
               echo '🔧 Setting permissions...'
               sudo chown -R www-data:www-data /var/www/eveabacus/frontend
