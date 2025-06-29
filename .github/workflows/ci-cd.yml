@@ -549,7 +549,7 @@ jobs:
               sudo rm -f /etc/systemd/system/eveabacusfrontend.service
               
               # Create service file using printf to avoid shell redirection issues
-              sudo printf '[Unit]\nDescription=EVE Abacus Next.js Frontend\nAfter=network.target\n\n[Service]\nWorkingDirectory=/var/www/eveabacus/frontend\nExecStartPre=/bin/bash -c \"echo \\"🔍 Debugging .next directory before start:\\" && ls -la /var/www/eveabacus/frontend/.next/ && echo \\"📁 Checking for BUILD_ID:\\" && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo \\"BUILD_ID not found\\" && echo \\"📁 Checking for server directory:\\" && ls -la /var/www/eveabacus/frontend/.next/server/ || echo \\"server directory not found\\"\"\nExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start\nRestart=always\nRestartSec=10\nSyslogIdentifier=eveabacusfrontend\nUser=www-data\nEnvironment=NODE_ENV=production\nEnvironment=PORT=3000\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/eveabacusfrontend.service
+              sudo printf '[Unit]\nDescription=EVE Abacus Next.js Frontend\nAfter=network.target\n\n[Service]\nWorkingDirectory=/var/www/eveabacus/frontend\nExecStartPre=/bin/bash -c "ls -la /var/www/eveabacus/frontend/.next/ && echo BUILD_ID check: && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo BUILD_ID not found"\nExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start\nRestart=always\nRestartSec=10\nSyslogIdentifier=eveabacusfrontend\nUser=www-data\nEnvironment=NODE_ENV=production\nEnvironment=PORT=3000\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/eveabacusfrontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
