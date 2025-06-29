@@ -351,7 +351,7 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              sudo systemctl stop eveabacus-frontend 2>/dev/null || true
+              sudo systemctl stop eveabacusfrontend 2>/dev/null || true
             "
           
           # Create storage account for large files
@@ -414,19 +414,17 @@ jobs:
               tar -xzf frontend-artifacts.tar.gz
               echo '📁 Extracted frontend contents:'
               ls -la /tmp/
-              echo '📁 frontend-build directory contents:'
-              ls -la /tmp/frontend-build/ || echo 'frontend-build directory not found'
               echo '📁 .next directory contents:'
-              ls -la /tmp/frontend-build/.next/ || echo '.next directory not found'
+              ls -la /tmp/.next/ || echo '.next directory not found'
               echo '📁 public directory contents:'
-              ls -la /tmp/frontend-build/public/ || echo 'public directory not found'
-              if [ -d '/tmp/frontend-build/.next/standalone' ]; then
+              ls -la /tmp/public/ || echo 'public directory not found'
+              if [ -d '/tmp/.next/standalone' ]; then
                 echo '🚀 Using standalone build...'
-                sudo cp -r /tmp/frontend-build/.next/standalone/* /var/www/eveabacus/frontend/
+                sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/
               else
                 echo '📁 Using regular build...'
-                sudo cp -r /tmp/frontend-build/.next /var/www/eveabacus/frontend/
-                sudo cp -r /tmp/frontend-build/public /var/www/eveabacus/frontend/
+                sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
+                sudo cp -r /tmp/public /var/www/eveabacus/frontend/
               fi
               echo '🔧 Setting permissions...'
               sudo chown -R eveabacus:eveabacus /var/www/eveabacus/frontend
@@ -453,11 +451,11 @@ jobs:
             --scripts "
               echo '🔧 Starting frontend service and reloading nginx...'
               # Start frontend service if it exists
-              if systemctl list-unit-files | grep -q eveabacus-frontend.service; then
-                echo '🚀 Starting eveabacus-frontend service...'
-                sudo systemctl start eveabacus-frontend
+              if systemctl list-unit-files | grep -q eveabacusfrontend.service; then
+                echo '🚀 Starting eveabacusfrontend service...'
+                sudo systemctl start eveabacusfrontend
               else
-                echo '⚠️  eveabacus-frontend service not found'
+                echo '⚠️  eveabacusfrontend service not found'
               fi
               
               # Reload nginx if it exists
