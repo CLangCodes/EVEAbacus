@@ -173,9 +173,9 @@ jobs:
               sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus-backend.service
               sudo chmod 644 /etc/systemd/system/eveabacus-backend.service
               
-              # Update the connection string with the correct password
-              echo '🔧 Updating database connection string...'
-              sudo sed -i 's/Password=your_password_here;/Password=${{ secrets.DB_PASSWORD }};/g' /etc/systemd/system/eveabacus-backend.service
+              # Add the connection string environment variable from GitHub secrets
+              echo '🔧 Adding database connection string from secrets...'
+              sudo sed -i '/Environment=ASPNETCORE_URLS/a Environment=ConnectionStrings__EVEAbacus=${{ secrets.CONNECTIONSTRINGS__BACKEND }}' /etc/systemd/system/eveabacus-backend.service
               
               sudo systemctl daemon-reload
               

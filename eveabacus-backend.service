@@ -11,7 +11,6 @@ SyslogIdentifier=eveabacus
 User=eveabacus
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://localhost:5000
-Environment=ConnectionStrings__EVEAbacus=Server=localhost;Database=eveabacus;User=root;Password=your_password_here;
 
 [Install]
 WantedBy=multi-user.target 
