@@ -502,28 +502,29 @@ jobs:
               # Check if standalone server.js exists, otherwise use pnpm start
               if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
                 echo '🚀 Using standalone server.js'
-                EXEC_START='/usr/bin/node /var/www/eveabacus/frontend/server.js'
+                EXEC_CMD='/usr/bin/node /var/www/eveabacus/frontend/server.js'
               else
                 echo '📁 Using pnpm start (standalone not available)'
-                EXEC_START='/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start'
+                EXEC_CMD='/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start'
               fi
               
-              echo '[Unit]' | sudo tee /etc/systemd/system/eveabacusfrontend.service
-              echo 'Description=EVE Abacus Next.js Frontend' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'After=network.target' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo '' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo '[Service]' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'WorkingDirectory=/var/www/eveabacus/frontend' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo "ExecStart=$EXEC_START" | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'Restart=always' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'RestartSec=10' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'SyslogIdentifier=eveabacusfrontend' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'User=www-data' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'Environment=NODE_ENV=production' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'Environment=PORT=3000' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo '' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo '[Install]' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'WantedBy=multi-user.target' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
+              # Create service file using individual echo commands
+              sudo echo '[Unit]' > /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'Description=EVE Abacus Next.js Frontend' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'After=network.target' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo '' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo '[Service]' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'WorkingDirectory=/var/www/eveabacus/frontend' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo "ExecStart=$EXEC_CMD" >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'Restart=always' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'RestartSec=10' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'SyslogIdentifier=eveabacusfrontend' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'User=www-data' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'Environment=NODE_ENV=production' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'Environment=PORT=3000' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo '' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo '[Install]' >> /etc/systemd/system/eveabacusfrontend.service
+              sudo echo 'WantedBy=multi-user.target' >> /etc/systemd/system/eveabacusfrontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
