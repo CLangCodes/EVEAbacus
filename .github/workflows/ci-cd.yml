@@ -462,48 +462,12 @@ jobs:
             ls -la ./eve-abacus-webui/.next/standalone/.next/ || echo ".next directory not found in original standalone"
             echo "📁 Checking for BUILD_ID in original standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found in original standalone"
+            echo "📁 Checking for static directory in original standalone:"
+            ls -la ./eve-abacus-webui/.next/standalone/.next/static/ || echo "static directory not found in original standalone"
             
-            # Copy the standalone directory as-is
+            # Copy the standalone directory as-is (it already contains everything needed)
             cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
             echo "✅ standalone directory copied"
-            
-            # Copy all necessary files from .next to ensure complete functionality
-            echo "📁 Copying all necessary .next files..."
-            
-            # Create .next directory if it doesn't exist in standalone
-            mkdir -p ./frontend-build/standalone/.next
-            
-            # Copy static assets (CSS, JS bundles, images)
-            if [ -d "./eve-abacus-webui/.next/static" ]; then
-              cp -r ./eve-abacus-webui/.next/static ./frontend-build/standalone/.next/
-              echo "✅ static directory copied"
-            else
-              echo "❌ static directory not found"
-            fi
-            
-            # Copy server directory (server-side components)
-            if [ -d "./eve-abacus-webui/.next/server" ]; then
-              cp -r ./eve-abacus-webui/.next/server ./frontend-build/standalone/.next/
-              echo "✅ server directory copied"
-            else
-              echo "❌ server directory not found"
-            fi
-            
-            # Copy any other important directories that might exist
-            for dir in "cache" "trace" "types"; do
-              if [ -d "./eve-abacus-webui/.next/$dir" ]; then
-                cp -r "./eve-abacus-webui/.next/$dir" "./frontend-build/standalone/.next/"
-                echo "✅ $dir directory copied"
-              fi
-            done
-            
-            # Copy BUILD_ID if it doesn't already exist in standalone
-            if [ ! -f "./frontend-build/standalone/.next/BUILD_ID" ] && [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
-              cp ./eve-abacus-webui/.next/BUILD_ID ./frontend-build/standalone/.next/
-              echo "✅ BUILD_ID copied"
-            else
-              echo "ℹ️ BUILD_ID already exists or not found"
-            fi
             
             echo "📁 Verifying standalone directory was copied:"
             ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
