@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  // Temporarily disable standalone output to ensure complete regular build
+  // output: 'standalone',
   // Disable symlinks on Windows to avoid permission issues
   outputFileTracingExcludes: {
     '*': [

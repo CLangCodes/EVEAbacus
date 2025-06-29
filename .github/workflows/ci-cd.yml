@@ -269,6 +269,32 @@ jobs:
           echo "✅ Frontend build artifacts found"
           ls -la ./eve-abacus-webui/.next/
           
+          # Check for BUILD_ID file (required for production builds)
+          echo "📁 Checking for BUILD_ID file:"
+          if [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
+            echo "✅ BUILD_ID found: $(cat ./eve-abacus-webui/.next/BUILD_ID)"
+          else
+            echo "❌ BUILD_ID not found - this is required for production builds"
+          fi
+          
+          # Check for server directory
+          echo "📁 Checking for server directory:"
+          if [ -d "./eve-abacus-webui/.next/server" ]; then
+            echo "✅ Server directory found"
+            ls -la ./eve-abacus-webui/.next/server/
+          else
+            echo "❌ Server directory not found"
+          fi
+          
+          # Check for static directory
+          echo "📁 Checking for static directory:"
+          if [ -d "./eve-abacus-webui/.next/static" ]; then
+            echo "✅ Static directory found"
+            ls -la ./eve-abacus-webui/.next/static/
+          else
+            echo "❌ Static directory not found"
+          fi
+          
           # Check for standalone output
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
             echo "✅ Standalone output found"
