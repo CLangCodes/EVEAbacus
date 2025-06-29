@@ -175,6 +175,14 @@ jobs:
               echo '🔧 Adding database connection string from secrets...'
               sudo sed -i '/Environment=ASPNETCORE_URLS/a Environment=ConnectionStrings__EVEAbacus=${{ secrets.CONNECTIONSTRINGS__BACKEND }}' /etc/systemd/system/eveabacus-backend.service
               
+              # Add the Redis password environment variable from GitHub secrets
+              echo '🔧 Adding Redis password from secrets...'
+              sudo sed -i '/Environment=ConnectionStrings__EVEAbacus/a Environment=REDIS__PASSWORD=${{ secrets.REDIS__PASSWORD }}' /etc/systemd/system/eveabacus-backend.service
+              
+              # Debug: Show the final service file configuration
+              echo '📋 Final service configuration:'
+              sudo cat /etc/systemd/system/eveabacus-backend.service
+              
               sudo systemctl daemon-reload
               
               rm -f backend-artifacts.tar.gz
@@ -224,6 +232,10 @@ jobs:
               sudo netstat -tlnp | grep :5000 || echo 'Port 5000 not listening'
               echo '📋 Checking backend process:'
               ps aux | grep eveabacus-backend || echo 'No eveabacus-backend process found'
+              echo '📋 Checking Redis connection (port 6379):'
+              sudo netstat -tlnp | grep :6379 || echo 'Redis not listening on port 6379'
+              echo '📋 Testing Redis connection:'
+              redis-cli -h localhost -p 6379 ping 2>/dev/null || echo 'Redis ping failed'
               
               for i in {1..30}; do
                 echo '🔍 Attempt $i: Testing backend health endpoint...'

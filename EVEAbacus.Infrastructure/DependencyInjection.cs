@@ -75,12 +75,26 @@ namespace EVEAbacus.Infrastructure
             {
                 EndPoints = { $"{config["Host"]}:{config["Port"]}" },
                 Password = config["Password"],
-                AbortOnConnectFail = false
+                AbortOnConnectFail = false,
+                ConnectRetry = 3,
+                ReconnectRetryPolicy = new ExponentialRetry(5000),
+                ConnectTimeout = 5000,
+                SyncTimeout = 5000,
+                ResponseTimeout = 5000
             };
-            services.AddSingleton<IConnectionMultiplexer>(sp =>
-            ConnectionMultiplexer.Connect(redisOptions));
-
-            services.AddSingleton<ICacheService, CacheService>();
+            
+            try
+            {
+                services.AddSingleton<IConnectionMultiplexer>(sp =>
+                    ConnectionMultiplexer.Connect(redisOptions));
+                services.AddSingleton<ICacheService, CacheService>();
+            }
+            catch (Exception ex)
+            {
+                // Log the Redis connection error but don't fail the application startup
+                Console.WriteLine($"Warning: Redis connection failed: {ex.Message}");
+                // You could add a fallback cache service here if needed
+            }
 
             return services;
         }
