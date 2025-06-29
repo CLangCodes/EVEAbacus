@@ -534,19 +534,6 @@ jobs:
             else
               echo "✅ @swc/helpers already exists in standalone build"
             fi
-            
-            # Ensure all dependencies are available by copying the complete node_modules
-            echo "🔧 Ensuring all dependencies are available in standalone build..."
-            echo "📁 Checking standalone node_modules size:"
-            du -sh ./frontend-build/standalone/node_modules/ || echo "standalone node_modules not found"
-            echo "📁 Checking main node_modules size:"
-            du -sh ./eve-abacus-webui/node_modules/ || echo "main node_modules not found"
-            
-            # Copy the complete node_modules to ensure all dependencies are available
-            echo "📁 Copying complete node_modules to standalone build..."
-            rm -rf ./frontend-build/standalone/node_modules
-            cp -r ./eve-abacus-webui/node_modules ./frontend-build/standalone/
-            echo "✅ Complete node_modules copied to standalone build"
           else
             echo "❌ standalone directory not found - cannot copy"
           fi
