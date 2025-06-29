@@ -7,8 +7,8 @@ WorkingDirectory=/var/www/eveabacus
 ExecStart=/usr/bin/dotnet EVEAbacus.WebUI.dll
 Restart=always
 RestartSec=10
-SyslogIdentifier=eveabacus
-User=eveabacus
+SyslogIdentifier=eveabacus-backend
+User=www-data
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://localhost:5000
 

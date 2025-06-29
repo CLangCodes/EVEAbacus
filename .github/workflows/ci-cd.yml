@@ -9,8 +9,6 @@ on:
 env:
   DOTNET_VERSION: '8.0.x'
   NODE_VERSION: '20'
-  AZURE_HOST: ${{ secrets.AZURE_HOST }}
-  AZURE_USER: ${{ secrets.AZURE_USER }}
   RESOURCE_GROUP: 'EVEAbacus'
   VM_NAME: ${{ secrets.VM_NAME }}
 
