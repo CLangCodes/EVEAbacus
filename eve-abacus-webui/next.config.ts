@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Temporarily disable standalone output to ensure complete regular build
+  // Disable standalone output to use regular Next.js build
   // output: 'standalone',
   // Disable symlinks on Windows to avoid permission issues
   outputFileTracingExcludes: {

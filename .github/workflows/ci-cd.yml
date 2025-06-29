@@ -376,27 +376,12 @@ jobs:
             echo "❌ Static directory not found"
           fi
           
-          # Check for standalone output
-          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "✅ Standalone output found"
-            ls -la ./eve-abacus-webui/.next/standalone/
-            echo "📁 Checking for server.js in standalone:"
-            if [ -f "./eve-abacus-webui/.next/standalone/server.js" ]; then
-              echo "✅ server.js found in standalone build"
-            else
-              echo "⚠️  server.js not found in standalone build"
-              echo "📁 Available files in standalone:"
-              find ./eve-abacus-webui/.next/standalone -type f -name "*.js" | head -10
-              echo "📁 All files in standalone:"
-              ls -la ./eve-abacus-webui/.next/standalone/
-            fi
-          else
-            echo "⚠️  Standalone output not found, using regular .next directory"
-            echo "📁 Available files in .next:"
-            find ./eve-abacus-webui/.next -type f -name "*.js" | head -10
-            echo "📁 All directories in .next:"
-            ls -la ./eve-abacus-webui/.next/
-          fi
+          # Check for build output
+          echo "📁 Checking build output structure:"
+          echo "📁 Available files in .next:"
+          find ./eve-abacus-webui/.next -type f -name "*.js" | head -10
+          echo "📁 All directories in .next:"
+          ls -la ./eve-abacus-webui/.next/
         working-directory: ./
       
       - name: Debug frontend artifacts
@@ -408,18 +393,9 @@ jobs:
           echo "Contents of public directory:"
           ls -la ./eve-abacus-webui/public/
           echo ""
-          echo "📁 Checking standalone build structure:"
-          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "✅ Standalone directory exists"
-            ls -la ./eve-abacus-webui/.next/standalone/
-            echo ""
-            echo "📁 Looking for server.js in standalone:"
-            find ./eve-abacus-webui/.next/standalone -name "server.js" -o -name "*.js" | head -5
-          else
-            echo "❌ Standalone directory not found"
-            echo "📁 Available directories in .next:"
-            ls -la ./eve-abacus-webui/.next/
-          fi
+          echo "📁 Checking build structure:"
+          echo "📁 Available directories in .next:"
+          ls -la ./eve-abacus-webui/.next/
         working-directory: ./
       
       - name: Prepare frontend artifacts
@@ -472,16 +448,6 @@ jobs:
             echo "✅ eveabacus-frontend.service copied"
           else
             echo "❌ eveabacus-frontend.service not found - cannot copy"
-          fi
-          
-          # If standalone exists, also copy it for potential use
-          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "🚀 Standalone build also available"
-            mkdir -p ./frontend-build/standalone
-            cp -r ./eve-abacus-webui/.next/standalone/* ./frontend-build/standalone/
-            echo "✅ standalone directory copied"
-          else
-            echo "⚠️  Standalone directory not found"
           fi
           
           echo "📁 Final frontend artifacts:"
@@ -607,24 +573,18 @@ jobs:
               ls -la /tmp/public/ || echo 'public directory not found'
               echo '📁 package.json and pnpm-lock.yaml:'
               ls -la /tmp/package.json /tmp/pnpm-lock.yaml 2>/dev/null || echo 'package.json or pnpm-lock.yaml not found'
-              echo '📁 Checking for standalone directory:'
-              ls -la /tmp/.next/standalone/ || echo 'standalone directory not found'
+              echo '📁 Checking for systemd service file:'
+              ls -la /tmp/eveabacus-frontend.service || echo 'eveabacus-frontend.service not found'
               
-              # Always copy the complete .next directory for production builds
-              echo '📁 Copying complete .next directory...'
-              sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
-              sudo cp -r /tmp/public /var/www/eveabacus/frontend/
-              sudo cp /tmp/package.json /var/www/eveabacus/frontend/
-              sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/frontend/
+              # Copy all frontend files
+              echo '📁 Copying all frontend files...'
+              sudo cp -r /tmp/.next /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy .next directory'
+              sudo cp -r /tmp/public /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy public directory'
+              sudo cp /tmp/package.json /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy package.json'
+              sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy pnpm-lock.yaml'
+              sudo cp /tmp/eveabacus-frontend.service /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy service file'
               
-              # Check if standalone server.js exists for potential use
-              if [ -f '/tmp/.next/standalone/server.js' ]; then
-                echo '🚀 Standalone server.js found, copying for potential use'
-                sudo mkdir -p /var/www/eveabacus/frontend/standalone
-                sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/standalone/
-              fi
-              
-              echo '📁 Regular build contents copied:'
+              echo '📁 Frontend files copied:'
               ls -la /var/www/eveabacus/frontend/
               
               # Install dependencies for production build
@@ -637,7 +597,7 @@ jobs:
               
               # Debug: Check .next directory structure
               echo '📁 Debugging .next directory structure:'
-              ls -la /var/www/eveabacus/frontend/.next/
+              ls -la /var/www/eveabacus/frontend/.next/ || echo '.next directory not found after copy'
               echo '📁 Checking for build-id file:'
               ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo 'BUILD_ID not found'
               echo '📁 Checking for server directory:'
@@ -684,8 +644,21 @@ jobs:
               
               # Copy the service file from the repository
               echo '📁 Copying systemd service file...'
-              sudo cp /var/www/eveabacus/frontend/eveabacus-frontend.service /etc/systemd/system/eveabacus-frontend.service
-              sudo chmod 644 /etc/systemd/system/eveabacus-frontend.service
+              if [ -f '/var/www/eveabacus/frontend/eveabacus-frontend.service' ]; then
+                sudo cp /var/www/eveabacus/frontend/eveabacus-frontend.service /etc/systemd/system/eveabacus-frontend.service
+                sudo chmod 644 /etc/systemd/system/eveabacus-frontend.service
+                echo '✅ Service file copied successfully'
+              else
+                echo '⚠️  Service file not found in frontend directory, trying repository root'
+                # Try to copy from the repository root if not in frontend directory
+                if [ -f '/var/www/eveabacus/eveabacus-frontend.service' ]; then
+                  sudo cp /var/www/eveabacus/eveabacus-frontend.service /etc/systemd/system/eveabacus-frontend.service
+                  sudo chmod 644 /etc/systemd/system/eveabacus-frontend.service
+                  echo '✅ Service file copied from repository root'
+                else
+                  echo '❌ Service file not found anywhere - service may not start properly'
+                fi
+              fi
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
