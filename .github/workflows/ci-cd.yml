@@ -519,6 +519,34 @@ jobs:
             else
               echo "✅ styled-jsx already exists in standalone build"
             fi
+            
+            # Ensure @swc/helpers is available in standalone build
+            echo "🔧 Ensuring @swc/helpers is available in standalone build..."
+            if [ ! -d "./frontend-build/standalone/node_modules/@swc/helpers" ]; then
+              echo "⚠️ @swc/helpers not found in standalone build, copying from main node_modules..."
+              if [ -d "./eve-abacus-webui/node_modules/@swc/helpers" ]; then
+                mkdir -p ./frontend-build/standalone/node_modules/@swc/
+                cp -r ./eve-abacus-webui/node_modules/@swc/helpers ./frontend-build/standalone/node_modules/@swc/
+                echo "✅ @swc/helpers copied to standalone build"
+              else
+                echo "❌ @swc/helpers not found in main node_modules either"
+              fi
+            else
+              echo "✅ @swc/helpers already exists in standalone build"
+            fi
+            
+            # Ensure all dependencies are available by copying the complete node_modules
+            echo "🔧 Ensuring all dependencies are available in standalone build..."
+            echo "📁 Checking standalone node_modules size:"
+            du -sh ./frontend-build/standalone/node_modules/ || echo "standalone node_modules not found"
+            echo "📁 Checking main node_modules size:"
+            du -sh ./eve-abacus-webui/node_modules/ || echo "main node_modules not found"
+            
+            # Copy the complete node_modules to ensure all dependencies are available
+            echo "📁 Copying complete node_modules to standalone build..."
+            rm -rf ./frontend-build/standalone/node_modules
+            cp -r ./eve-abacus-webui/node_modules ./frontend-build/standalone/
+            echo "✅ Complete node_modules copied to standalone build"
           else
             echo "❌ standalone directory not found - cannot copy"
           fi
@@ -545,6 +573,10 @@ jobs:
           ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found in standalone"
           echo "📁 Checking main node_modules for styled-jsx:"
           ls -la ./eve-abacus-webui/node_modules/styled-jsx/ || echo "styled-jsx not found in main"
+          echo "📁 Checking for @swc/helpers in standalone node_modules:"
+          ls -la ./frontend-build/standalone/node_modules/@swc/helpers/ || echo "@swc/helpers not found in standalone"
+          echo "📁 Checking main node_modules for @swc/helpers:"
+          ls -la ./eve-abacus-webui/node_modules/@swc/helpers/ || echo "@swc/helpers not found in main"
           
           # Copy public directory for static assets
           echo "📁 Copying public directory..."
