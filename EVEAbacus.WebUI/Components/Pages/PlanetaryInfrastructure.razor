@@ -218,7 +218,15 @@ else {
             StateHasChanged();
             return;
         }
-        filteredPlanets = (await MapService.SelectPlanetsAsync(FocalSystemName, SystemJumpRange, SelectedSecurityStatus.ToArray(), SelectedPlanetTypes.ToArray())).AsQueryable();
+        
+        Console.WriteLine($"PI Debug: Searching for planets around {FocalSystemName} with range {SystemJumpRange}");
+        Console.WriteLine($"PI Debug: Selected planet types: {string.Join(", ", SelectedPlanetTypes)}");
+        Console.WriteLine($"PI Debug: Selected security status: {string.Join(", ", SelectedSecurityStatus)}");
+        
+        var results = await MapService.SelectPlanetsAsync(FocalSystemName, SystemJumpRange, SelectedSecurityStatus.ToArray(), SelectedPlanetTypes.ToArray());
+        
+        Console.WriteLine($"PI Debug: Found {results.Length} planets");
+        filteredPlanets = results.AsQueryable();
         _loading = false;
         StateHasChanged();
     }

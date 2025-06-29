@@ -421,10 +421,21 @@ namespace EVEAbacus.Application.Services
                 if (planetTypes!.Length != 0)
                 {
                     Debug.WriteLine("Filtering planets by selected types");
+                    Debug.WriteLine($"Selected planet types: {string.Join(", ", planetTypes)}");
+                    
                     filteredPlanets = allPlanets
-                    .Where(pl => pl.Item != null
-                        && planetTypes.Contains(pl.Item.TypeName!)).ToHashSet();
-                                    }
+                    .Where(pl => pl.Item != null && pl.Item.TypeName != null)
+                    .Where(pl => {
+                        var planetTypeName = pl.Item!.TypeName!;
+                        // Handle both formats: "Planet (Barren)" and "Barren"
+                        return planetTypes.Any(selectedType => 
+                            planetTypeName.Contains(selectedType, StringComparison.OrdinalIgnoreCase) ||
+                            planetTypeName.EndsWith($"({selectedType})", StringComparison.OrdinalIgnoreCase)
+                        );
+                    }).ToHashSet();
+                    
+                    Debug.WriteLine($"Filtered planets count: {filteredPlanets.Count}");
+                }
                 else
                 {
                     Debug.WriteLine("No filters, resetting to full planet list");
