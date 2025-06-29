@@ -133,8 +133,16 @@ jobs:
       - name: Prepare frontend artifacts
         run: |
           mkdir -p ./frontend-build
-          cp -r ./eve-abacus-webui/.next ./frontend-build/
-          cp -r ./eve-abacus-webui/public ./frontend-build/
+          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
+            echo "🚀 Using standalone build..."
+            cp -r ./eve-abacus-webui/.next/standalone/* ./frontend-build/
+          else
+            echo "📁 Using regular build..."
+            cp -r ./eve-abacus-webui/.next ./frontend-build/
+            cp -r ./eve-abacus-webui/public ./frontend-build/
+          fi
+          echo "📁 Final frontend artifacts:"
+          ls -la ./frontend-build/
         working-directory: ./
       
       - name: Upload frontend artifacts
@@ -200,7 +208,7 @@ jobs:
             --command-id RunShellScript \
             --scripts "
               sudo systemctl stop eveabacus 2>/dev/null || true
-              sudo systemctl stop eveabacus-frontend 2>/dev/null || true
+              sudo systemctl stop eveabacusfrontend 2>/dev/null || true
             "
           
           # Create storage account for large files
@@ -247,6 +255,18 @@ jobs:
           
           # Deploy backend from storage
           echo "Deploying backend from storage..."
+          # Generate SAS token for backend artifacts
+          BACKEND_SAS=$(az storage blob generate-sas \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY \
+            --container-name deployments \
+            --name backend-artifacts.tar.gz \
+            --permissions r \
+            --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
+            --as-user \
+            --full-uri \
+            --output tsv)
+          
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -257,12 +277,7 @@ jobs:
               sudo rm -rf /var/www/eveabacus/*
               cd /tmp
               echo '📥 Downloading backend artifacts...'
-              az storage blob download \
-                --account-name $STORAGE_ACCOUNT_NAME \
-                --account-key $STORAGE_KEY \
-                --container-name deployments \
-                --name backend-artifacts.tar.gz \
-                --file backend-artifacts.tar.gz
+              curl -L -o backend-artifacts.tar.gz \"$BACKEND_SAS\"
               echo '📦 Extracting backend artifacts...'
               tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
               echo '🔧 Setting permissions...'
@@ -270,12 +285,24 @@ jobs:
               sudo chmod -R 755 /var/www/eveabacus
               echo '📁 Backend deployment contents:'
               ls -la /var/www/eveabacus/
-              rm backend-artifacts.tar.gz
+              rm -f backend-artifacts.tar.gz
               echo '✅ Backend deployment complete'
             "
           
           # Deploy frontend from storage
           echo "Deploying frontend from storage..."
+          # Generate SAS token for frontend artifacts
+          FRONTEND_SAS=$(az storage blob generate-sas \
+            --account-name $STORAGE_ACCOUNT_NAME \
+            --account-key $STORAGE_KEY \
+            --container-name deployments \
+            --name frontend-artifacts.tar.gz \
+            --permissions r \
+            --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
+            --as-user \
+            --full-uri \
+            --output tsv)
+          
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -286,12 +313,7 @@ jobs:
               sudo rm -rf /var/www/eveabacus/frontend/*
               cd /tmp
               echo '📥 Downloading frontend artifacts...'
-              az storage blob download \
-                --account-name $STORAGE_ACCOUNT_NAME \
-                --account-key $STORAGE_KEY \
-                --container-name deployments \
-                --name frontend-artifacts.tar.gz \
-                --file frontend-artifacts.tar.gz
+              curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
               echo '📦 Extracting frontend artifacts...'
               tar -xzf frontend-artifacts.tar.gz
               echo '📁 Extracted frontend contents:'
@@ -315,7 +337,7 @@ jobs:
               sudo chmod -R 755 /var/www/eveabacus/frontend
               echo '📁 Frontend deployment contents:'
               ls -la /var/www/eveabacus/frontend/
-              rm frontend-artifacts.tar.gz
+              rm -f frontend-artifacts.tar.gz
               echo '✅ Frontend deployment complete'
             "
           
@@ -333,7 +355,30 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              sudo systemctl start eveabacus
-              sudo systemctl start eveabacus-frontend
-              sudo systemctl reload nginx
+              echo '🔧 Starting services...'
+              # Start backend service if it exists
+              if systemctl list-unit-files | grep -q eveabacus.service; then
+                echo '🚀 Starting eveabacus service...'
+                sudo systemctl start eveabacus
+              else
+                echo '⚠️  eveabacus service not found'
+              fi
+              
+              # Start frontend service if it exists
+              if systemctl list-unit-files | grep -q eveabacus-frontend.service; then
+                echo '🚀 Starting eveabacus-frontend service...'
+                sudo systemctl start eveabacus-frontend
+              else
+                echo '⚠️  eveabacus-frontend service not found'
+              fi
+              
+              # Reload nginx if it exists
+              if systemctl list-unit-files | grep -q nginx.service; then
+                echo '🔄 Reloading nginx...'
+                sudo systemctl reload nginx
+              else
+                echo '⚠️  nginx service not found'
+              fi
+              
+              echo '✅ Service startup complete'
             " 
