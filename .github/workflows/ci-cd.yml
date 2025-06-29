@@ -470,10 +470,27 @@ jobs:
             --command-id RunShellScript \
             --scripts "
               echo '🔧 Starting frontend service and reloading nginx...'
+              
+              # Update the service configuration to use standalone build
+              echo '🔧 Updating frontend service configuration...'
+              sudo sed -i 's|ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start|ExecStart=/usr/bin/node /var/www/eveabacus/frontend/server.js|g' /etc/systemd/system/eveabacusfrontend.service
+              sudo sed -i 's|SyslogIdentifier=eveabacus-frontend|SyslogIdentifier=eveabacusfrontend|g' /etc/systemd/system/eveabacusfrontend.service
+              
+              # Reload systemd to pick up the new configuration
+              sudo systemctl daemon-reload
+              
               # Start frontend service if it exists
               if systemctl list-unit-files | grep -q eveabacusfrontend.service; then
                 echo '🚀 Starting eveabacusfrontend service...'
                 sudo systemctl start eveabacusfrontend
+                echo '⏳ Waiting for frontend service to start...'
+                sleep 5
+                if systemctl is-active --quiet eveabacusfrontend; then
+                  echo '✅ Frontend service started successfully'
+                else
+                  echo '⚠️  Frontend service failed to start'
+                  sudo systemctl status eveabacusfrontend
+                fi
               else
                 echo '⚠️  eveabacusfrontend service not found'
               fi
