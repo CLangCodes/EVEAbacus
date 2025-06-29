@@ -475,38 +475,49 @@ jobs:
             cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
             echo "✅ standalone directory copied"
             
-            # Check if the standalone build has a .next directory, if not, copy it
-            if [ ! -d "./frontend-build/standalone/.next" ]; then
-              echo "⚠️ Standalone build missing .next directory, copying from main .next..."
-              mkdir -p ./frontend-build/standalone/.next
-              
-              # Copy BUILD_ID
-              if [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
-                cp ./eve-abacus-webui/.next/BUILD_ID ./frontend-build/standalone/.next/
-                echo "✅ BUILD_ID copied"
+            # Always ensure the .next directory exists in the standalone build
+            echo "🔧 Ensuring .next directory exists in standalone build..."
+            mkdir -p ./frontend-build/standalone/.next
+            
+            # Copy BUILD_ID
+            if [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
+              cp ./eve-abacus-webui/.next/BUILD_ID ./frontend-build/standalone/.next/
+              echo "✅ BUILD_ID copied"
+            fi
+            
+            # Copy static directory
+            if [ -d "./eve-abacus-webui/.next/static" ]; then
+              cp -r ./eve-abacus-webui/.next/static ./frontend-build/standalone/.next/
+              echo "✅ static directory copied"
+            fi
+            
+            # Copy server directory
+            if [ -d "./eve-abacus-webui/.next/server" ]; then
+              cp -r ./eve-abacus-webui/.next/server ./frontend-build/standalone/.next/
+              echo "✅ server directory copied"
+            fi
+            
+            # Copy other important files
+            for file in "app-build-manifest.json" "build-manifest.json" "prerender-manifest.json" "react-loadable-manifest.json" "required-server-files.json" "routes-manifest.json"; do
+              if [ -f "./eve-abacus-webui/.next/$file" ]; then
+                cp "./eve-abacus-webui/.next/$file" "./frontend-build/standalone/.next/"
+                echo "✅ $file copied"
               fi
-              
-              # Copy static directory
-              if [ -d "./eve-abacus-webui/.next/static" ]; then
-                cp -r ./eve-abacus-webui/.next/static ./frontend-build/standalone/.next/
-                echo "✅ static directory copied"
+            done
+            
+            # Ensure styled-jsx is available in standalone build
+            echo "🔧 Ensuring styled-jsx is available in standalone build..."
+            if [ ! -d "./frontend-build/standalone/node_modules/styled-jsx" ]; then
+              echo "⚠️ styled-jsx not found in standalone build, copying from main node_modules..."
+              if [ -d "./eve-abacus-webui/node_modules/styled-jsx" ]; then
+                mkdir -p ./frontend-build/standalone/node_modules/
+                cp -r ./eve-abacus-webui/node_modules/styled-jsx ./frontend-build/standalone/node_modules/
+                echo "✅ styled-jsx copied to standalone build"
+              else
+                echo "❌ styled-jsx not found in main node_modules either"
               fi
-              
-              # Copy server directory
-              if [ -d "./eve-abacus-webui/.next/server" ]; then
-                cp -r ./eve-abacus-webui/.next/server ./frontend-build/standalone/.next/
-                echo "✅ server directory copied"
-              fi
-              
-              # Copy other important files
-              for file in "app-build-manifest.json" "build-manifest.json" "prerender-manifest.json" "react-loadable-manifest.json" "required-server-files.json" "routes-manifest.json"; do
-                if [ -f "./eve-abacus-webui/.next/$file" ]; then
-                  cp "./eve-abacus-webui/.next/$file" "./frontend-build/standalone/.next/"
-                  echo "✅ $file copied"
-                fi
-              done
             else
-              echo "✅ Standalone build already has .next directory"
+              echo "✅ styled-jsx already exists in standalone build"
             fi
           else
             echo "❌ standalone directory not found - cannot copy"
@@ -528,6 +539,12 @@ jobs:
           ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found"
           echo "📁 Full standalone directory structure:"
           find ./frontend-build/standalone -type f -name "*.js" | head -10
+          echo "📁 Checking standalone node_modules contents:"
+          ls -la ./frontend-build/standalone/node_modules/ | head -10 || echo "node_modules not found"
+          echo "📁 Checking for styled-jsx in standalone node_modules:"
+          ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found in standalone"
+          echo "📁 Checking main node_modules for styled-jsx:"
+          ls -la ./eve-abacus-webui/node_modules/styled-jsx/ || echo "styled-jsx not found in main"
           
           # Copy public directory for static assets
           echo "📁 Copying public directory..."
