@@ -23,6 +23,9 @@ importers:
       redis:
         specifier: ^4.6.13
         version: 4.7.1
+      styled-jsx:
+        specifier: ^5.1.2
+        version: 5.1.6(react@19.1.0)
       swagger-jsdoc:
         specifier: ^6.2.8
         version: 6.2.8(openapi-types@12.1.3)
