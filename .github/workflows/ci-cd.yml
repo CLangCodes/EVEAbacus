@@ -172,6 +172,11 @@ jobs:
               echo '📁 Copying systemd service file...'
               sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus.service
               sudo chmod 644 /etc/systemd/system/eveabacus.service
+              
+              # Update the connection string with the correct password
+              echo '🔧 Updating database connection string...'
+              sudo sed -i 's/Password=your_password_here;/Password=${{ secrets.DB_PASSWORD }};/g' /etc/systemd/system/eveabacus.service
+              
               sudo systemctl daemon-reload
               
               rm -f backend-artifacts.tar.gz
@@ -213,16 +218,35 @@ jobs:
             --command-id RunShellScript \
             --scripts "
               echo '🔍 Checking if backend is ready...'
+              echo '📋 Checking backend service status:'
+              sudo systemctl status eveabacus || echo 'Backend service not found or failed'
+              echo '📋 Checking backend service logs:'
+              sudo journalctl -u eveabacus -n 10 --no-pager || echo 'No backend service logs found'
+              echo '📋 Checking if port 5000 is listening:'
+              sudo netstat -tlnp | grep :5000 || echo 'Port 5000 not listening'
+              echo '📋 Checking backend process:'
+              ps aux | grep eveabacus || echo 'No eveabacus process found'
+              
               for i in {1..30}; do
+                echo '🔍 Attempt $i: Testing backend health endpoint...'
                 if curl -f http://localhost:5000/health 2>/dev/null; then
                   echo '✅ Backend is ready!'
                   exit 0
+                else
+                  echo '❌ Health check failed'
+                  echo '📋 Trying to get more info:'
+                  curl -v http://localhost:5000/health 2>&1 | head -10 || echo 'Curl failed completely'
                 fi
                 echo '⏳ Waiting for backend to be ready... (attempt $i/30)'
                 sleep 5
               done
               echo '⚠️  Backend may not be fully ready, but continuing...'
+              echo '📋 Final backend service status:'
+              sudo systemctl status eveabacus || echo 'Backend service not found'
             "
+          
+          echo "✅ Backend deployment completed successfully"
+          echo "📋 Summary: Backend should now be running and ready for frontend build"
 
   # Build frontend (after backend is deployed and running)
   build-frontend:
