@@ -565,6 +565,8 @@ jobs:
                 sudo echo 'ExecStart=/usr/bin/node /var/www/eveabacus/frontend/standalone/server.js' >> /etc/systemd/system/eveabacusfrontend.service
               else
                 echo '📁 Using pnpm start with complete .next directory'
+                # Add debugging before starting the service
+                sudo echo 'ExecStartPre=/bin/bash -c "echo \"🔍 Debugging .next directory before start:\" && ls -la /var/www/eveabacus/frontend/.next/ && echo \"📁 Checking for BUILD_ID:\" && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo \"BUILD_ID not found\" && echo \"📁 Checking for server directory:\" && ls -la /var/www/eveabacus/frontend/.next/server/ || echo \"server directory not found\""' >> /etc/systemd/system/eveabacusfrontend.service
                 sudo echo 'ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start' >> /etc/systemd/system/eveabacusfrontend.service
               fi
               
