@@ -273,8 +273,18 @@ jobs:
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
             echo "✅ Standalone output found"
             ls -la ./eve-abacus-webui/.next/standalone/
+            echo "📁 Checking for server.js in standalone:"
+            if [ -f "./eve-abacus-webui/.next/standalone/server.js" ]; then
+              echo "✅ server.js found in standalone build"
+            else
+              echo "⚠️  server.js not found in standalone build"
+              echo "📁 Available files in standalone:"
+              find ./eve-abacus-webui/.next/standalone -type f -name "*.js" | head -10
+            fi
           else
             echo "⚠️  Standalone output not found, using regular .next directory"
+            echo "📁 Available files in .next:"
+            find ./eve-abacus-webui/.next -type f -name "*.js" | head -10
           fi
         working-directory: ./
       
@@ -421,16 +431,26 @@ jobs:
               if [ -d '/tmp/.next/standalone' ]; then
                 echo '🚀 Using standalone build...'
                 sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/
+                echo '📁 Standalone contents copied:'
+                ls -la /var/www/eveabacus/frontend/
               else
                 echo '📁 Using regular build...'
                 sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
                 sudo cp -r /tmp/public /var/www/eveabacus/frontend/
+                echo '📁 Regular build contents copied:'
+                ls -la /var/www/eveabacus/frontend/
               fi
               echo '🔧 Setting permissions...'
-              sudo chown -R eveabacus:eveabacus /var/www/eveabacus/frontend
+              sudo chown -R www-data:www-data /var/www/eveabacus/frontend
               sudo chmod -R 755 /var/www/eveabacus/frontend
-              echo '📁 Frontend deployment contents:'
+              echo '📁 Final frontend deployment contents:'
               ls -la /var/www/eveabacus/frontend/
+              if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
+                echo '✅ server.js found - standalone build successful'
+              else
+                echo '⚠️  server.js not found - checking for alternative files'
+                find /var/www/eveabacus/frontend -name '*.js' | head -5
+              fi
               rm -f frontend-artifacts.tar.gz
               echo '✅ Frontend deployment complete'
             "
