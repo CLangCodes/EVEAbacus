@@ -452,6 +452,7 @@ jobs:
                 echo '📁 Using regular build...'
                 sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
                 sudo cp -r /tmp/public /var/www/eveabacus/frontend/
+                sudo cp /tmp/package.json /var/www/eveabacus/frontend/
                 echo '📁 Regular build contents copied:'
                 ls -la /var/www/eveabacus/frontend/
               fi
