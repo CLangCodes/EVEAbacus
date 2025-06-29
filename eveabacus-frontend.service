@@ -4,13 +4,14 @@ After=network.target
 
 [Service]
 WorkingDirectory=/var/www/eveabacus/frontend
-ExecStart=/usr/bin/node /var/www/eveabacus/frontend/.next/standalone/server.js
+ExecStartPre=/bin/bash -c "ls -la /var/www/eveabacus/frontend/.next/ && echo BUILD_ID check: && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo BUILD_ID not found"
+ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start
 Restart=always
 RestartSec=10
 SyslogIdentifier=eveabacus-frontend
 User=www-data
 Environment=NODE_ENV=production
-Environment=PORT=3001
+Environment=PORT=3000
 
 [Install]
 WantedBy=multi-user.target 

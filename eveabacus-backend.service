@@ -1,0 +1,16 @@
+[Unit]
+Description=EVE Abacus Backend API
+After=network.target
+
+[Service]
+WorkingDirectory=/var/www/eveabacus
+ExecStart=/usr/bin/dotnet EVEAbacus.WebUI.dll
+Restart=always
+RestartSec=10
+SyslogIdentifier=eveabacus
+User=eveabacus
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://localhost:5000
+
+[Install]
+WantedBy=multi-user.target 

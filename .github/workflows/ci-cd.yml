@@ -47,6 +47,13 @@ jobs:
       - name: Publish backend
         run: dotnet publish --configuration Release --output ./publish-backend ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
       
+      - name: Prepare backend artifacts
+        run: |
+          # Copy systemd service file to backend artifacts
+          cp ./eveabacus-backend.service ./publish-backend/
+          echo "📁 Backend artifacts prepared:"
+          ls -la ./publish-backend/
+      
       - name: Upload backend artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -160,6 +167,13 @@ jobs:
               sudo chmod -R 755 /var/www/eveabacus
               echo '📁 Backend deployment contents:'
               ls -la /var/www/eveabacus/
+              
+              # Copy systemd service file
+              echo '📁 Copying systemd service file...'
+              sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus.service
+              sudo chmod 644 /etc/systemd/system/eveabacus.service
+              sudo systemctl daemon-reload
+              
               rm -f backend-artifacts.tar.gz
               echo '✅ Backend deployment complete'
             "
@@ -349,6 +363,9 @@ jobs:
           cp -r ./eve-abacus-webui/public ./frontend-build/
           cp ./eve-abacus-webui/package.json ./frontend-build/
           cp ./eve-abacus-webui/pnpm-lock.yaml ./frontend-build/
+          
+          # Copy systemd service files
+          cp ./eveabacus-frontend.service ./frontend-build/
           
           # If standalone exists, also copy it for potential use
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
@@ -548,8 +565,10 @@ jobs:
               sudo systemctl stop eveabacusfrontend 2>/dev/null || true
               sudo rm -f /etc/systemd/system/eveabacusfrontend.service
               
-              # Create service file using printf to avoid shell redirection issues
-              sudo printf '[Unit]\nDescription=EVE Abacus Next.js Frontend\nAfter=network.target\n\n[Service]\nWorkingDirectory=/var/www/eveabacus/frontend\nExecStartPre=/bin/bash -c "ls -la /var/www/eveabacus/frontend/.next/ && echo BUILD_ID check: && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo BUILD_ID not found"\nExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start\nRestart=always\nRestartSec=10\nSyslogIdentifier=eveabacusfrontend\nUser=www-data\nEnvironment=NODE_ENV=production\nEnvironment=PORT=3000\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/eveabacusfrontend.service
+              # Copy the service file from the repository
+              echo '📁 Copying systemd service file...'
+              sudo cp /tmp/eveabacus-frontend.service /etc/systemd/system/eveabacusfrontend.service
+              sudo chmod 644 /etc/systemd/system/eveabacusfrontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
