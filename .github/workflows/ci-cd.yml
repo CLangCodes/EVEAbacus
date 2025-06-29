@@ -540,6 +540,13 @@ jobs:
               sudo chmod -R 755 /var/www/eveabacus/frontend
               echo '📁 Final frontend deployment contents:'
               ls -la /var/www/eveabacus/frontend/
+              echo '📁 Checking if .next directory exists:'
+              ls -la /var/www/eveabacus/frontend/.next/ || echo '.next directory not found after copy'
+              echo '📁 Checking if package.json exists:'
+              ls -la /var/www/eveabacus/frontend/package.json || echo 'package.json not found after copy'
+              echo '📁 Checking if pnpm is available:'
+              which pnpm || echo 'pnpm not found in PATH'
+              /usr/local/lib/node_modules/pnpm/bin/pnpm.cjs --version || echo 'pnpm.cjs not found or not working'
               rm -f frontend-artifacts.tar.gz
               echo '✅ Frontend deployment complete'
             "
@@ -567,7 +574,7 @@ jobs:
               
               # Copy the service file from the repository
               echo '📁 Copying systemd service file...'
-              sudo cp /tmp/eveabacus-frontend.service /etc/systemd/system/eveabacusfrontend.service
+              sudo cp /var/www/eveabacus/frontend/eveabacus-frontend.service /etc/systemd/system/eveabacusfrontend.service
               sudo chmod 644 /etc/systemd/system/eveabacusfrontend.service
               
               # Reload systemd to pick up the new configuration
@@ -583,7 +590,14 @@ jobs:
                   echo '✅ Frontend service started successfully'
                 else
                   echo '⚠️  Frontend service failed to start'
+                  echo '📋 Service status:'
                   sudo systemctl status eveabacusfrontend
+                  echo '📋 Recent logs:'
+                  sudo journalctl -u eveabacusfrontend -n 20 --no-pager
+                  echo '📋 Checking if files exist:'
+                  ls -la /var/www/eveabacus/frontend/ || echo 'Frontend directory not found'
+                  ls -la /var/www/eveabacus/frontend/.next/ || echo '.next directory not found'
+                  ls -la /var/www/eveabacus/frontend/package.json || echo 'package.json not found'
                 fi
               else
                 echo '⚠️  eveabacusfrontend service not found'
