@@ -499,23 +499,23 @@ jobs:
               sudo systemctl stop eveabacusfrontend 2>/dev/null || true
               sudo rm -f /etc/systemd/system/eveabacusfrontend.service
               
-              # Check if standalone server.js exists, otherwise use pnpm start
-              if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
-                echo '🚀 Using standalone server.js'
-                EXEC_CMD='/usr/bin/node /var/www/eveabacus/frontend/server.js'
-              else
-                echo '📁 Using pnpm start (standalone not available)'
-                EXEC_CMD='/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start'
-              fi
-              
-              # Create service file using individual echo commands
+              # Create service file using simple echo commands
               sudo echo '[Unit]' > /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'Description=EVE Abacus Next.js Frontend' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'After=network.target' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo '' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo '[Service]' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'WorkingDirectory=/var/www/eveabacus/frontend' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo "ExecStart=$EXEC_CMD" >> /etc/systemd/system/eveabacusfrontend.service
+              
+              # Check if standalone server.js exists, otherwise use pnpm start
+              if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
+                echo '🚀 Using standalone server.js'
+                sudo echo 'ExecStart=/usr/bin/node /var/www/eveabacus/frontend/server.js' >> /etc/systemd/system/eveabacusfrontend.service
+              else
+                echo '📁 Using pnpm start (standalone not available)'
+                sudo echo 'ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start' >> /etc/systemd/system/eveabacusfrontend.service
+              fi
+              
               sudo echo 'Restart=always' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'RestartSec=10' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'SyslogIdentifier=eveabacusfrontend' >> /etc/systemd/system/eveabacusfrontend.service
@@ -525,6 +525,10 @@ jobs:
               sudo echo '' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo '[Install]' >> /etc/systemd/system/eveabacusfrontend.service
               sudo echo 'WantedBy=multi-user.target' >> /etc/systemd/system/eveabacusfrontend.service
+              
+              # Debug: Show the created service file
+              echo '📄 Created service file contents:'
+              cat /etc/systemd/system/eveabacusfrontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
