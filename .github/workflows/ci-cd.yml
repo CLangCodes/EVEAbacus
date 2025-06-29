@@ -263,7 +263,6 @@ jobs:
             --name backend-artifacts.tar.gz \
             --permissions r \
             --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
-            --as-user \
             --full-uri \
             --output tsv)
           
@@ -299,7 +298,6 @@ jobs:
             --name frontend-artifacts.tar.gz \
             --permissions r \
             --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
-            --as-user \
             --full-uri \
             --output tsv)
           
