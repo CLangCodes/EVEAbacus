@@ -318,19 +318,23 @@ jobs:
       - name: Prepare frontend artifacts
         run: |
           mkdir -p ./frontend-build
-          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "🚀 Using standalone build..."
-            cp -r ./eve-abacus-webui/.next/standalone/* ./frontend-build/
-          else
-            echo "📁 Using regular build..."
-            cp -r ./eve-abacus-webui/.next ./frontend-build/
-            cp -r ./eve-abacus-webui/public ./frontend-build/
-          fi
-          # Always include package.json for pnpm start to work
+          # Always copy the complete .next directory for production builds
+          cp -r ./eve-abacus-webui/.next ./frontend-build/
+          cp -r ./eve-abacus-webui/public ./frontend-build/
           cp ./eve-abacus-webui/package.json ./frontend-build/
           cp ./eve-abacus-webui/pnpm-lock.yaml ./frontend-build/
+          
+          # If standalone exists, also copy it for potential use
+          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
+            echo "🚀 Standalone build also available"
+            mkdir -p ./frontend-build/standalone
+            cp -r ./eve-abacus-webui/.next/standalone/* ./frontend-build/standalone/
+          fi
+          
           echo "📁 Final frontend artifacts:"
           ls -la ./frontend-build/
+          echo "📁 .next directory contents:"
+          ls -la ./frontend-build/.next/
         working-directory: ./
       
       - name: Upload frontend artifacts
@@ -452,88 +456,47 @@ jobs:
               ls -la /tmp/package.json /tmp/pnpm-lock.yaml 2>/dev/null || echo 'package.json or pnpm-lock.yaml not found'
               echo '📁 Checking for standalone directory:'
               ls -la /tmp/.next/standalone/ || echo 'standalone directory not found'
-              if [ -d '/tmp/.next/standalone' ]; then
-                echo '🚀 Standalone directory found, checking contents:'
-                ls -la /tmp/.next/standalone/
-                if [ -f '/tmp/.next/standalone/server.js' ]; then
-                  echo '✅ server.js found in standalone'
-                  sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/
-                  echo '📁 Standalone contents copied:'
-                  ls -la /var/www/eveabacus/frontend/
-                else
-                  echo '⚠️  server.js not found in standalone'
-                  echo '📁 Using regular build instead...'
-                  sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
-                  sudo cp -r /tmp/public /var/www/eveabacus/frontend/
-                  sudo cp /tmp/package.json /var/www/eveabacus/frontend/
-                  sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/frontend/
-                  echo '📁 Regular build contents copied:'
-                  ls -la /var/www/eveabacus/frontend/
-                  
-                  # Install dependencies for regular build
-                  echo '📦 Installing dependencies for regular build...'
-                  cd /var/www/eveabacus/frontend
-                  sudo pnpm install --prod --frozen-lockfile
-                  echo '✅ Dependencies installed'
-                  echo '📁 Checking node_modules after install:'
-                  ls -la /var/www/eveabacus/frontend/node_modules/.bin/ | grep next || echo 'next not found in node_modules/.bin'
-                  
-                  # Debug: Check .next directory structure
-                  echo '📁 Debugging .next directory structure:'
-                  ls -la /var/www/eveabacus/frontend/.next/
-                  echo '📁 Checking for build-id file:'
-                  ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo 'BUILD_ID not found'
-                  echo '📁 Checking for server directory:'
-                  ls -la /var/www/eveabacus/frontend/.next/server/ || echo 'server directory not found'
-                  echo '📁 Checking for static directory:'
-                  ls -la /var/www/eveabacus/frontend/.next/static/ || echo 'static directory not found'
-                fi
-              else
-                echo '📁 No standalone directory found, using regular build...'
-                sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
-                sudo cp -r /tmp/public /var/www/eveabacus/frontend/
-                sudo cp /tmp/package.json /var/www/eveabacus/frontend/
-                sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/frontend/
-                echo '📁 Regular build contents copied:'
-                ls -la /var/www/eveabacus/frontend/
-                
-                # Install dependencies for regular build
-                echo '📦 Installing dependencies for regular build...'
-                cd /var/www/eveabacus/frontend
-                sudo pnpm install --prod --frozen-lockfile
-                echo '✅ Dependencies installed'
-                echo '📁 Checking node_modules after install:'
-                ls -la /var/www/eveabacus/frontend/node_modules/.bin/ | grep next || echo 'next not found in node_modules/.bin'
-                
-                # Debug: Check .next directory structure
-                echo '📁 Debugging .next directory structure:'
-                ls -la /var/www/eveabacus/frontend/.next/
-                echo '📁 Checking for build-id file:'
-                ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo 'BUILD_ID not found'
-                echo '📁 Checking for server directory:'
-                ls -la /var/www/eveabacus/frontend/.next/server/ || echo 'server directory not found'
-                echo '📁 Checking for static directory:'
-                ls -la /var/www/eveabacus/frontend/.next/static/ || echo 'static directory not found'
+              
+              # Always copy the complete .next directory for production builds
+              echo '📁 Copying complete .next directory...'
+              sudo cp -r /tmp/.next /var/www/eveabacus/frontend/
+              sudo cp -r /tmp/public /var/www/eveabacus/frontend/
+              sudo cp /tmp/package.json /var/www/eveabacus/frontend/
+              sudo cp /tmp/pnpm-lock.yaml /var/www/eveabacus/frontend/
+              
+              # Check if standalone server.js exists for potential use
+              if [ -f '/tmp/.next/standalone/server.js' ]; then
+                echo '🚀 Standalone server.js found, copying for potential use'
+                sudo mkdir -p /var/www/eveabacus/frontend/standalone
+                sudo cp -r /tmp/.next/standalone/* /var/www/eveabacus/frontend/standalone/
               fi
+              
+              echo '📁 Regular build contents copied:'
+              ls -la /var/www/eveabacus/frontend/
+              
+              # Install dependencies for production build
+              echo '📦 Installing dependencies for production build...'
+              cd /var/www/eveabacus/frontend
+              sudo pnpm install --prod --frozen-lockfile
+              echo '✅ Dependencies installed'
+              echo '📁 Checking node_modules after install:'
+              ls -la /var/www/eveabacus/frontend/node_modules/.bin/ | grep next || echo 'next not found in node_modules/.bin'
+              
+              # Debug: Check .next directory structure
+              echo '📁 Debugging .next directory structure:'
+              ls -la /var/www/eveabacus/frontend/.next/
+              echo '📁 Checking for build-id file:'
+              ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo 'BUILD_ID not found'
+              echo '📁 Checking for server directory:'
+              ls -la /var/www/eveabacus/frontend/.next/server/ || echo 'server directory not found'
+              echo '📁 Checking for static directory:'
+              ls -la /var/www/eveabacus/frontend/.next/static/ || echo 'static directory not found'
+              
               echo '🔧 Setting permissions...'
               sudo chown -R www-data:www-data /var/www/eveabacus/frontend
               sudo chmod -R 755 /var/www/eveabacus/frontend
               echo '📁 Final frontend deployment contents:'
               ls -la /var/www/eveabacus/frontend/
-              if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
-                echo '✅ server.js found - standalone build successful'
-              else
-                echo '⚠️  server.js not found - checking for alternative files'
-                find /var/www/eveabacus/frontend -name '*.js' | head -5
-                echo '📁 Checking if .next directory exists:'
-                ls -la /var/www/eveabacus/frontend/.next/ || echo '.next directory not found'
-                if [ -d '/var/www/eveabacus/frontend/.next/standalone' ]; then
-                  echo '📁 Standalone directory exists:'
-                  ls -la /var/www/eveabacus/frontend/.next/standalone/
-                else
-                  echo '⚠️  Standalone directory not found'
-                fi
-              fi
               rm -f frontend-artifacts.tar.gz
               echo '✅ Frontend deployment complete'
             "
@@ -554,7 +517,7 @@ jobs:
             --scripts "
               echo '🔧 Starting frontend service and reloading nginx...'
               
-              # Update the service configuration to use standalone build
+              # Update the service configuration
               echo '🔧 Updating frontend service configuration...'
               sudo systemctl stop eveabacusfrontend 2>/dev/null || true
               sudo rm -f /etc/systemd/system/eveabacusfrontend.service
@@ -571,8 +534,11 @@ jobs:
               if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
                 echo '🚀 Using standalone server.js'
                 sudo echo 'ExecStart=/usr/bin/node /var/www/eveabacus/frontend/server.js' >> /etc/systemd/system/eveabacusfrontend.service
+              elif [ -f '/var/www/eveabacus/frontend/standalone/server.js' ]; then
+                echo '🚀 Using standalone server.js from standalone directory'
+                sudo echo 'ExecStart=/usr/bin/node /var/www/eveabacus/frontend/standalone/server.js' >> /etc/systemd/system/eveabacusfrontend.service
               else
-                echo '📁 Using pnpm start (standalone not available)'
+                echo '📁 Using pnpm start with complete .next directory'
                 sudo echo 'ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start' >> /etc/systemd/system/eveabacusfrontend.service
               fi
               
