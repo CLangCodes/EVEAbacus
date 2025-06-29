@@ -451,19 +451,14 @@ jobs:
             echo "📁 Checking for BUILD_ID in original standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found in original standalone"
             
-            # Create the standalone directory structure first
-            mkdir -p ./frontend-build/standalone
-            echo "✅ standalone directory created"
+            # Copy the standalone directory first
+            cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
+            echo "✅ standalone directory copied"
             
-            # Copy the complete .next directory first to preserve BUILD_ID and dependencies
-            echo "📁 Copying complete .next directory for dependencies..."
+            # Now copy the .next directory to the standalone directory to preserve BUILD_ID and dependencies
+            echo "📁 Copying .next directory to standalone for dependencies..."
             cp -r ./eve-abacus-webui/.next ./frontend-build/standalone/
             echo "✅ .next directory copied to standalone"
-            
-            # Now copy the standalone files, but preserve the .next directory we just copied
-            echo "📁 Copying standalone files (preserving .next)..."
-            cp -r ./eve-abacus-webui/.next/standalone/* ./frontend-build/standalone/
-            echo "✅ standalone files copied"
             
             echo "📁 Verifying standalone directory was copied:"
             ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
