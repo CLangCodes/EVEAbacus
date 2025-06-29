@@ -451,13 +451,19 @@ jobs:
             echo "📁 Checking for BUILD_ID in original standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found in original standalone"
             
-            cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
-            echo "✅ standalone directory copied"
+            # Create the standalone directory structure first
+            mkdir -p ./frontend-build/standalone
+            echo "✅ standalone directory created"
             
-            # Also copy the complete .next directory for dependencies
+            # Copy the complete .next directory first to preserve BUILD_ID and dependencies
             echo "📁 Copying complete .next directory for dependencies..."
             cp -r ./eve-abacus-webui/.next ./frontend-build/standalone/
             echo "✅ .next directory copied to standalone"
+            
+            # Now copy the standalone files, but preserve the .next directory we just copied
+            echo "📁 Copying standalone files (preserving .next)..."
+            cp -r ./eve-abacus-webui/.next/standalone/* ./frontend-build/standalone/
+            echo "✅ standalone files copied"
             
             echo "📁 Verifying standalone directory was copied:"
             ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
@@ -469,6 +475,8 @@ jobs:
             ls -la ./frontend-build/standalone/.next/BUILD_ID || echo "BUILD_ID not found in standalone .next"
             echo "📁 Checking node_modules in standalone:"
             ls -la ./frontend-build/standalone/node_modules/ | head -5 || echo "node_modules not found in standalone"
+            echo "📁 Checking for styled-jsx specifically:"
+            ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found"
             echo "📁 Full standalone directory structure:"
             find ./frontend-build/standalone -type f -name "*.js" | head -10
           else
@@ -611,14 +619,18 @@ jobs:
               tar -tzf frontend-artifacts.tar.gz | head -20
               echo '📦 Extracting with verbose output:'
               tar -xzf frontend-artifacts.tar.gz
-              echo '📁 Extracted frontend contents:'
-              ls -la /tmp/
-              echo '📁 Checking for standalone directory specifically:'
-              find /tmp -name "standalone" -type d 2>/dev/null || echo "No standalone directory found"
               echo '📁 standalone directory contents:'
               ls -la /tmp/standalone/ || echo 'standalone directory not found'
               echo '📁 Checking for server.js in standalone:'
               ls -la /tmp/standalone/server.js || echo 'server.js not found'
+              echo '📁 Checking for .next directory in standalone:'
+              ls -la /tmp/standalone/.next/ || echo '.next directory not found'
+              echo '📁 Checking for BUILD_ID in standalone .next:'
+              ls -la /tmp/standalone/.next/BUILD_ID || echo 'BUILD_ID not found in standalone .next'
+              echo '📁 Checking for node_modules in standalone:'
+              ls -la /tmp/standalone/node_modules/ | head -5 || echo 'node_modules not found'
+              echo '📁 Checking for styled-jsx in standalone:'
+              ls -la /tmp/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found'
               echo '📁 public directory contents:'
               ls -la /tmp/public/ || echo 'public directory not found'
               echo '📁 Checking for systemd service file:'
@@ -654,6 +666,10 @@ jobs:
               ls -la /var/www/eveabacus/frontend/standalone/ || echo 'standalone directory not found after copy'
               echo '📁 Checking if server.js exists:'
               ls -la /var/www/eveabacus/frontend/standalone/server.js || echo 'server.js not found after copy'
+              echo '📁 Checking if BUILD_ID exists:'
+              ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo 'BUILD_ID not found after copy'
+              echo '📁 Checking if styled-jsx exists:'
+              ls -la /var/www/eveabacus/frontend/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found after copy'
               echo '📁 Checking if node is available:'
               which node || echo 'node not found in PATH'
               node --version || echo 'node version check failed'
