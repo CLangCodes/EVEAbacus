@@ -548,27 +548,8 @@ jobs:
               sudo systemctl stop eveabacusfrontend 2>/dev/null || true
               sudo rm -f /etc/systemd/system/eveabacusfrontend.service
               
-              # Create service file using simple echo commands
-              sudo echo '[Unit]' > /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'Description=EVE Abacus Next.js Frontend' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'After=network.target' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo '' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo '[Service]' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'WorkingDirectory=/var/www/eveabacus/frontend' >> /etc/systemd/system/eveabacusfrontend.service
-              
-              # Always add debugging and use pnpm start for now
-              echo '📁 Using pnpm start with debugging'
-              sudo echo 'ExecStartPre=/bin/bash -c "echo \"🔍 Debugging .next directory before start:\" && ls -la /var/www/eveabacus/frontend/.next/ && echo \"📁 Checking for BUILD_ID:\" && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo \"BUILD_ID not found\" && echo \"📁 Checking for server directory:\" && ls -la /var/www/eveabacus/frontend/.next/server/ || echo \"server directory not found\""' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'ExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'Restart=always' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'RestartSec=10' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'SyslogIdentifier=eveabacusfrontend' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'User=www-data' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'Environment=NODE_ENV=production' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'Environment=PORT=3000' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo '' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo '[Install]' >> /etc/systemd/system/eveabacusfrontend.service
-              sudo echo 'WantedBy=multi-user.target' >> /etc/systemd/system/eveabacusfrontend.service
+              # Create service file using printf to avoid shell redirection issues
+              sudo printf '[Unit]\nDescription=EVE Abacus Next.js Frontend\nAfter=network.target\n\n[Service]\nWorkingDirectory=/var/www/eveabacus/frontend\nExecStartPre=/bin/bash -c \"echo \\"🔍 Debugging .next directory before start:\\" && ls -la /var/www/eveabacus/frontend/.next/ && echo \\"📁 Checking for BUILD_ID:\\" && ls -la /var/www/eveabacus/frontend/.next/BUILD_ID || echo \\"BUILD_ID not found\\" && echo \\"📁 Checking for server directory:\\" && ls -la /var/www/eveabacus/frontend/.next/server/ || echo \\"server directory not found\\"\"\nExecStart=/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start\nRestart=always\nRestartSec=10\nSyslogIdentifier=eveabacusfrontend\nUser=www-data\nEnvironment=NODE_ENV=production\nEnvironment=PORT=3000\n\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/eveabacusfrontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
