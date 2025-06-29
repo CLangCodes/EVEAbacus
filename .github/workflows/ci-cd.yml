@@ -296,6 +296,19 @@ jobs:
           echo ""
           echo "Contents of public directory:"
           ls -la ./eve-abacus-webui/public/
+          echo ""
+          echo "📁 Checking standalone build structure:"
+          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
+            echo "✅ Standalone directory exists"
+            ls -la ./eve-abacus-webui/.next/standalone/
+            echo ""
+            echo "📁 Looking for server.js in standalone:"
+            find ./eve-abacus-webui/.next/standalone -name "server.js" -o -name "*.js" | head -5
+          else
+            echo "❌ Standalone directory not found"
+            echo "📁 Available directories in .next:"
+            ls -la ./eve-abacus-webui/.next/
+          fi
         working-directory: ./
       
       - name: Prepare frontend artifacts
@@ -452,6 +465,14 @@ jobs:
               else
                 echo '⚠️  server.js not found - checking for alternative files'
                 find /var/www/eveabacus/frontend -name '*.js' | head -5
+                echo '📁 Checking if .next directory exists:'
+                ls -la /var/www/eveabacus/frontend/.next/ || echo '.next directory not found'
+                if [ -d '/var/www/eveabacus/frontend/.next/standalone' ]; then
+                  echo '📁 Standalone directory exists:'
+                  ls -la /var/www/eveabacus/frontend/.next/standalone/
+                else
+                  echo '⚠️  Standalone directory not found'
+                fi
               fi
               rm -f frontend-artifacts.tar.gz
               echo '✅ Frontend deployment complete'
@@ -477,13 +498,23 @@ jobs:
               echo '🔧 Updating frontend service configuration...'
               sudo systemctl stop eveabacusfrontend 2>/dev/null || true
               sudo rm -f /etc/systemd/system/eveabacusfrontend.service
+              
+              # Check if standalone server.js exists, otherwise use pnpm start
+              if [ -f '/var/www/eveabacus/frontend/server.js' ]; then
+                echo '🚀 Using standalone server.js'
+                EXEC_START='/usr/bin/node /var/www/eveabacus/frontend/server.js'
+              else
+                echo '📁 Using pnpm start (standalone not available)'
+                EXEC_START='/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start'
+              fi
+              
               echo '[Unit]' | sudo tee /etc/systemd/system/eveabacusfrontend.service
               echo 'Description=EVE Abacus Next.js Frontend' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
               echo 'After=network.target' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
               echo '' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
               echo '[Service]' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
               echo 'WorkingDirectory=/var/www/eveabacus/frontend' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
-              echo 'ExecStart=/usr/bin/node /var/www/eveabacus/frontend/server.js' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
+              echo "ExecStart=$EXEC_START" | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
               echo 'Restart=always' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
               echo 'RestartSec=10' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
               echo 'SyslogIdentifier=eveabacusfrontend' | sudo tee -a /etc/systemd/system/eveabacusfrontend.service
