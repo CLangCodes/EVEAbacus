@@ -3,14 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Enable standalone output for production deployment (industry standard)
   output: 'standalone',
-  // Disable symlinks on Windows to avoid permission issues
-  outputFileTracingExcludes: {
-    '*': [
-      'node_modules/@swc/core-linux-x64-gnu',
-      'node_modules/@swc/core-linux-x64-musl',
-      'node_modules/@esbuild/linux-x64',
-    ],
-  },
   // Handle Windows symlink issues
   webpack: (config, { isServer }) => {
     if (isServer && process.platform === 'win32') {

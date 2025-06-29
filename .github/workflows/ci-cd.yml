@@ -453,6 +453,12 @@ jobs:
             
             cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
             echo "✅ standalone directory copied"
+            
+            # Also copy the complete .next directory for dependencies
+            echo "📁 Copying complete .next directory for dependencies..."
+            cp -r ./eve-abacus-webui/.next ./frontend-build/standalone/
+            echo "✅ .next directory copied to standalone"
+            
             echo "📁 Verifying standalone directory was copied:"
             ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
             echo "📁 Checking server.js in copied directory:"
@@ -636,6 +642,8 @@ jobs:
               ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo 'BUILD_ID not found'
               echo '📁 Checking standalone node_modules:'
               ls -la /var/www/eveabacus/frontend/standalone/node_modules/ | head -5 || echo 'node_modules not found'
+              echo '📁 Checking for styled-jsx:'
+              ls -la /var/www/eveabacus/frontend/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found'
               
               echo '🔧 Setting permissions...'
               sudo chown -R www-data:www-data /var/www/eveabacus/frontend
