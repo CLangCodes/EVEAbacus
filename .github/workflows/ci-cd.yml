@@ -444,14 +444,27 @@ jobs:
           # Copy standalone build for production deployment
           echo "📁 Copying standalone build..."
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
+            echo "📁 Original standalone directory contents:"
+            ls -la ./eve-abacus-webui/.next/standalone/
+            echo "📁 Checking for .next in original standalone:"
+            ls -la ./eve-abacus-webui/.next/standalone/.next/ || echo ".next directory not found in original standalone"
+            echo "📁 Checking for BUILD_ID in original standalone:"
+            ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found in original standalone"
+            
             cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
             echo "✅ standalone directory copied"
             echo "📁 Verifying standalone directory was copied:"
             ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
             echo "📁 Checking server.js in copied directory:"
             ls -la ./frontend-build/standalone/server.js || echo "server.js not found in copied directory"
+            echo "📁 Checking for .next directory in standalone:"
+            ls -la ./frontend-build/standalone/.next/ || echo ".next directory not found in standalone"
             echo "📁 Checking BUILD_ID in standalone .next:"
             ls -la ./frontend-build/standalone/.next/BUILD_ID || echo "BUILD_ID not found in standalone .next"
+            echo "📁 Checking node_modules in standalone:"
+            ls -la ./frontend-build/standalone/node_modules/ | head -5 || echo "node_modules not found in standalone"
+            echo "📁 Full standalone directory structure:"
+            find ./frontend-build/standalone -type f -name "*.js" | head -10
           else
             echo "❌ standalone directory not found - cannot copy"
           fi

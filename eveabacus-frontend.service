@@ -3,9 +3,9 @@ Description=EVE Abacus Next.js Frontend
 After=network.target
 
 [Service]
-WorkingDirectory=/var/www/eveabacus/frontend
+WorkingDirectory=/var/www/eveabacus/frontend/standalone
 ExecStartPre=/bin/bash -c "ls -la /var/www/eveabacus/frontend/standalone/ && echo BUILD_ID check: && ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo BUILD_ID not found"
-ExecStart=/var/www/eveabacus/frontend/standalone/server.js
+ExecStart=/usr/bin/node server.js
 Restart=always
 RestartSec=10
 SyslogIdentifier=eveabacus-frontend
