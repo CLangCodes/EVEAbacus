@@ -12,6 +12,7 @@
     "generate-types:dev": "openapi-typescript http://localhost:5000/swagger/v1/swagger.json -o src/types/generated.ts --prettier --watch"
   },
   "dependencies": {
+    "critters": "^0.0.25",
     "ioredis": "^5.3.2",
     "next": "15.3.4",
     "react": "^19.0.0",
