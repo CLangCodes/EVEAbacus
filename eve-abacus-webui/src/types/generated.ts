@@ -2548,7 +2548,7 @@ export interface components {
             marketOrder?: components["schemas"]["MarketOrder"];
             /** Format: double */
             price?: number;
-            item: components["schemas"]["Item"];
+            item?: components["schemas"]["Item"];
         };
         Region: {
             /** Format: int32 */
