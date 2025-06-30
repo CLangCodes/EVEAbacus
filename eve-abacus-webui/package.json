@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "node -e \"const fs=require('fs');const path=require('path');if(fs.existsSync('.next/standalone')){const staticSrc='.next/static';const staticDest='.next/standalone/.next/static';if(fs.existsSync(staticSrc)){if(!fs.existsSync('.next/standalone/.next'))fs.mkdirSync('.next/standalone/.next',{recursive:true});require('child_process').execSync('cp -r '+staticSrc+' '+staticDest,{stdio:'inherit'});}}\"",
+    "postbuild": "sh -c \"if [ -d '.next/standalone' ] && [ -d '.next' ]; then mkdir -p '.next/standalone/.next' && cp -r '.next/static' '.next/standalone/.next/' 2>/dev/null || true && cp -r '.next/server' '.next/standalone/.next/' 2>/dev/null || true && cp -r '.next/types' '.next/standalone/.next/' 2>/dev/null || true && cp '.next/'*.json '.next/standalone/.next/' 2>/dev/null || true; fi\"",
     "build:with-types": "pnpm run generate-types && next build",
     "start": "next start",
     "lint": "next lint",
