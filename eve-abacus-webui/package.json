@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "powershell -Command \"if (Test-Path '.next\\standalone') { if (!(Test-Path '.next\\standalone\\.next')) { New-Item -ItemType Directory -Path '.next\\standalone\\.next' -Force }; Copy-Item -Path '.next\\static' -Destination '.next\\standalone\\.next\\static' -Recurse -Force }\"",
+    "postbuild": "node -e \"const fs=require('fs');const path=require('path');if(fs.existsSync('.next/standalone')){const staticSrc='.next/static';const staticDest='.next/standalone/.next/static';if(fs.existsSync(staticSrc)){if(!fs.existsSync('.next/standalone/.next'))fs.mkdirSync('.next/standalone/.next',{recursive:true});require('child_process').execSync('cp -r '+staticSrc+' '+staticDest,{stdio:'inherit'});}}\"",
     "build:with-types": "pnpm run generate-types && next build",
     "start": "next start",
     "lint": "next lint",
