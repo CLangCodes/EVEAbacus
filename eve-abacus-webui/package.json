@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "powershell -Command \"if (Test-Path '.next\\standalone') { if (!(Test-Path '.next\\standalone\\.next')) { New-Item -ItemType Directory -Path '.next\\standalone\\.next' -Force }; Copy-Item -Path '.next\\static' -Destination '.next\\standalone\\.next\\static' -Recurse -Force }\"",
     "build:with-types": "pnpm run generate-types && next build",
     "start": "next start",
     "lint": "next lint",
