@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "sh -c \"if [ -d '.next/standalone' ] && [ -d '.next' ]; then mkdir -p '.next/standalone/.next' && cp -r '.next/static' '.next/standalone/.next/' 2>/dev/null || true && cp -r '.next/server' '.next/standalone/.next/' 2>/dev/null || true && cp -r '.next/types' '.next/standalone/.next/' 2>/dev/null || true && cp '.next/'*.json '.next/standalone/.next/' 2>/dev/null || true; fi\"",
+    "postbuild": "sh -c \"if [ -d '.next/standalone' ] && [ -d '.next' ]; then mkdir -p '.next/standalone/.next' && cp -r '.next/static' '.next/standalone/.next/' 2>/dev/null || true && cp -r '.next/server' '.next/standalone/.next/' 2>/dev/null || true && cp -r '.next/types' '.next/standalone/.next/' 2>/dev/null || true && cp '.next/'*.json '.next/standalone/.next/' 2>/dev/null || true && npm install --production --prefix .next/standalone; fi\"",
     "build:with-types": "pnpm run generate-types && next build",
     "start": "next start",
     "lint": "next lint",
