@@ -504,36 +504,6 @@ jobs:
                 echo "✅ $file copied"
               fi
             done
-            
-            # Ensure styled-jsx is available in standalone build
-            echo "🔧 Ensuring styled-jsx is available in standalone build..."
-            if [ ! -d "./frontend-build/standalone/node_modules/styled-jsx" ]; then
-              echo "⚠️ styled-jsx not found in standalone build, copying from main node_modules..."
-              if [ -d "./eve-abacus-webui/node_modules/styled-jsx" ]; then
-                mkdir -p ./frontend-build/standalone/node_modules/
-                cp -r ./eve-abacus-webui/node_modules/styled-jsx ./frontend-build/standalone/node_modules/
-                echo "✅ styled-jsx copied to standalone build"
-              else
-                echo "❌ styled-jsx not found in main node_modules either"
-              fi
-            else
-              echo "✅ styled-jsx already exists in standalone build"
-            fi
-            
-            # Ensure @swc/helpers is available in standalone build
-            echo "🔧 Ensuring @swc/helpers is available in standalone build..."
-            if [ ! -d "./frontend-build/standalone/node_modules/@swc/helpers" ]; then
-              echo "⚠️ @swc/helpers not found in standalone build, copying from main node_modules..."
-              if [ -d "./eve-abacus-webui/node_modules/@swc/helpers" ]; then
-                mkdir -p ./frontend-build/standalone/node_modules/@swc/
-                cp -r ./eve-abacus-webui/node_modules/@swc/helpers ./frontend-build/standalone/node_modules/@swc/
-                echo "✅ @swc/helpers copied to standalone build"
-              else
-                echo "❌ @swc/helpers not found in main node_modules either"
-              fi
-            else
-              echo "✅ @swc/helpers already exists in standalone build"
-            fi
           else
             echo "❌ standalone directory not found - cannot copy"
           fi
