@@ -49,8 +49,7 @@ jobs:
         run: |
           # Copy systemd service file to backend artifacts
           cp ./eveabacus-backend.service ./publish-backend/
-          echo "📁 Backend artifacts prepared:"
-          ls -la ./publish-backend/
+          echo "Backend artifacts prepared:"
       
       - name: Upload backend artifacts
         uses: actions/upload-artifact@v4
@@ -76,7 +75,7 @@ jobs:
       
       - name: Debug downloaded artifacts
         run: |
-          echo "🔍 Checking downloaded artifacts..."
+          echo "Checking downloaded artifacts..."
           echo "Backend artifacts:"
           ls -la ./backend-artifacts/ || echo "Backend artifacts not found"
       
@@ -152,59 +151,49 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              echo '🔍 Starting backend deployment...'
+              echo 'Starting backend deployment...'
               sudo mkdir -p /var/www/eveabacus
               sudo rm -rf /var/www/eveabacus/*
               cd /tmp
-              echo '📥 Downloading backend artifacts...'
+              echo 'Downloading backend artifacts...'
               curl -L -o backend-artifacts.tar.gz \"$BACKEND_SAS\"
-              echo '📦 Extracting backend artifacts...'
-              echo '📁 Checking tar file contents before extraction:'
+              echo 'Extracting backend artifacts...'
+              echo 'Checking tar file contents before extraction:'
               tar -tzf backend-artifacts.tar.gz | head -20
-              echo '📦 Extracting with verbose output:'
+              echo 'Extracting with verbose output:'
               tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
-              echo '📁 Extracted backend contents:'
+              echo 'Extracted backend contents:'
               ls -la /var/www/eveabacus/
-              echo '📁 Checking for .NET DLL files:'
+              echo 'Checking for .NET DLL files:'
               find /var/www/eveabacus -name "*.dll" | head -5 || echo "No DLL files found"
-              echo '📁 Checking for EVEAbacus.WebUI.dll specifically:'
+              echo 'Checking for EVEAbacus.WebUI.dll specifically:'
               ls -la /var/www/eveabacus/EVEAbacus.WebUI.dll || echo 'EVEAbacus.WebUI.dll not found'
-              echo '📁 Checking for systemd service file:'
+              echo 'Checking for systemd service file:'
               ls -la /var/www/eveabacus/eveabacus-backend.service || echo 'eveabacus-backend.service not found'
               
               # Copy systemd service file
-              echo '📁 Copying systemd service file...'
+              echo 'Copying systemd service file...'
               sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus-backend.service
               sudo chmod 644 /etc/systemd/system/eveabacus-backend.service
               
-              # Add the connection string environment variable from GitHub secrets
-              echo '🔧 Adding database connection string from secrets...'
+              echo 'Adding database connection string from secrets...'
               sudo sed -i '/Environment=ASPNETCORE_URLS/a Environment=ConnectionStrings__EVEAbacus=${{ secrets.CONNECTIONSTRINGS__BACKEND }}' /etc/systemd/system/eveabacus-backend.service
               
-              # Add the Redis password environment variable from GitHub secrets
-              echo '🔧 Adding Redis password from secrets...'
+              echo 'Adding Redis password from secrets...'
               sudo sed -i '/Environment=ConnectionStrings__EVEAbacus/a Environment=REDIS__PASSWORD=${{ secrets.REDIS__PASSWORD }}' /etc/systemd/system/eveabacus-backend.service
               
-              # Debug: Show the final service file configuration
-              echo '📋 Final service configuration:'
-              sudo cat /etc/systemd/system/eveabacus-backend.service
+              echo 'Adding ESISettings__SecretKey from secrets...'
+              sudo sed -i '/Environment=REDIS__PASSWORD/a Environment=ESISettings__SecretKey=${{ secrets.ESISETTINGS__SECRETKEY }}' /etc/systemd/system/eveabacus-backend.service
               
-              echo '🔧 Setting permissions...'
+              echo 'Setting permissions...'
               sudo chown -R eveabacus:eveabacus /var/www/eveabacus
               sudo chmod -R 755 /var/www/eveabacus
-              echo '📁 Final backend deployment contents:'
-              ls -la /var/www/eveabacus/
-              echo '📁 Checking if EVEAbacus.WebUI.dll exists:'
-              ls -la /var/www/eveabacus/EVEAbacus.WebUI.dll || echo 'EVEAbacus.WebUI.dll not found after copy'
-              echo '📁 Checking if dotnet is available:'
-              which dotnet || echo 'dotnet not found in PATH'
-              dotnet --version || echo 'dotnet version check failed'
+              
               sudo systemctl daemon-reload
               rm -f backend-artifacts.tar.gz
-              echo '✅ Backend deployment complete'
+              echo 'Backend deployment complete'
             "
           
-          # Clean up storage account
           echo "Cleaning up storage account..."
           az storage account delete \
             --name $STORAGE_ACCOUNT_NAME \
@@ -218,60 +207,59 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              echo '🔧 Starting backend service...'
+              echo 'Starting backend service...'
               # Start backend service if it exists
               if systemctl list-unit-files | grep -q eveabacus-backend.service; then
-                echo '🚀 Starting eveabacus-backend service...'
+                echo 'Starting eveabacus-backend service...'
                 sudo systemctl start eveabacus-backend
-                echo '⏳ Waiting for backend to be ready...'
+                echo 'Waiting for backend to be ready...'
                 sleep 10
-                echo '✅ Backend service started'
+                echo 'Backend service started'
               else
-                echo '⚠️  eveabacus-backend service not found'
+                echo 'Warning: eveabacus-backend service not found'
               fi
             "
           
-          # Wait for backend to be ready
           echo "Waiting for backend to be ready..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              echo '🔍 Checking if backend is ready...'
-              echo '📋 Checking backend service status:'
+              echo 'Checking if backend is ready...'
+              echo 'Checking backend service status:'
               sudo systemctl status eveabacus-backend || echo 'Backend service not found or failed'
-              echo '📋 Checking backend service logs:'
+              echo 'Checking backend service logs:'
               sudo journalctl -u eveabacus-backend -n 10 --no-pager || echo 'No backend service logs found'
-              echo '📋 Checking if port 5000 is listening:'
+              echo 'Checking if port 5000 is listening:'
               sudo netstat -tlnp | grep :5000 || echo 'Port 5000 not listening'
-              echo '📋 Checking backend process:'
+              echo 'Checking backend process:'
               ps aux | grep eveabacus-backend || echo 'No eveabacus-backend process found'
-              echo '📋 Checking Redis connection (port 6379):'
+              echo 'Checking Redis connection (port 6379):'
               sudo netstat -tlnp | grep :6379 || echo 'Redis not listening on port 6379'
-              echo '📋 Testing Redis connection:'
+              echo 'Testing Redis connection:'
               redis-cli -h localhost -p 6379 ping 2>/dev/null || echo 'Redis ping failed'
               
               for i in {1..30}; do
-                echo '🔍 Attempt $i: Testing backend health endpoint...'
+                echo 'Attempt $i: Testing backend health endpoint...'
                 if curl -f http://localhost:5000/health 2>/dev/null; then
-                  echo '✅ Backend is ready!'
+                  echo 'Backend is ready!'
                   exit 0
                 else
-                  echo '❌ Health check failed'
-                  echo '📋 Trying to get more info:'
+                  echo 'Health check failed'
+                  echo 'Trying to get more info:'
                   curl -v http://localhost:5000/health 2>&1 | head -10 || echo 'Curl failed completely'
                 fi
-                echo '⏳ Waiting for backend to be ready... (attempt $i/30)'
+                echo 'Waiting for backend to be ready... (attempt $i/30)'
                 sleep 5
               done
-              echo '⚠️  Backend may not be fully ready, but continuing...'
-              echo '📋 Final backend service status:'
+              echo 'Backend may not be fully ready, but continuing...'
+              echo 'Final backend service status:'
               sudo systemctl status eveabacus-backend || echo 'Backend service not found'
             "
           
-          echo "✅ Backend deployment completed successfully"
-          echo "📋 Summary: Backend should now be running and ready for frontend build"
+          echo "Backend deployment completed successfully"
+          echo "Summary: Backend should now be running and ready for frontend build"
 
   # Build frontend (after backend is deployed and running)
   build-frontend:
@@ -325,237 +313,237 @@ jobs:
       
       - name: Debug build output
         run: |
-          echo "🔍 Debugging frontend build output..."
-          echo "📁 Current directory: $(pwd)"
-          echo "📁 eve-abacus-webui directory contents:"
+          echo "Debugging frontend build output..."
+          echo "Current directory: $(pwd)"
+          echo "eve-abacus-webui directory contents:"
           ls -la ./eve-abacus-webui/
           echo ""
-          echo "📁 .next directory exists:"
+          echo ".next directory exists:"
           if [ -d "./eve-abacus-webui/.next" ]; then
-            echo "✅ .next directory found"
+            echo ".next directory found"
             ls -la ./eve-abacus-webui/.next/
             echo ""
-            echo "📁 BUILD_ID file:"
+            echo "BUILD_ID file:"
             ls -la ./eve-abacus-webui/.next/BUILD_ID || echo "BUILD_ID not found"
             echo ""
-            echo "📁 Server directory:"
+            echo "Server directory:"
             ls -la ./eve-abacus-webui/.next/server/ || echo "server directory not found"
             echo ""
-            echo "📁 Static directory:"
+            echo "Static directory:"
             ls -la ./eve-abacus-webui/.next/static/ || echo "static directory not found"
             echo ""
-            echo "📁 Standalone directory:"
+            echo "Standalone directory:"
             ls -la ./eve-abacus-webui/.next/standalone/ || echo "standalone directory not found"
             echo ""
-            echo "📁 Checking standalone .next directory:"
+            echo "Checking standalone .next directory:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/ || echo "standalone .next directory not found"
             echo ""
-            echo "📁 Checking standalone BUILD_ID:"
+            echo "Checking standalone BUILD_ID:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "standalone BUILD_ID not found"
             echo ""
-            echo "📁 Checking standalone static directory:"
+            echo "Checking standalone static directory:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/static/ || echo "standalone static directory not found"
             echo ""
-            echo "📁 Checking standalone node_modules:"
+            echo "Checking standalone node_modules:"
             ls -la ./eve-abacus-webui/.next/standalone/node_modules/ | head -5 || echo "standalone node_modules not found"
             echo ""
-            echo "📁 Checking for styled-jsx in standalone:"
+            echo "Checking for styled-jsx in standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found"
           else
-            echo "❌ .next directory not found - build may have failed"
-            echo "📁 Checking for any build artifacts:"
+            echo ".next directory not found - build may have failed"
+            echo "Checking for any build artifacts:"
             find ./eve-abacus-webui -name "*.js" -o -name "*.json" | head -10
           fi
           echo ""
-          echo "📁 package.json exists:"
+          echo "package.json exists:"
           ls -la ./eve-abacus-webui/package.json || echo "package.json not found"
           echo ""
-          echo "📁 public directory exists:"
+          echo "public directory exists:"
           ls -la ./eve-abacus-webui/public/ || echo "public directory not found"
         working-directory: ./
       
       - name: Check if build artifacts exist
         run: |
           if [ ! -d "./eve-abacus-webui/.next" ]; then
-            echo "❌ Frontend build failed - .next directory not found"
+            echo "Frontend build failed - .next directory not found"
             exit 1
           fi
-          echo "✅ Frontend build artifacts found"
+          echo "Frontend build artifacts found"
           ls -la ./eve-abacus-webui/.next/
           
           # Check for BUILD_ID file (required for production builds)
-          echo "📁 Checking for BUILD_ID file:"
+          echo "Checking for BUILD_ID file:"
           if [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
-            echo "✅ BUILD_ID found: $(cat ./eve-abacus-webui/.next/BUILD_ID)"
+            echo "BUILD_ID found: $(cat ./eve-abacus-webui/.next/BUILD_ID)"
           else
-            echo "❌ BUILD_ID not found - this is required for production builds"
+            echo "BUILD_ID not found - this is required for production builds"
           fi
           
           # Check for server directory
-          echo "📁 Checking for server directory:"
+          echo "Checking for server directory:"
           if [ -d "./eve-abacus-webui/.next/server" ]; then
-            echo "✅ Server directory found"
+            echo "Server directory found"
             ls -la ./eve-abacus-webui/.next/server/
           else
-            echo "❌ Server directory not found"
+            echo "Server directory not found"
           fi
           
           # Check for static directory
-          echo "📁 Checking for static directory:"
+          echo "Checking for static directory:"
           if [ -d "./eve-abacus-webui/.next/static" ]; then
-            echo "✅ Static directory found"
+            echo "Static directory found"
             ls -la ./eve-abacus-webui/.next/static/
           else
-            echo "❌ Static directory not found"
+            echo "Static directory not found"
           fi
           
           # Check for build output
-          echo "📁 Checking build output structure:"
-          echo "📁 Available files in .next:"
+          echo "Checking build output structure:"
+          echo "Available files in .next:"
           find ./eve-abacus-webui/.next -type f -name "*.js" | head -10
-          echo "📁 All directories in .next:"
+          echo "All directories in .next:"
           ls -la ./eve-abacus-webui/.next/
           echo ""
-          echo "📁 Checking for standalone output:"
+          echo "Checking for standalone output:"
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "✅ Standalone output found"
+            echo "Standalone output found"
             ls -la ./eve-abacus-webui/.next/standalone/
-            echo "📁 Checking for server.js in standalone:"
+            echo "Checking for server.js in standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/server.js || echo "server.js not found"
-            echo "📁 Checking for BUILD_ID in standalone .next:"
+            echo "Checking for BUILD_ID in standalone .next:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found"
           else
-            echo "❌ Standalone output not found"
+            echo "Standalone output not found"
           fi
         working-directory: ./
       
       - name: Debug frontend artifacts
         run: |
-          echo "📁 Frontend artifacts to be uploaded:"
+          echo "Frontend artifacts to be uploaded:"
           echo "Contents of standalone directory:"
           find ./eve-abacus-webui/.next/standalone -type f -name "*.js" | head -10
           echo ""
           echo "Contents of public directory:"
           ls -la ./eve-abacus-webui/public/
           echo ""
-          echo "📁 Checking standalone build structure:"
-          echo "📁 Available files in standalone:"
+          echo "Checking standalone build structure:"
+          echo "Available files in standalone:"
           ls -la ./eve-abacus-webui/.next/standalone/
           echo ""
-          echo "📁 Checking if server.js exists:"
+          echo "Checking if server.js exists:"
           ls -la ./eve-abacus-webui/.next/standalone/server.js || echo "server.js not found"
           echo ""
-          echo "📁 Checking if BUILD_ID exists in standalone .next:"
+          echo "Checking if BUILD_ID exists in standalone .next:"
           ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found"
         working-directory: ./
       
       - name: Prepare frontend artifacts
         run: |
-          echo "🔍 Preparing frontend artifacts..."
-          echo "📁 Current directory: $(pwd)"
-          echo "📁 eve-abacus-webui directory contents:"
+          echo "Preparing frontend artifacts..."
+          echo "Current directory: $(pwd)"
+          echo "eve-abacus-webui directory contents:"
           ls -la ./eve-abacus-webui/
           
           mkdir -p ./frontend-build
-          echo "📁 Created frontend-build directory"
+          echo "Created frontend-build directory"
           
           # Copy standalone build for production deployment
-          echo "📁 Copying standalone build..."
+          echo "Copying standalone build..."
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "📁 Original standalone directory contents:"
+            echo "Original standalone directory contents:"
             ls -la ./eve-abacus-webui/.next/standalone/
-            echo "📁 Checking for .next in original standalone:"
+            echo "Checking for .next in original standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/ || echo ".next directory not found in original standalone"
-            echo "📁 Checking for BUILD_ID in original standalone:"
+            echo "Checking for BUILD_ID in original standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found in original standalone"
-            echo "📁 Checking for static directory in original standalone:"
+            echo "Checking for static directory in original standalone:"
             ls -la ./eve-abacus-webui/.next/standalone/.next/static/ || echo "static directory not found in original standalone"
             
             # Copy the standalone directory as-is (it already contains everything needed)
             cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
-            echo "✅ standalone directory copied"
+            echo "standalone directory copied"
             
             # Always ensure the .next directory exists in the standalone build
-            echo "🔧 Ensuring .next directory exists in standalone build..."
+            echo "Ensuring .next directory exists in standalone build..."
             mkdir -p ./frontend-build/standalone/.next
             
             # Copy BUILD_ID
             if [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
               cp ./eve-abacus-webui/.next/BUILD_ID ./frontend-build/standalone/.next/
-              echo "✅ BUILD_ID copied"
+              echo "BUILD_ID copied"
             fi
             
             # Copy static directory
             if [ -d "./eve-abacus-webui/.next/static" ]; then
               cp -r ./eve-abacus-webui/.next/static ./frontend-build/standalone/.next/
-              echo "✅ static directory copied"
+              echo "static directory copied"
             fi
             
             # Copy server directory
             if [ -d "./eve-abacus-webui/.next/server" ]; then
               cp -r ./eve-abacus-webui/.next/server ./frontend-build/standalone/.next/
-              echo "✅ server directory copied"
+              echo "server directory copied"
             fi
             
             # Copy other important files
             for file in "app-build-manifest.json" "build-manifest.json" "prerender-manifest.json" "react-loadable-manifest.json" "required-server-files.json" "routes-manifest.json"; do
               if [ -f "./eve-abacus-webui/.next/$file" ]; then
                 cp "./eve-abacus-webui/.next/$file" "./frontend-build/standalone/.next/"
-                echo "✅ $file copied"
+                echo "$file copied"
               fi
             done
           else
-            echo "❌ standalone directory not found - cannot copy"
+            echo "standalone directory not found - cannot copy"
           fi
           
-          echo "📁 Verifying standalone directory was copied:"
+          echo "Verifying standalone directory was copied:"
           ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
-          echo "📁 Checking server.js in copied directory:"
+          echo "Checking server.js in copied directory:"
           ls -la ./frontend-build/standalone/server.js || echo "server.js not found in copied directory"
-          echo "📁 Checking for .next directory in standalone:"
+          echo "Checking for .next directory in standalone:"
           ls -la ./frontend-build/standalone/.next/ || echo ".next directory not found in standalone"
-          echo "📁 Checking BUILD_ID in standalone .next:"
+          echo "Checking BUILD_ID in standalone .next:"
           ls -la ./frontend-build/standalone/.next/BUILD_ID || echo "BUILD_ID not found in standalone .next"
-          echo "📁 Checking static directory in standalone .next:"
+          echo "Checking static directory in standalone .next:"
           ls -la ./frontend-build/standalone/.next/static/ || echo "static directory not found in standalone .next"
-          echo "📁 Checking node_modules in standalone:"
+          echo "Checking node_modules in standalone:"
           ls -la ./frontend-build/standalone/node_modules/ | head -5 || echo "node_modules not found in standalone"
-          echo "📁 Checking for styled-jsx specifically:"
+          echo "Checking for styled-jsx specifically:"
           ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found"
-          echo "📁 Full standalone directory structure:"
+          echo " Full standalone directory structure:"
           find ./frontend-build/standalone -type f -name "*.js" | head -10
-          echo "📁 Checking standalone node_modules contents:"
+          echo " Checking standalone node_modules contents:"
           ls -la ./frontend-build/standalone/node_modules/ | head -10 || echo "node_modules not found"
-          echo "📁 Checking for styled-jsx in standalone node_modules:"
+          echo " Checking for styled-jsx in standalone node_modules:"
           ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found in standalone"
-          echo "📁 Checking main node_modules for styled-jsx:"
+          echo " Checking main node_modules for styled-jsx:"
           ls -la ./eve-abacus-webui/node_modules/styled-jsx/ || echo "styled-jsx not found in main"
-          echo "📁 Checking for @swc/helpers in standalone node_modules:"
+          echo " Checking for @swc/helpers in standalone node_modules:"
           ls -la ./frontend-build/standalone/node_modules/@swc/helpers/ || echo "@swc/helpers not found in standalone"
-          echo "📁 Checking main node_modules for @swc/helpers:"
+          echo " Checking main node_modules for @swc/helpers:"
           ls -la ./eve-abacus-webui/node_modules/@swc/helpers/ || echo "@swc/helpers not found in main"
           
           # Copy public directory for static assets
-          echo "📁 Copying public directory..."
+          echo " Copying public directory..."
           if [ -d "./eve-abacus-webui/public" ]; then
             cp -r ./eve-abacus-webui/public ./frontend-build/
-            echo "✅ public directory copied"
+            echo " public directory copied"
           else
-            echo "❌ public directory not found - cannot copy"
+            echo " public directory not found - cannot copy"
           fi
           
           # Copy systemd service files
-          echo "📁 Copying systemd service file..."
+          echo " Copying systemd service file..."
           if [ -f "./eveabacus-frontend.service" ]; then
             cp ./eveabacus-frontend.service ./frontend-build/
-            echo "✅ eveabacus-frontend.service copied"
+            echo " eveabacus-frontend.service copied"
           else
-            echo "❌ eveabacus-frontend.service not found - cannot copy"
+            echo " eveabacus-frontend.service not found - cannot copy"
           fi
           
-          echo "📁 Final frontend artifacts:"
+          echo " Final frontend artifacts:"
           ls -la ./frontend-build/
-          echo "📁 standalone directory contents:"
+          echo " standalone directory contents:"
           ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
         working-directory: ./
       
@@ -583,7 +571,7 @@ jobs:
       
       - name: Debug downloaded artifacts
         run: |
-          echo "🔍 Checking downloaded artifacts..."
+          echo "Checking downloaded artifacts..."
           echo "Frontend artifacts:"
           ls -la ./frontend-artifacts/ || echo "Frontend artifacts not found"
           echo ""
@@ -660,75 +648,75 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              echo '🔍 Starting frontend deployment...'
+              echo 'Starting frontend deployment...'
               sudo mkdir -p /var/www/eveabacus/frontend
               sudo rm -rf /var/www/eveabacus/frontend/*
               cd /tmp
-              echo '📥 Downloading frontend artifacts...'
+              echo 'Downloading frontend artifacts...'
               curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
-              echo '📦 Extracting frontend artifacts...'
-              echo '📁 Checking tar file contents before extraction:'
+              echo 'Extracting frontend artifacts...'
+              echo 'Checking tar file contents before extraction:'
               tar -tzf frontend-artifacts.tar.gz | head -20
-              echo '📦 Extracting with verbose output:'
+              echo 'Extracting with verbose output:'
               tar -xzf frontend-artifacts.tar.gz
-              echo '📁 standalone directory contents:'
+              echo 'standalone directory contents:'
               ls -la /tmp/standalone/ || echo 'standalone directory not found'
-              echo '📁 Checking for server.js in standalone:'
+              echo 'Checking for server.js in standalone:'
               ls -la /tmp/standalone/server.js || echo 'server.js not found'
-              echo '📁 Checking for .next directory in standalone:'
+              echo 'Checking for .next directory in standalone:'
               ls -la /tmp/standalone/.next/ || echo '.next directory not found'
-              echo '📁 Checking for BUILD_ID in standalone .next:'
+              echo 'Checking for BUILD_ID in standalone .next:'
               ls -la /tmp/standalone/.next/BUILD_ID || echo 'BUILD_ID not found in standalone .next'
-              echo '📁 Checking for node_modules in standalone:'
+              echo 'Checking for node_modules in standalone:'
               ls -la /tmp/standalone/node_modules/ | head -5 || echo 'node_modules not found'
-              echo '📁 Checking for styled-jsx in standalone:'
+              echo 'Checking for styled-jsx in standalone:'
               ls -la /tmp/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found'
-              echo '📁 public directory contents:'
+              echo 'public directory contents:'
               ls -la /tmp/public/ || echo 'public directory not found'
-              echo '📁 Checking for systemd service file:'
+              echo 'Checking for systemd service file:'
               ls -la /tmp/eveabacus-frontend.service || echo 'eveabacus-frontend.service not found'
               
               # Copy standalone build files
-              echo '📁 Copying standalone build files...'
+              echo 'Copying standalone build files...'
               sudo cp -r /tmp/standalone /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy standalone directory'
               sudo cp -r /tmp/public /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy public directory'
               sudo cp /tmp/eveabacus-frontend.service /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy service file'
               
-              echo '📁 Frontend files copied:'
+              echo 'Frontend files copied:'
               ls -la /var/www/eveabacus/frontend/
               
               # Debug: Check standalone directory structure
-              echo '📁 Debugging standalone directory structure:'
+              echo 'Debugging standalone directory structure:'
               ls -la /var/www/eveabacus/frontend/standalone/ || echo 'standalone directory not found after copy'
-              echo '📁 Checking for server.js:'
+              echo 'Checking for server.js:'
               ls -la /var/www/eveabacus/frontend/standalone/server.js || echo 'server.js not found'
-              echo '📁 Checking for BUILD_ID file:'
+              echo 'Checking for BUILD_ID file:'
               ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo 'BUILD_ID not found'
-              echo '📁 Checking for .next directory:'
+              echo 'Checking for .next directory:'
               ls -la /var/www/eveabacus/frontend/standalone/.next/ || echo '.next directory not found'
-              echo '📁 Checking standalone node_modules:'
+              echo 'Checking standalone node_modules:'
               ls -la /var/www/eveabacus/frontend/standalone/node_modules/ | head -5 || echo 'node_modules not found'
-              echo '📁 Checking for styled-jsx:'
+              echo 'Checking for styled-jsx:'
               ls -la /var/www/eveabacus/frontend/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found'
               
-              echo '🔧 Setting permissions...'
+              echo 'Setting permissions...'
               sudo chown -R www-data:www-data /var/www/eveabacus/frontend
               sudo chmod -R 755 /var/www/eveabacus/frontend
-              echo '📁 Final frontend deployment contents:'
+              echo 'Final frontend deployment contents:'
               ls -la /var/www/eveabacus/frontend/
-              echo '📁 Checking if standalone directory exists:'
+              echo 'Checking if standalone directory exists:'
               ls -la /var/www/eveabacus/frontend/standalone/ || echo 'standalone directory not found after copy'
-              echo '📁 Checking if server.js exists:'
+              echo 'Checking if server.js exists:'
               ls -la /var/www/eveabacus/frontend/standalone/server.js || echo 'server.js not found after copy'
-              echo '📁 Checking if BUILD_ID exists:'
+              echo 'Checking if BUILD_ID exists:'
               ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo 'BUILD_ID not found after copy'
-              echo '📁 Checking if styled-jsx exists:'
+              echo 'Checking if styled-jsx exists:'
               ls -la /var/www/eveabacus/frontend/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found after copy'
-              echo '📁 Checking if node is available:'
+              echo 'Checking if node is available:'
               which node || echo 'node not found in PATH'
               node --version || echo 'node version check failed'
               rm -f frontend-artifacts.tar.gz
-              echo '✅ Frontend deployment complete'
+              echo 'Frontend deployment complete'
             "
           
           # Clean up storage account
@@ -745,28 +733,28 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --command-id RunShellScript \
             --scripts "
-              echo '🔧 Starting frontend service and reloading nginx...'
+              echo 'Starting frontend service and reloading nginx...'
               
               # Update the service configuration
-              echo '🔧 Updating frontend service configuration...'
+              echo 'Updating frontend service configuration...'
               sudo systemctl stop eveabacus-frontend 2>/dev/null || true
               sudo rm -f /etc/systemd/system/eveabacus-frontend.service
               
               # Copy the service file from the repository
-              echo '📁 Copying systemd service file...'
+              echo 'Copying systemd service file...'
               if [ -f '/var/www/eveabacus/frontend/eveabacus-frontend.service' ]; then
                 sudo cp /var/www/eveabacus/frontend/eveabacus-frontend.service /etc/systemd/system/eveabacus-frontend.service
                 sudo chmod 644 /etc/systemd/system/eveabacus-frontend.service
-                echo '✅ Service file copied successfully'
+                echo 'Service file copied successfully'
               else
-                echo '⚠️  Service file not found in frontend directory, trying repository root'
+                echo ' Service file not found in frontend directory, trying repository root'
                 # Try to copy from the repository root if not in frontend directory
                 if [ -f '/var/www/eveabacus/eveabacus-frontend.service' ]; then
                   sudo cp /var/www/eveabacus/eveabacus-frontend.service /etc/systemd/system/eveabacus-frontend.service
                   sudo chmod 644 /etc/systemd/system/eveabacus-frontend.service
-                  echo '✅ Service file copied from repository root'
+                  echo 'Service file copied from repository root'
                 else
-                  echo '❌ Service file not found anywhere - service may not start properly'
+                  echo 'Service file not found anywhere - service may not start properly'
                 fi
               fi
               
@@ -775,34 +763,34 @@ jobs:
               
               # Start frontend service if it exists
               if systemctl list-unit-files | grep -q eveabacus-frontend.service; then
-                echo '🚀 Starting eveabacus-frontend service...'
+                echo 'Starting eveabacus-frontend service...'
                 sudo systemctl start eveabacus-frontend
-                echo '⏳ Waiting for frontend service to start...'
+                echo 'Waiting for frontend service to start...'
                 sleep 5
                 if systemctl is-active --quiet eveabacus-frontend; then
-                  echo '✅ Frontend service started successfully'
+                  echo 'Frontend service started successfully'
                 else
-                  echo '⚠️  Frontend service failed to start'
-                  echo '📋 Service status:'
+                  echo ' Frontend service failed to start'
+                  echo 'Service status:'
                   sudo systemctl status eveabacus-frontend
-                  echo '📋 Recent logs:'
+                  echo 'Recent logs:'
                   sudo journalctl -u eveabacus-frontend -n 20 --no-pager
-                  echo '📋 Checking if files exist:'
+                  echo 'Checking if files exist:'
                   ls -la /var/www/eveabacus/frontend/ || echo 'Frontend directory not found'
                   ls -la /var/www/eveabacus/frontend/standalone/ || echo 'standalone directory not found'
                   ls -la /var/www/eveabacus/frontend/standalone/server.js || echo 'server.js not found'
                 fi
               else
-                echo '⚠️  eveabacus-frontend service not found'
+                echo ' eveabacus-frontend service not found'
               fi
               
               # Reload nginx if it exists
               if systemctl list-unit-files | grep -q nginx.service; then
-                echo '🔄 Reloading nginx...'
+                echo 'Reloading nginx...'
                 sudo systemctl reload nginx
               else
-                echo '⚠️  nginx service not found'
+                echo ' nginx service not found'
               fi
               
-              echo '✅ Frontend deployment and service startup complete'
+              echo 'Frontend deployment and service startup complete'
             " 
