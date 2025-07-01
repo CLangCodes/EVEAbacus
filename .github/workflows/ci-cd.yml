@@ -36,6 +36,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
       
+      - name: Clean publish-backend directory
+        run: rm -rf ./publish-backend
+
       - name: Build backend
         run: dotnet build --no-restore --configuration Release ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
       
