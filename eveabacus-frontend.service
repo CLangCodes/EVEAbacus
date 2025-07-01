@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/var/www/eveabacus/frontend
-ExecStart=server.js
+ExecStart=node server.js
 Restart=always
 RestartSec=10
 SyslogIdentifier=eveabacus-frontend
