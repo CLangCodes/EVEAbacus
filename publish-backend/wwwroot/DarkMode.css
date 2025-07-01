@@ -1,0 +1,13 @@
+﻿:root {
+    --bs-body-bg: #000000;
+    --bs-body-color: #fff;
+}
+
+.top-row{
+    background-color: #000000 !important;
+}
+
+.sidebar {
+    background-image: linear-gradient(180deg, rgb(0,0,0) 0%, #000 70%) !important;
+    border-right: 1px solid white;
+}
