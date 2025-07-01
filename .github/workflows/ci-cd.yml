@@ -329,10 +329,8 @@ jobs:
 
             # Copy static directory if it exists
             if [ -d "./eve-abacus-webui/.next/static" ]; then
-              cp -r ./eve-abacus-webui/.next/static ./frontend-build/standalone/.next/
+              cp -r ./eve-abacus-webui/.next/static ./frontend-build/.next/
             fi
-
-            done
           else
             # If standalone directory does not exist, print an error and exit
             echo "standalone directory not found - cannot copy"
