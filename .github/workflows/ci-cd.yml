@@ -309,240 +309,42 @@ jobs:
         run: pnpm build
         working-directory: ./eve-abacus-webui
       
-      - name: Debug build output
-        run: |
-          echo "Debugging frontend build output..."
-          echo "Current directory: $(pwd)"
-          echo "eve-abacus-webui directory contents:"
-          ls -la ./eve-abacus-webui/
-          echo ""
-          echo ".next directory exists:"
-          if [ -d "./eve-abacus-webui/.next" ]; then
-            echo ".next directory found"
-            ls -la ./eve-abacus-webui/.next/
-            echo ""
-            echo "BUILD_ID file:"
-            ls -la ./eve-abacus-webui/.next/BUILD_ID || echo "BUILD_ID not found"
-            echo ""
-            echo "Server directory:"
-            ls -la ./eve-abacus-webui/.next/server/ || echo "server directory not found"
-            echo ""
-            echo "Static directory:"
-            ls -la ./eve-abacus-webui/.next/static/ || echo "static directory not found"
-            echo ""
-            echo "Standalone directory:"
-            ls -la ./eve-abacus-webui/.next/standalone/ || echo "standalone directory not found"
-            echo ""
-            echo "Checking standalone .next directory:"
-            ls -la ./eve-abacus-webui/.next/standalone/.next/ || echo "standalone .next directory not found"
-            echo ""
-            echo "Checking standalone BUILD_ID:"
-            ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "standalone BUILD_ID not found"
-            echo ""
-            echo "Checking standalone static directory:"
-            ls -la ./eve-abacus-webui/.next/standalone/.next/static/ || echo "standalone static directory not found"
-            echo ""
-            echo "Checking standalone node_modules:"
-            ls -la ./eve-abacus-webui/.next/standalone/node_modules/ | head -5 || echo "standalone node_modules not found"
-            echo ""
-            echo "Checking for styled-jsx in standalone:"
-            ls -la ./eve-abacus-webui/.next/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found"
-          else
-            echo ".next directory not found - build may have failed"
-            echo "Checking for any build artifacts:"
-            find ./eve-abacus-webui -name "*.js" -o -name "*.json" | head -10
-          fi
-          echo ""
-          echo "package.json exists:"
-          ls -la ./eve-abacus-webui/package.json || echo "package.json not found"
-          echo ""
-          echo "public directory exists:"
-          ls -la ./eve-abacus-webui/public/ || echo "public directory not found"
-        working-directory: ./
-      
-      - name: Check if build artifacts exist
-        run: |
-          if [ ! -d "./eve-abacus-webui/.next" ]; then
-            echo "Frontend build failed - .next directory not found"
-            exit 1
-          fi
-          echo "Frontend build artifacts found"
-          ls -la ./eve-abacus-webui/.next/
-          
-          # Check for BUILD_ID file (required for production builds)
-          echo "Checking for BUILD_ID file:"
-          if [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
-            echo "BUILD_ID found: $(cat ./eve-abacus-webui/.next/BUILD_ID)"
-          else
-            echo "BUILD_ID not found - this is required for production builds"
-          fi
-          
-          # Check for server directory
-          echo "Checking for server directory:"
-          if [ -d "./eve-abacus-webui/.next/server" ]; then
-            echo "Server directory found"
-            ls -la ./eve-abacus-webui/.next/server/
-          else
-            echo "Server directory not found"
-          fi
-          
-          # Check for static directory
-          echo "Checking for static directory:"
-          if [ -d "./eve-abacus-webui/.next/static" ]; then
-            echo "Static directory found"
-            ls -la ./eve-abacus-webui/.next/static/
-          else
-            echo "Static directory not found"
-          fi
-          
-          # Check for build output
-          echo "Checking build output structure:"
-          echo "Available files in .next:"
-          find ./eve-abacus-webui/.next -type f -name "*.js" | head -10
-          echo "All directories in .next:"
-          ls -la ./eve-abacus-webui/.next/
-          echo ""
-          echo "Checking for standalone output:"
-          if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "Standalone output found"
-            ls -la ./eve-abacus-webui/.next/standalone/
-            echo "Checking for server.js in standalone:"
-            ls -la ./eve-abacus-webui/.next/standalone/server.js || echo "server.js not found"
-            echo "Checking for BUILD_ID in standalone .next:"
-            ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found"
-          else
-            echo "Standalone output not found"
-          fi
-        working-directory: ./
-      
-      - name: Debug frontend artifacts
-        run: |
-          echo "Frontend artifacts to be uploaded:"
-          echo "Contents of standalone directory:"
-          find ./eve-abacus-webui/.next/standalone -type f -name "*.js" | head -10
-          echo ""
-          echo "Contents of public directory:"
-          ls -la ./eve-abacus-webui/public/
-          echo ""
-          echo "Checking standalone build structure:"
-          echo "Available files in standalone:"
-          ls -la ./eve-abacus-webui/.next/standalone/
-          echo ""
-          echo "Checking if server.js exists:"
-          ls -la ./eve-abacus-webui/.next/standalone/server.js || echo "server.js not found"
-          echo ""
-          echo "Checking if BUILD_ID exists in standalone .next:"
-          ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found"
-        working-directory: ./
-      
       - name: Prepare frontend artifacts
         run: |
           echo "Preparing frontend artifacts..."
-          echo "Current directory: $(pwd)"
-          echo "eve-abacus-webui directory contents:"
-          ls -la ./eve-abacus-webui/
           
+          # Prepare the frontend-build directory
           mkdir -p ./frontend-build
-          echo "Created frontend-build directory"
-          
-          # Copy standalone build for production deployment
-          echo "Copying standalone build..."
+
+          # Copy the standalone build directory if it exists
           if [ -d "./eve-abacus-webui/.next/standalone" ]; then
-            echo "Original standalone directory contents:"
-            ls -la ./eve-abacus-webui/.next/standalone/
-            echo "Checking for .next in original standalone:"
-            ls -la ./eve-abacus-webui/.next/standalone/.next/ || echo ".next directory not found in original standalone"
-            echo "Checking for BUILD_ID in original standalone:"
-            ls -la ./eve-abacus-webui/.next/standalone/.next/BUILD_ID || echo "BUILD_ID not found in original standalone"
-            echo "Checking for static directory in original standalone:"
-            ls -la ./eve-abacus-webui/.next/standalone/.next/static/ || echo "static directory not found in original standalone"
-            
-            # Copy the standalone directory as-is (it already contains everything needed)
-            cp -r ./eve-abacus-webui/.next/standalone ./frontend-build/
-            echo "standalone directory copied"
-            
-            # Always ensure the .next directory exists in the standalone build
-            echo "Ensuring .next directory exists in standalone build..."
-            mkdir -p ./frontend-build/standalone/.next
-            
-            # Copy BUILD_ID
-            if [ -f "./eve-abacus-webui/.next/BUILD_ID" ]; then
-              cp ./eve-abacus-webui/.next/BUILD_ID ./frontend-build/standalone/.next/
-              echo "BUILD_ID copied"
-            fi
-            
-            # Copy static directory
+            # Copy the entire standalone directory
+            cp -r ./eve-abacus-webui/.next/standalone/. ./frontend-build/
+
+            # Ensure the .next directory exists in the standalone build
+            mkdir -p ./frontend-build/.next
+
+            # Copy static directory if it exists
             if [ -d "./eve-abacus-webui/.next/static" ]; then
               cp -r ./eve-abacus-webui/.next/static ./frontend-build/standalone/.next/
-              echo "static directory copied"
             fi
-            
-            # Copy server directory
-            if [ -d "./eve-abacus-webui/.next/server" ]; then
-              cp -r ./eve-abacus-webui/.next/server ./frontend-build/standalone/.next/
-              echo "server directory copied"
-            fi
-            
-            # Copy other important files
-            for file in "app-build-manifest.json" "build-manifest.json" "prerender-manifest.json" "react-loadable-manifest.json" "required-server-files.json" "routes-manifest.json"; do
-              if [ -f "./eve-abacus-webui/.next/$file" ]; then
-                cp "./eve-abacus-webui/.next/$file" "./frontend-build/standalone/.next/"
-                echo "$file copied"
-              fi
+
             done
           else
+            # If standalone directory does not exist, print an error and exit
             echo "standalone directory not found - cannot copy"
+            exit 1
           fi
-          
-          echo "Verifying standalone directory was copied:"
-          ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
-          echo "Checking server.js in copied directory:"
-          ls -la ./frontend-build/standalone/server.js || echo "server.js not found in copied directory"
-          echo "Checking for .next directory in standalone:"
-          ls -la ./frontend-build/standalone/.next/ || echo ".next directory not found in standalone"
-          echo "Checking BUILD_ID in standalone .next:"
-          ls -la ./frontend-build/standalone/.next/BUILD_ID || echo "BUILD_ID not found in standalone .next"
-          echo "Checking static directory in standalone .next:"
-          ls -la ./frontend-build/standalone/.next/static/ || echo "static directory not found in standalone .next"
-          echo "Checking node_modules in standalone:"
-          ls -la ./frontend-build/standalone/node_modules/ | head -5 || echo "node_modules not found in standalone"
-          echo "Checking for styled-jsx specifically:"
-          ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found"
-          echo " Full standalone directory structure:"
-          find ./frontend-build/standalone -type f -name "*.js" | head -10
-          echo " Checking standalone node_modules contents:"
-          ls -la ./frontend-build/standalone/node_modules/ | head -10 || echo "node_modules not found"
-          echo " Checking for styled-jsx in standalone node_modules:"
-          ls -la ./frontend-build/standalone/node_modules/styled-jsx/ || echo "styled-jsx not found in standalone"
-          echo " Checking main node_modules for styled-jsx:"
-          ls -la ./eve-abacus-webui/node_modules/styled-jsx/ || echo "styled-jsx not found in main"
-          echo " Checking for @swc/helpers in standalone node_modules:"
-          ls -la ./frontend-build/standalone/node_modules/@swc/helpers/ || echo "@swc/helpers not found in standalone"
-          echo " Checking main node_modules for @swc/helpers:"
-          ls -la ./eve-abacus-webui/node_modules/@swc/helpers/ || echo "@swc/helpers not found in main"
-          
-          # Copy public directory for static assets
-          echo " Copying public directory..."
+
+          # Copy the public directory for static assets if it exists
           if [ -d "./eve-abacus-webui/public" ]; then
             cp -r ./eve-abacus-webui/public ./frontend-build/
-            echo " public directory copied"
-          else
-            echo " public directory not found - cannot copy"
           fi
-          
-          # Copy systemd service files
-          echo " Copying systemd service file..."
+
+          # Copy the systemd service file if it exists
           if [ -f "./eveabacus-frontend.service" ]; then
             cp ./eveabacus-frontend.service ./frontend-build/
-            echo " eveabacus-frontend.service copied"
-          else
-            echo " eveabacus-frontend.service not found - cannot copy"
           fi
-          
-          echo " Final frontend artifacts:"
-          ls -la ./frontend-build/
-          echo " standalone directory contents:"
-          ls -la ./frontend-build/standalone/ || echo "standalone directory not found in frontend-build"
         working-directory: ./
       
       - name: Upload frontend artifacts
@@ -566,18 +368,6 @@ jobs:
         with:
           name: frontend-artifacts
           path: ./frontend-artifacts
-      
-      - name: Debug downloaded artifacts
-        run: |
-          echo "Checking downloaded artifacts..."
-          echo "Frontend artifacts:"
-          ls -la ./frontend-artifacts/ || echo "Frontend artifacts not found"
-          echo ""
-          echo "Frontend standalone directory:"
-          ls -la ./frontend-artifacts/standalone/ || echo "standalone directory not found"
-          echo ""
-          echo "Frontend public directory:"
-          ls -la ./frontend-artifacts/public/ || echo "public directory not found"
       
       - name: Azure Login
         uses: azure/login@v2
@@ -652,27 +442,8 @@ jobs:
               cd /tmp
               echo 'Downloading frontend artifacts...'
               curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
-              echo 'Extracting frontend artifacts...'
-              echo 'Checking tar file contents before extraction:'
-              tar -tzf frontend-artifacts.tar.gz | head -20
-              echo 'Extracting with verbose output:'
+              echo 'Extracting frontend artifacts with verbose output:'
               tar -xzf frontend-artifacts.tar.gz
-              echo 'standalone directory contents:'
-              ls -la /tmp/standalone/ || echo 'standalone directory not found'
-              echo 'Checking for server.js in standalone:'
-              ls -la /tmp/standalone/server.js || echo 'server.js not found'
-              echo 'Checking for .next directory in standalone:'
-              ls -la /tmp/standalone/.next/ || echo '.next directory not found'
-              echo 'Checking for BUILD_ID in standalone .next:'
-              ls -la /tmp/standalone/.next/BUILD_ID || echo 'BUILD_ID not found in standalone .next'
-              echo 'Checking for node_modules in standalone:'
-              ls -la /tmp/standalone/node_modules/ | head -5 || echo 'node_modules not found'
-              echo 'Checking for styled-jsx in standalone:'
-              ls -la /tmp/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found'
-              echo 'public directory contents:'
-              ls -la /tmp/public/ || echo 'public directory not found'
-              echo 'Checking for systemd service file:'
-              ls -la /tmp/eveabacus-frontend.service || echo 'eveabacus-frontend.service not found'
               
               # Copy standalone build files
               echo 'Copying standalone build files...'
@@ -680,36 +451,9 @@ jobs:
               sudo cp -r /tmp/public /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy public directory'
               sudo cp /tmp/eveabacus-frontend.service /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy service file'
               
-              echo 'Frontend files copied:'
-              ls -la /var/www/eveabacus/frontend/
-              
-              # Debug: Check standalone directory structure
-              echo 'Debugging standalone directory structure:'
-              ls -la /var/www/eveabacus/frontend/standalone/ || echo 'standalone directory not found after copy'
-              echo 'Checking for server.js:'
-              ls -la /var/www/eveabacus/frontend/standalone/server.js || echo 'server.js not found'
-              echo 'Checking for BUILD_ID file:'
-              ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo 'BUILD_ID not found'
-              echo 'Checking for .next directory:'
-              ls -la /var/www/eveabacus/frontend/standalone/.next/ || echo '.next directory not found'
-              echo 'Checking standalone node_modules:'
-              ls -la /var/www/eveabacus/frontend/standalone/node_modules/ | head -5 || echo 'node_modules not found'
-              echo 'Checking for styled-jsx:'
-              ls -la /var/www/eveabacus/frontend/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found'
-              
               echo 'Setting permissions...'
               sudo chown -R www-data:www-data /var/www/eveabacus/frontend
               sudo chmod -R 755 /var/www/eveabacus/frontend
-              echo 'Final frontend deployment contents:'
-              ls -la /var/www/eveabacus/frontend/
-              echo 'Checking if standalone directory exists:'
-              ls -la /var/www/eveabacus/frontend/standalone/ || echo 'standalone directory not found after copy'
-              echo 'Checking if server.js exists:'
-              ls -la /var/www/eveabacus/frontend/standalone/server.js || echo 'server.js not found after copy'
-              echo 'Checking if BUILD_ID exists:'
-              ls -la /var/www/eveabacus/frontend/standalone/.next/BUILD_ID || echo 'BUILD_ID not found after copy'
-              echo 'Checking if styled-jsx exists:'
-              ls -la /var/www/eveabacus/frontend/standalone/node_modules/styled-jsx/ || echo 'styled-jsx not found after copy'
               echo 'Checking if node is available:'
               which node || echo 'node not found in PATH'
               node --version || echo 'node version check failed'
@@ -764,7 +508,7 @@ jobs:
                 echo 'Starting eveabacus-frontend service...'
                 sudo systemctl start eveabacus-frontend
                 echo 'Waiting for frontend service to start...'
-                sleep 5
+                sleep 1
                 if systemctl is-active --quiet eveabacus-frontend; then
                   echo 'Frontend service started successfully'
                 else
