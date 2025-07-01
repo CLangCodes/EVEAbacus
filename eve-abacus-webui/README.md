@@ -40,6 +40,7 @@ src/
 │   └── orders.ts                    # TypeScript interfaces
 ├── utils/
 │   ├── cookies.ts                   # Custom cookie utility
+│   └── cookies.test.ts              # Cookie utility tests
 └── app/
     └── manufacturing-calculator/
         └── page.tsx                 # Main calculator page

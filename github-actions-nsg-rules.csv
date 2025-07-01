@@ -1,0 +1,25 @@
+Name,Priority,Source,Source Port Range,Destination,Destination Port Range,Protocol,Action,Description
+GitHubActions-4-148-0-0-16,100,4.148.0.0/16,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-149-0-0-18,101,4.149.0.0/18,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-150-0-0-18,102,4.150.0.0/18,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-151-0-0-16,103,4.151.0.0/16,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-152-0-0-15,104,4.152.0.0/15,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-154-0-0-15,105,4.154.0.0/15,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-156-0-0-15,106,4.156.0.0/15,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-175-0-0-16,107,4.175.0.0/16,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-180-0-0-16,108,4.180.0.0/16,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-207-0-0-16,109,4.207.0.0/16,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-208-0-0-15,110,4.208.0.0/15,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-210-0-0-17,111,4.210.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-227-0-0-17,112,4.227.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-231-0-0-17,113,4.231.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-236-0-0-17,114,4.236.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-242-0-0-17,115,4.242.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-245-0-0-17,116,4.245.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-246-0-0-17,117,4.246.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-249-0-0-17,118,4.249.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubActions-4-255-0-0-17,119,4.255.0.0/17,*,*,443,Tcp,Allow,GitHub Actions deployment access
+GitHubAPI-192-30-252-0-22,120,192.30.252.0/22,*,*,443,Tcp,Allow,GitHub API access
+GitHubAPI-185-199-108-0-22,121,185.199.108.0/22,*,*,443,Tcp,Allow,GitHub API access
+GitHubAPI-140-82-112-0-20,122,140.82.112.0/20,*,*,443,Tcp,Allow,GitHub API access
+GitHubAPI-143-55-64-0-20,123,143.55.64.0/20,*,*,443,Tcp,Allow,GitHub API access 
