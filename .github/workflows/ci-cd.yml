@@ -448,7 +448,7 @@ jobs:
               
               # Copy standalone build files
               echo 'Copying standalone build files...'
-              sudo cp -r /tmp/standalone /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy standalone directory'
+              sudo cp -r /tmp/standalone/. /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy standalone directory'
               sudo cp -r /tmp/public /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy public directory'
               sudo cp /tmp/eveabacus-frontend.service /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy service file'
               
