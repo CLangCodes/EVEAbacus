@@ -212,8 +212,6 @@ jobs:
               if systemctl list-unit-files | grep -q eveabacus-backend.service; then
                 echo 'Starting eveabacus-backend service...'
                 sudo systemctl start eveabacus-backend
-                echo 'Waiting for backend to be ready...'
-                sleep 10
                 echo 'Backend service started'
               else
                 echo 'Warning: eveabacus-backend service not found'
