@@ -309,7 +309,7 @@ jobs:
         working-directory: ./eve-abacus-webui
       
       - name: Build frontend
-        run: OPENAPI_SPEC_URL="https://eveabacus.com/swagger/v1/swagger.json" pnpm build
+        run: OPENAPI_SPEC_URL="https://blazor.eveabacus.com/swagger/v1/swagger.json" pnpm build
         working-directory: ./eve-abacus-webui
       
       - name: Prepare frontend artifacts
