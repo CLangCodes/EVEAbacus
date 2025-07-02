@@ -464,8 +464,11 @@ jobs:
             --command-id RunShellScript \
             --scripts "
               echo 'Starting frontend deployment...'
+              
+              # Completely clean the eveabacus directory
+              echo 'Cleaning /var/www/eveabacus directory...'
+              sudo rm -rf /var/www/eveabacus/*
               sudo mkdir -p /var/www/eveabacus/frontend
-              sudo rm -rf /var/www/eveabacus/frontend/*
               
               # Create a clean deployment directory
               mkdir -p ~/deploy-frontend
@@ -487,6 +490,14 @@ jobs:
               
               # Clean up deployment directory
               rm -rf ~/deploy-frontend
+              
+              # Clean up any leftover system files that might have been copied
+              echo 'Cleaning up any leftover system files...'
+              sudo find /var/www/eveabacus/frontend -name "clr-debug-pipe-*" -delete 2>/dev/null || true
+              sudo find /var/www/eveabacus/frontend -name "dotnet-diagnostic-*" -delete 2>/dev/null || true
+              sudo find /var/www/eveabacus/frontend -name "systemd-private-*" -delete 2>/dev/null || true
+              sudo find /var/www/eveabacus/frontend -name "snap-private-tmp" -delete 2>/dev/null || true
+              sudo find /var/www/eveabacus/frontend -name "frontend-artifacts.tar.gz" -delete 2>/dev/null || true
               
               echo 'Setting permissions...'
               sudo chown -R www-data:www-data /var/www/eveabacus/frontend
