@@ -471,7 +471,8 @@ jobs:
               sudo mkdir -p /var/www/eveabacus/frontend
               
               # Create a clean deployment directory
-              mkdir -p ~/deploy-frontend
+              cd ~
+              mkdir -p deploy-frontend
               cd ~/deploy-frontend
               echo 'Downloading frontend artifacts...'
               curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
@@ -495,7 +496,8 @@ jobs:
               fi
 
               # Clean up deployment directory
-              #rm -rf ~/deploy-frontend
+              # echo 'Testing failed if you see this'
+              # rm -rf ~/deploy-frontend
               
               # Clean up any leftover system files that might have been copied
               echo 'Cleaning up any leftover system files...'
