@@ -465,18 +465,18 @@ jobs:
             --scripts "
               echo 'Starting frontend deployment...'
               
-              # Completely clean the eveabacus directory
+              # Completely clean the eveabacus/frontend directory
               echo 'Cleaning /var/www/eveabacus/frontend/ directory...'
               sudo rm -rf /var/www/eveabacus/frontend/.
               sudo mkdir -p /var/www/eveabacus/frontend
               
               # Completely clean the deploy-frontend directory
-              echo 'Cleaning ~/deploy-frontend directory'
-              rm -rf ~/deploy-frontend
-              mkdir ~/deploy-frontend
+              echo 'Cleaning /tmp/deploy-frontend directory'
+              rm -rf /tmp/deploy-frontend
+              mkdir /tmp/deploy-frontend
 
-              #Download frontend artifacts
-              cd ~/deploy-frontend
+              # Download frontend artifacts
+              cd /tmp/deploy-frontend
               echo 'Downloading frontend artifacts...'
               curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
               echo 'Extracting frontend artifacts with verbose output:'
@@ -484,13 +484,13 @@ jobs:
               
               # Debug: Check what was extracted
               echo 'Contents of extracted artifacts:'
-              ls -la ~/deploy-frontend/
+              ls -la /tmp/deploy-frontend/
               echo 'Checking for .next directory:'
-              ls -la ~/deploy-frontend/.next/ || echo 'No .next directory found in artifacts'
+              ls -la /tmp/deploy-frontend/.next/ || echo 'No .next directory found in artifacts'
               
               # Copy only the frontend build files
               echo 'Copying frontend build files...'
-              sudo cp -r ~/deploy-frontend/* /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
+              sudo cp -r /tmp/deploy-frontend/* /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
               
               # Check if server.js exists, fail if not
               if [ ! -f "/var/www/eveabacus/frontend/server.js" ]; then
@@ -500,7 +500,7 @@ jobs:
 
               # Clean up deployment directory
               # echo 'Testing failed if you see this'
-              # rm -rf ~/deploy-frontend
+              # rm -rf /tmp/deploy-frontend
               
               # Clean up any leftover system files that might have been copied
               echo 'Cleaning up any leftover system files...'
