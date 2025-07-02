@@ -466,15 +466,27 @@ jobs:
               echo 'Starting frontend deployment...'
               sudo mkdir -p /var/www/eveabacus/frontend
               sudo rm -rf /var/www/eveabacus/frontend/*
-              cd /tmp
+              
+              # Create a clean deployment directory
+              mkdir -p ~/deploy-frontend
+              cd ~/deploy-frontend
               echo 'Downloading frontend artifacts...'
               curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
               echo 'Extracting frontend artifacts with verbose output:'
               tar -xzf frontend-artifacts.tar.gz
               
-              # Copy all frontend build files
+              # Debug: Check what was extracted
+              echo 'Contents of extracted artifacts:'
+              ls -la ~/deploy-frontend/
+              echo 'Checking for .next directory:'
+              ls -la ~/deploy-frontend/.next/ || echo 'No .next directory found in artifacts'
+              
+              # Copy only the frontend build files
               echo 'Copying frontend build files...'
-              sudo cp -r /tmp/* /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
+              sudo cp -r ~/deploy-frontend/* /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
+              
+              # Clean up deployment directory
+              rm -rf ~/deploy-frontend
               
               echo 'Setting permissions...'
               sudo chown -R www-data:www-data /var/www/eveabacus/frontend
