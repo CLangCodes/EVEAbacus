@@ -370,9 +370,16 @@ jobs:
             cp ./eveabacus-frontend.service ./frontend-build/
           fi
           
+          # Debugging
+          echo "Contents of frontend-build before upload:"
+          ls -la ./frontend-build
+          ls -la ./frontend-build/.next
+          ls -la ./frontend-build/.next/static
+
           echo "Final artifacts structure:"
           find ./frontend-build -type d | head -10
         working-directory: ./
+
       
       - name: Upload frontend artifacts
         uses: actions/upload-artifact@v4
