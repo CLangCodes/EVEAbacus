@@ -485,18 +485,27 @@ jobs:
               # Debug: Check what was extracted
               echo 'Contents of extracted artifacts:'
               ls -la /tmp/deploy-frontend/
-              echo 'Checking for .next directory:'
-              ls -la /tmp/deploy-frontend/.next/ || echo 'No .next directory found in artifacts'
+              echo 'Checking for static directory:'
+              ls -la /tmp/deploy-frontend/static/ || echo 'No static directory found in artifacts'
               
               # Copy only the frontend build files
               echo 'Copying frontend build files...'
-              sudo cp -r /tmp/deploy-frontend/* /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
+              sudo cp -r /tmp/deploy-frontend/. /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
               
               # Move static directory into .next if it exists
               if [ -d "/var/www/eveabacus/frontend/static" ]; then
                 echo 'Moving static directory into .next...'
                 sudo mkdir -p /var/www/eveabacus/frontend/.next
                 sudo mv /var/www/eveabacus/frontend/static /var/www/eveabacus/frontend/.next/static
+              fi
+
+              # Check if that succeeded
+              echo 'Checking if copy of static folder succeeded:'
+              if [ -d "/var/www/eveabacus/frontend/.next/static" ]; then
+                echo 'Copy succeeded.'
+              else
+                echo 'Copy was unsuccessful'
+                exit 1
               fi
 
               # Check if server.js exists, fail if not
