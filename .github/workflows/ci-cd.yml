@@ -466,8 +466,8 @@ jobs:
               echo 'Starting frontend deployment...'
               
               # Completely clean the eveabacus directory
-              echo 'Cleaning /var/www/eveabacus directory...'
-              sudo rm -rf /var/www/eveabacus/*
+              echo 'Cleaning /var/www/eveabacus/frontend/ directory...'
+              sudo rm -rf /var/www/eveabacus/frontend/.
               sudo mkdir -p /var/www/eveabacus/frontend
               
               # Create a clean deployment directory
