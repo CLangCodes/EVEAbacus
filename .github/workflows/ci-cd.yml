@@ -14,257 +14,257 @@ env:
 
 jobs:
   # Build and test backend
-  build-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # build-backend:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
       
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+  #     - name: Setup .NET
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: ${{ env.DOTNET_VERSION }}
       
-      - name: Cache .NET dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+  #     - name: Cache .NET dependencies
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: ~/.nuget/packages
+  #         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-nuget-
       
-      - name: Restore dependencies
-        run: dotnet restore ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+  #     - name: Restore dependencies
+  #       run: dotnet restore ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
       
-      - name: Clean publish-backend directory
-        run: rm -rf ./publish-backend
+  #     - name: Clean publish-backend directory
+  #       run: rm -rf ./publish-backend
 
-      - name: Build backend
-        run: dotnet build --no-restore --configuration Release ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+  #     - name: Build backend
+  #       run: dotnet build --no-restore --configuration Release ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
       
-      - name: Test backend
-        run: dotnet test --no-build --verbosity normal ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+  #     - name: Test backend
+  #       run: dotnet test --no-build --verbosity normal ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
       
-      - name: Publish backend
-        run: dotnet publish --configuration Release --output ./publish-backend --self-contained true -r linux-x64 ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
+  #     - name: Publish backend
+  #       run: dotnet publish --configuration Release --output ./publish-backend --self-contained true -r linux-x64 ./EVEAbacus.WebUI/EVEAbacus.WebUI.csproj
       
-      - name: Prepare backend artifacts
-        run: |
-          # Copy systemd service file to backend artifacts
-          cp ./eveabacus-backend.service ./publish-backend/
-          echo "Backend artifacts prepared:"
+  #     - name: Prepare backend artifacts
+  #       run: |
+  #         # Copy systemd service file to backend artifacts
+  #         cp ./eveabacus-backend.service ./publish-backend/
+  #         echo "Backend artifacts prepared:"
       
-      - name: Upload backend artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-artifacts
-          path: ./publish-backend
-          retention-days: 1
+  #     - name: Upload backend artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: backend-artifacts
+  #         path: ./publish-backend
+  #         retention-days: 1
 
-  # Deploy backend to production
-  deploy-backend:
-    needs: [build-backend]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # # Deploy backend to production
+  # deploy-backend:
+  #   needs: [build-backend]
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
       
-      - name: Download backend artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-artifacts
-          path: ./backend-artifacts
+  #     - name: Download backend artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: backend-artifacts
+  #         path: ./backend-artifacts
       
-      - name: Debug downloaded artifacts
-        run: |
-          echo "Checking downloaded artifacts..."
-          echo "Backend artifacts:"
-          ls -la ./backend-artifacts/ || echo "Backend artifacts not found"
+  #     - name: Debug downloaded artifacts
+  #       run: |
+  #         echo "Checking downloaded artifacts..."
+  #         echo "Backend artifacts:"
+  #         ls -la ./backend-artifacts/ || echo "Backend artifacts not found"
       
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Azure Login
+  #       uses: azure/login@v2
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: List available VMs
-        run: |
-          echo "Available VMs in resource group ${{ env.RESOURCE_GROUP }}:"
-          az vm list --resource-group ${{ env.RESOURCE_GROUP }} --query "[].{Name:name, Status:powerState}" -o table
+  #     - name: List available VMs
+  #       run: |
+  #         echo "Available VMs in resource group ${{ env.RESOURCE_GROUP }}:"
+  #         az vm list --resource-group ${{ env.RESOURCE_GROUP }} --query "[].{Name:name, Status:powerState}" -o table
       
-      - name: Deploy backend to Azure VM
-        run: |
-          # Stop backend service
-          echo "Stopping backend service..."
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              sudo systemctl stop eveabacus-backend 2>/dev/null || true
-            "
+  #     - name: Deploy backend to Azure VM
+  #       run: |
+  #         # Stop backend service
+  #         echo "Stopping backend service..."
+  #         az vm run-command invoke \
+  #           --resource-group ${{ env.RESOURCE_GROUP }} \
+  #           --name ${{ env.VM_NAME }} \
+  #           --command-id RunShellScript \
+  #           --scripts "
+  #             sudo systemctl stop eveabacus-backend 2>/dev/null || true
+  #           "
           
-          # Create storage account for large files
-          echo "Setting up storage for backend deployment..."
-          STORAGE_ACCOUNT_NAME="evebackend$(date +%s)"
-          az storage account create \
-            --name $STORAGE_ACCOUNT_NAME \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --location eastus \
-            --sku Standard_LRS \
-            --kind StorageV2
+  #         # Create storage account for large files
+  #         echo "Setting up storage for backend deployment..."
+  #         STORAGE_ACCOUNT_NAME="evebackend$(date +%s)"
+  #         az storage account create \
+  #           --name $STORAGE_ACCOUNT_NAME \
+  #           --resource-group ${{ env.RESOURCE_GROUP }} \
+  #           --location eastus \
+  #           --sku Standard_LRS \
+  #           --kind StorageV2
           
-          # Get storage key
-          STORAGE_KEY=$(az storage account keys list \
-            --account-name $STORAGE_ACCOUNT_NAME \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query '[0].value' -o tsv)
+  #         # Get storage key
+  #         STORAGE_KEY=$(az storage account keys list \
+  #           --account-name $STORAGE_ACCOUNT_NAME \
+  #           --resource-group ${{ env.RESOURCE_GROUP }} \
+  #           --query '[0].value' -o tsv)
           
-          # Create container
-          az storage container create \
-            --name deployments \
-            --account-name $STORAGE_ACCOUNT_NAME \
-            --account-key $STORAGE_KEY
+  #         # Create container
+  #         az storage container create \
+  #           --name deployments \
+  #           --account-name $STORAGE_ACCOUNT_NAME \
+  #           --account-key $STORAGE_KEY
           
-          # Upload backend artifacts
-          echo "Uploading backend artifacts..."
-          tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
-          az storage blob upload \
-            --account-name $STORAGE_ACCOUNT_NAME \
-            --account-key $STORAGE_KEY \
-            --container-name deployments \
-            --name backend-artifacts.tar.gz \
-            --file backend-artifacts.tar.gz
+  #         # Upload backend artifacts
+  #         echo "Uploading backend artifacts..."
+  #         tar -czf backend-artifacts.tar.gz -C ./backend-artifacts .
+  #         az storage blob upload \
+  #           --account-name $STORAGE_ACCOUNT_NAME \
+  #           --account-key $STORAGE_KEY \
+  #           --container-name deployments \
+  #           --name backend-artifacts.tar.gz \
+  #           --file backend-artifacts.tar.gz
           
-          # Deploy backend from storage
-          echo "Deploying backend from storage..."
-          # Generate SAS token for backend artifacts
-          BACKEND_SAS=$(az storage blob generate-sas \
-            --account-name $STORAGE_ACCOUNT_NAME \
-            --account-key $STORAGE_KEY \
-            --container-name deployments \
-            --name backend-artifacts.tar.gz \
-            --permissions r \
-            --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
-            --full-uri \
-            --output tsv)
+  #         # Deploy backend from storage
+  #         echo "Deploying backend from storage..."
+  #         # Generate SAS token for backend artifacts
+  #         BACKEND_SAS=$(az storage blob generate-sas \
+  #           --account-name $STORAGE_ACCOUNT_NAME \
+  #           --account-key $STORAGE_KEY \
+  #           --container-name deployments \
+  #           --name backend-artifacts.tar.gz \
+  #           --permissions r \
+  #           --expiry $(date -u -d "1 hour" '+%Y-%m-%dT%H:%M:%SZ') \
+  #           --full-uri \
+  #           --output tsv)
           
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              echo 'Starting backend deployment...'
-              sudo mkdir -p /var/www/eveabacus
-              sudo rm -rf /var/www/eveabacus/*
-              cd /tmp
-              echo 'Downloading backend artifacts...'
-              curl -L -o backend-artifacts.tar.gz \"$BACKEND_SAS\"
-              echo 'Extracting backend artifacts...'
-              echo 'Checking tar file contents before extraction:'
-              tar -tzf backend-artifacts.tar.gz | head -20
-              echo 'Extracting with verbose output:'
-              tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
-              echo 'Extracted backend contents:'
-              ls -la /var/www/eveabacus/
-              echo 'Checking for .NET DLL files:'
-              find /var/www/eveabacus -name "*.dll" | head -5 || echo "No DLL files found"
-              echo 'Checking for EVEAbacus.WebUI.dll specifically:'
-              ls -la /var/www/eveabacus/EVEAbacus.WebUI.dll || echo 'EVEAbacus.WebUI.dll not found'
-              echo 'Checking for systemd service file:'
-              ls -la /var/www/eveabacus/eveabacus-backend.service || echo 'eveabacus-backend.service not found'
+  #         az vm run-command invoke \
+  #           --resource-group ${{ env.RESOURCE_GROUP }} \
+  #           --name ${{ env.VM_NAME }} \
+  #           --command-id RunShellScript \
+  #           --scripts "
+  #             echo 'Starting backend deployment...'
+  #             sudo mkdir -p /var/www/eveabacus
+  #             sudo rm -rf /var/www/eveabacus/*
+  #             cd /tmp
+  #             echo 'Downloading backend artifacts...'
+  #             curl -L -o backend-artifacts.tar.gz \"$BACKEND_SAS\"
+  #             echo 'Extracting backend artifacts...'
+  #             echo 'Checking tar file contents before extraction:'
+  #             tar -tzf backend-artifacts.tar.gz | head -20
+  #             echo 'Extracting with verbose output:'
+  #             tar -xzf backend-artifacts.tar.gz -C /var/www/eveabacus/
+  #             echo 'Extracted backend contents:'
+  #             ls -la /var/www/eveabacus/
+  #             echo 'Checking for .NET DLL files:'
+  #             find /var/www/eveabacus -name "*.dll" | head -5 || echo "No DLL files found"
+  #             echo 'Checking for EVEAbacus.WebUI.dll specifically:'
+  #             ls -la /var/www/eveabacus/EVEAbacus.WebUI.dll || echo 'EVEAbacus.WebUI.dll not found'
+  #             echo 'Checking for systemd service file:'
+  #             ls -la /var/www/eveabacus/eveabacus-backend.service || echo 'eveabacus-backend.service not found'
               
-              # Copy systemd service file
-              echo 'Copying systemd service file...'
-              sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus-backend.service
-              sudo chmod 644 /etc/systemd/system/eveabacus-backend.service
+  #             # Copy systemd service file
+  #             echo 'Copying systemd service file...'
+  #             sudo cp /var/www/eveabacus/eveabacus-backend.service /etc/systemd/system/eveabacus-backend.service
+  #             sudo chmod 644 /etc/systemd/system/eveabacus-backend.service
               
-              echo 'Adding database connection string from secrets...'
-              sudo sed -i '/Environment=ASPNETCORE_URLS/a Environment=ConnectionStrings__EVEAbacus=${{ secrets.CONNECTIONSTRINGS__BACKEND }}' /etc/systemd/system/eveabacus-backend.service
+  #             echo 'Adding database connection string from secrets...'
+  #             sudo sed -i '/Environment=ASPNETCORE_URLS/a Environment=ConnectionStrings__EVEAbacus=${{ secrets.CONNECTIONSTRINGS__BACKEND }}' /etc/systemd/system/eveabacus-backend.service
               
-              echo 'Adding Redis password from secrets...'
-              sudo sed -i '/Environment=ConnectionStrings__EVEAbacus/a Environment=REDIS__PASSWORD=${{ secrets.REDIS__PASSWORD }}' /etc/systemd/system/eveabacus-backend.service
+  #             echo 'Adding Redis password from secrets...'
+  #             sudo sed -i '/Environment=ConnectionStrings__EVEAbacus/a Environment=REDIS__PASSWORD=${{ secrets.REDIS__PASSWORD }}' /etc/systemd/system/eveabacus-backend.service
               
-              echo 'Adding ESISettings__SecretKey from secrets...'
-              sudo sed -i '/Environment=REDIS__PASSWORD/a Environment=ESISettings__SecretKey=${{ secrets.ESISETTINGS__SECRETKEY }}' /etc/systemd/system/eveabacus-backend.service
+  #             echo 'Adding ESISettings__SecretKey from secrets...'
+  #             sudo sed -i '/Environment=REDIS__PASSWORD/a Environment=ESISettings__SecretKey=${{ secrets.ESISETTINGS__SECRETKEY }}' /etc/systemd/system/eveabacus-backend.service
               
-              echo 'Setting permissions...'
-              sudo chown -R eveabacus:eveabacus /var/www/eveabacus
-              sudo chmod -R 755 /var/www/eveabacus
+  #             echo 'Setting permissions...'
+  #             sudo chown -R eveabacus:eveabacus /var/www/eveabacus
+  #             sudo chmod -R 755 /var/www/eveabacus
               
-              sudo systemctl daemon-reload
-              rm -f backend-artifacts.tar.gz
-              echo 'Backend deployment complete'
-            "
+  #             sudo systemctl daemon-reload
+  #             rm -f backend-artifacts.tar.gz
+  #             echo 'Backend deployment complete'
+  #           "
           
-          echo "Cleaning up storage account..."
-          az storage account delete \
-            --name $STORAGE_ACCOUNT_NAME \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --yes
+  #         echo "Cleaning up storage account..."
+  #         az storage account delete \
+  #           --name $STORAGE_ACCOUNT_NAME \
+  #           --resource-group ${{ env.RESOURCE_GROUP }} \
+  #           --yes
           
-          # Start backend service
-          echo "Starting backend service..."
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              echo 'Starting backend service...'
-              # Start backend service if it exists
-              if systemctl list-unit-files | grep -q eveabacus-backend.service; then
-                echo 'Starting eveabacus-backend service...'
-                sudo systemctl start eveabacus-backend
-                echo 'Backend service started'
-              else
-                echo 'Warning: eveabacus-backend service not found'
-              fi
-            "
+  #         # Start backend service
+  #         echo "Starting backend service..."
+  #         az vm run-command invoke \
+  #           --resource-group ${{ env.RESOURCE_GROUP }} \
+  #           --name ${{ env.VM_NAME }} \
+  #           --command-id RunShellScript \
+  #           --scripts "
+  #             echo 'Starting backend service...'
+  #             # Start backend service if it exists
+  #             if systemctl list-unit-files | grep -q eveabacus-backend.service; then
+  #               echo 'Starting eveabacus-backend service...'
+  #               sudo systemctl start eveabacus-backend
+  #               echo 'Backend service started'
+  #             else
+  #               echo 'Warning: eveabacus-backend service not found'
+  #             fi
+  #           "
           
-          echo "Waiting for backend to be ready..."
-          az vm run-command invoke \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.VM_NAME }} \
-            --command-id RunShellScript \
-            --scripts "
-              echo 'Checking if backend is ready...'
-              echo 'Checking backend service status:'
-              sudo systemctl status eveabacus-backend || echo 'Backend service not found or failed'
-              echo 'Checking backend service logs:'
-              sudo journalctl -u eveabacus-backend -n 10 --no-pager || echo 'No backend service logs found'
-              echo 'Checking if port 5000 is listening:'
-              sudo netstat -tlnp | grep :5000 || echo 'Port 5000 not listening'
-              echo 'Checking backend process:'
-              ps aux | grep eveabacus-backend || echo 'No eveabacus-backend process found'
-              echo 'Checking Redis connection (port 6379):'
-              sudo netstat -tlnp | grep :6379 || echo 'Redis not listening on port 6379'
-              echo 'Testing Redis connection:'
-              redis-cli -h localhost -p 6379 ping 2>/dev/null || echo 'Redis ping failed'
+  #         echo "Waiting for backend to be ready..."
+  #         az vm run-command invoke \
+  #           --resource-group ${{ env.RESOURCE_GROUP }} \
+  #           --name ${{ env.VM_NAME }} \
+  #           --command-id RunShellScript \
+  #           --scripts "
+  #             echo 'Checking if backend is ready...'
+  #             echo 'Checking backend service status:'
+  #             sudo systemctl status eveabacus-backend || echo 'Backend service not found or failed'
+  #             echo 'Checking backend service logs:'
+  #             sudo journalctl -u eveabacus-backend -n 10 --no-pager || echo 'No backend service logs found'
+  #             echo 'Checking if port 5000 is listening:'
+  #             sudo netstat -tlnp | grep :5000 || echo 'Port 5000 not listening'
+  #             echo 'Checking backend process:'
+  #             ps aux | grep eveabacus-backend || echo 'No eveabacus-backend process found'
+  #             echo 'Checking Redis connection (port 6379):'
+  #             sudo netstat -tlnp | grep :6379 || echo 'Redis not listening on port 6379'
+  #             echo 'Testing Redis connection:'
+  #             redis-cli -h localhost -p 6379 ping 2>/dev/null || echo 'Redis ping failed'
               
-              for i in {1..30}; do
-                echo 'Attempt $i: Testing backend health endpoint...'
-                if curl -f http://localhost:5000/health 2>/dev/null; then
-                  echo 'Backend is ready!'
-                  exit 0
-                else
-                  echo 'Health check failed'
-                  echo 'Trying to get more info:'
-                  curl -v http://localhost:5000/health 2>&1 | head -10 || echo 'Curl failed completely'
-                fi
-                echo 'Waiting for backend to be ready... (attempt $i/30)'
-                sleep 5
-              done
-              echo 'Backend may not be fully ready, but continuing...'
-              echo 'Final backend service status:'
-              sudo systemctl status eveabacus-backend || echo 'Backend service not found'
-            "
+  #             for i in {1..30}; do
+  #               echo 'Attempt $i: Testing backend health endpoint...'
+  #               if curl -f http://localhost:5000/health 2>/dev/null; then
+  #                 echo 'Backend is ready!'
+  #                 exit 0
+  #               else
+  #                 echo 'Health check failed'
+  #                 echo 'Trying to get more info:'
+  #                 curl -v http://localhost:5000/health 2>&1 | head -10 || echo 'Curl failed completely'
+  #               fi
+  #               echo 'Waiting for backend to be ready... (attempt $i/30)'
+  #               sleep 5
+  #             done
+  #             echo 'Backend may not be fully ready, but continuing...'
+  #             echo 'Final backend service status:'
+  #             sudo systemctl status eveabacus-backend || echo 'Backend service not found'
+  #           "
           
-          echo "Backend deployment completed successfully"
-          echo "Summary: Backend should now be running and ready for frontend build"
+  #         echo "Backend deployment completed successfully"
+  #         echo "Summary: Backend should now be running and ready for frontend build"
 
   # Build frontend (after backend is deployed and running)
   build-frontend:
-    needs: [deploy-backend]
+    # needs: [deploy-backend]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -337,23 +337,27 @@ jobs:
             # Copy the entire standalone directory
             cp -r ./eve-abacus-webui/.next/standalone/. ./frontend-build/
 
-            # Ensure the .next directory exists in the standalone build
-            mkdir -p ./frontend-build/.next
+            # Ensure the standalone/.next directory exists
+            if [ -d "./eve-abacus-webui/.next/standalone/.next" ]; then
+              echo "Found standalone/.next folder from build"
+            # If standalone/.next directory does not exist, print an error and exit
+            else
+              echo "Error: Did not find the standalone/.next folder from the build."
+              exit 1
+            fi
 
             # Copy static directory if it exists
             if [ -d "./eve-abacus-webui/.next/static" ]; then
-              echo "Found static directory, copying to ./frontend-build/static..."
-              cp -r ./eve-abacus-webui/.next/static ./frontend-build/static
+              echo "Found static directory, copying to ./frontend-build/.next/static..."
+              cp -r ./eve-abacus-webui/.next/static ./frontend-build/.next/static
+            # If static directory does not exist, print an error and exit
             else
               echo "WARNING: .next/static directory not found!"
+              exit 1
             fi
             
-            echo "Contents of frontend-build after copying:"
-            ls -la ./frontend-build/
-            echo "Contents of frontend-build/.next:"
-            ls -la ./frontend-build/.next/ || echo "No .next directory in frontend-build"
+          # If standalone directory does not exist, print an error and exit
           else
-            # If standalone directory does not exist, print an error and exit
             echo "standalone directory not found - cannot copy"
             echo "Available directories in .next:"
             ls -la ./eve-abacus-webui/.next/ || echo "No .next directory found"
@@ -361,17 +365,22 @@ jobs:
           fi
 
           # Copy the public directory for static assets if it exists
+          echo "Copying public directory"
           if [ -d "./eve-abacus-webui/public" ]; then
             cp -r ./eve-abacus-webui/public ./frontend-build/
+          else
+              echo "Public directory not found"
+              exit 1
           fi
 
+          echo "Copying systemd service file"
           # Copy the systemd service file if it exists
           if [ -f "./eveabacus-frontend.service" ]; then
             cp ./eveabacus-frontend.service ./frontend-build/
+          else
+            echo "systemd service file not found"
+            exit 1
           fi
-
-          echo "Final artifacts structure:"
-          find ./frontend-build -type d | head -10
         working-directory: ./
       
       - name: Upload frontend artifacts
@@ -380,6 +389,7 @@ jobs:
           name: frontend-artifacts
           path: ./frontend-build
           retention-days: 1
+          include-hidden-files: true
 
   # Deploy frontend to production
   deploy-frontend:
