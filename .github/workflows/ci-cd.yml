@@ -342,8 +342,8 @@ jobs:
 
             # Copy static directory if it exists
             if [ -d "./eve-abacus-webui/.next/static" ]; then
-              echo "Found static directory, copying to .next/static..."
-              cp -r ./eve-abacus-webui/.next/static ./frontend-build/.next/
+              echo "Found static directory, copying to ./frontend-build/static..."
+              cp -r ./eve-abacus-webui/.next/static ./frontend-build/static
             else
               echo "WARNING: .next/static directory not found!"
             fi
@@ -499,6 +499,13 @@ jobs:
               echo 'Copying frontend build files...'
               sudo cp -r /tmp/deploy-frontend/* /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
               
+              # Move static directory into .next if it exists
+              if [ -d "/var/www/eveabacus/frontend/static" ]; then
+                echo 'Moving static directory into .next...'
+                sudo mkdir -p /var/www/eveabacus/frontend/.next
+                sudo mv /var/www/eveabacus/frontend/static /var/www/eveabacus/frontend/.next/static
+              fi
+
               # Check if server.js exists, fail if not
               if [ ! -f "/var/www/eveabacus/frontend/server.js" ]; then
                 echo 'ERROR: /var/www/eveabacus/frontend/server.js not found! Failing deployment.'
