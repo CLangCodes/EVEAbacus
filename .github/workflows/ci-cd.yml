@@ -470,9 +470,12 @@ jobs:
               sudo rm -rf /var/www/eveabacus/frontend/.
               sudo mkdir -p /var/www/eveabacus/frontend
               
-              # Create a clean deployment directory
-              cd ~
-              mkdir -p deploy-frontend
+              # Completely clean the deploy-frontend directory
+              echo 'Cleaning ~/deploy-frontend directory'
+              rm -rf ~/deploy-frontend
+              mkdir ~/deploy-frontend
+
+              #Download frontend artifacts
               cd ~/deploy-frontend
               echo 'Downloading frontend artifacts...'
               curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
