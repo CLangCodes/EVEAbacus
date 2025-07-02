@@ -488,8 +488,14 @@ jobs:
               echo 'Copying frontend build files...'
               sudo cp -r ~/deploy-frontend/* /var/www/eveabacus/frontend/ 2>/dev/null || echo 'Failed to copy frontend files'
               
+              # Check if server.js exists, fail if not
+              if [ ! -f "/var/www/eveabacus/frontend/server.js" ]; then
+                echo 'ERROR: /var/www/eveabacus/frontend/server.js not found! Failing deployment.'
+                exit 1
+              fi
+
               # Clean up deployment directory
-              rm -rf ~/deploy-frontend
+              #rm -rf ~/deploy-frontend
               
               # Clean up any leftover system files that might have been copied
               echo 'Cleaning up any leftover system files...'
