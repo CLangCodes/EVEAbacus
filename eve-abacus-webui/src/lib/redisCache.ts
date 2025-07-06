@@ -15,7 +15,7 @@ class RedisCacheService {
     const isDevelopment = process.env.NODE_ENV === 'development';
     const host = process.env.REDIS_HOST || (isDevelopment ? '192.168.50.174' : 'localhost');
     const port = parseInt(process.env.REDIS_PORT || '6379');
-    const password = process.env.REDIS_PASSWORD || 'MisfitInit4!4';
+    const password = process.env.REDIS__PASSWORD || process.env.REDIS_PASSWORD;
     const db = parseInt(process.env.REDIS_DB || '0');
 
     this.prefix = process.env.REDIS_PREFIX || 'eve-abacus:';
