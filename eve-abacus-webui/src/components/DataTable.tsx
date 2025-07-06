@@ -88,9 +88,9 @@ export function DataTable<T extends Record<string, unknown>>({
   if (loading) {
     return (
       <div className={`animate-pulse ${className}`}>
-        <div className="bg-gray-200 h-8 mb-2 rounded"></div>
+        <div className="bg-gray-200 dark:bg-gray-700 h-8 mb-2 rounded"></div>
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="bg-gray-200 h-12 mb-1 rounded"></div>
+          <div key={i} className="bg-gray-200 dark:bg-gray-700 h-12 mb-1 rounded"></div>
         ))}
       </div>
     );
@@ -98,7 +98,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
   if (data.length === 0) {
     return (
-      <div className={`text-center py-8 text-gray-500 ${className}`}>
+      <div className={`text-center py-8 text-gray-500 dark:text-gray-400 ${className}`}>
         {emptyMessage}
       </div>
     );
@@ -107,14 +107,14 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <div className={className}>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-          <thead className="bg-gray-50">
+        <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+          <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b ${
-                    column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
+                  className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600 ${
+                    column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600' : ''
                   } ${column.width || ''}`}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
@@ -128,16 +128,16 @@ export function DataTable<T extends Record<string, unknown>>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {sortedData.map((row, index) => (
               <tr
                 key={index}
-                className="hover:bg-gray-50 transition-colors duration-150"
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
               >
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}
-                    className="px-4 py-3 text-sm text-gray-900 border-b"
+                    className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-600"
                   >
                     {column.render 
                       ? column.render(row[column.key], row)
