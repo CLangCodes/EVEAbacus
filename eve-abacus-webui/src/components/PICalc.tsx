@@ -280,16 +280,16 @@ export function PICalc({ className = "" }: PICalcProps) {
         />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Range
           </label>
           <select
             value={systemJumpRange}
             onChange={(e) => setSystemJumpRange(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             {jumpRangeOptions.map(option => (
-              <option key={option} value={option}>{option}</option>
+              <option key={option} value={option} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">{option}</option>
             ))}
           </select>
         </div>
@@ -315,7 +315,7 @@ export function PICalc({ className = "" }: PICalcProps) {
       {focalSystemName && Array.isArray(validSolarSystems) && validSolarSystems.includes(focalSystemName) && (
         <div className="flex items-center space-x-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Results per page
             </label>
             <select
@@ -324,12 +324,12 @@ export function PICalc({ className = "" }: PICalcProps) {
                 setPageSize(Number(e.target.value));
                 setCurrentPage(1); // Reset to first page when changing page size
               }}
-              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
+              <option value={10} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">10</option>
+              <option value={25} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">25</option>
+              <option value={50} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">50</option>
+              <option value={100} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">100</option>
             </select>
           </div>
           {totalCount > 0 && (
