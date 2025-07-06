@@ -26,7 +26,7 @@ export function PICalc({ className = "" }: PICalcProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
 
   const jumpRangeOptions = [0, 1, 2, 3, 4, 5, 10];
   const securityStatusOptions = ['High Sec', 'Low Sec', 'Null Sec'];
