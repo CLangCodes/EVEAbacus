@@ -295,17 +295,18 @@ export function PICalc({ className = "" }: PICalcProps) {
             </select>
           </div>
 
-          <div className="lg:col-span-2 ">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="lg:col-span-2">
+            <div className="flex gap-4">
               <MultiSelect
+                className="w-[200px]"
                 options={planetTypes}
                 selectedValues={selectedPlanetTypes}
                 onChange={setSelectedPlanetTypes}
                 label="Planet Type"
                 placeholder="Select planet types..."
               />
-
               <MultiSelect
+                className="w-[200px]"
                 options={securityStatusOptions}
                 selectedValues={selectedSecurityStatus}
                 onChange={setSelectedSecurityStatus}
