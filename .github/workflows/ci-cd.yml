@@ -205,8 +205,9 @@ jobs:
               --name $STORAGE_ACCOUNT_NAME \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --yes
-          
-          # Start backend service
+      
+      - name: Start backend service
+        run: |
           echo "Starting backend service..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
@@ -223,7 +224,9 @@ jobs:
                 echo 'Warning: eveabacus-backend service not found'
               fi
             "
-          
+      
+      - name: Wait for backend to be ready
+        run: |
           echo "Waiting for backend to be ready..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
@@ -245,7 +248,7 @@ jobs:
               redis-cli -h localhost -p 6379 ping 2>/dev/null || echo 'Redis ping failed'
               
               for i in {1..30}; do
-                echo 'Attempt $i: Testing backend health endpoint...'
+                echo 'Attempt \$i: Testing backend health endpoint...'
                 if curl -f http://localhost:5000/health 2>/dev/null; then
                   echo 'Backend is ready!'
                   exit 0
@@ -254,14 +257,16 @@ jobs:
                   echo 'Trying to get more info:'
                   curl -v http://localhost:5000/health 2>&1 | head -10 || echo 'Curl failed completely'
                 fi
-                echo 'Waiting for backend to be ready... (attempt $i/30)'
+                echo 'Waiting for backend to be ready... (attempt \$i/30)'
                 sleep 5
               done
               echo 'Backend may not be fully ready, but continuing...'
               echo 'Final backend service status:'
               sudo systemctl status eveabacus-backend || echo 'Backend service not found'
             "
-          
+      
+      - name: Backend deployment summary
+        run: |
           echo "Backend deployment completed successfully"
           echo "Summary: Backend should now be running and ready for frontend build"
 
@@ -552,13 +557,14 @@ jobs:
           # Clean up storage account
           if: always()
           run: |
-            echo "Cleaning up storage ccount..."
+            echo "Cleaning up storage account..."
             az storage account delete \
               --name $STORAGE_ACCOUNT_NAME \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --yes
-          
-          # Start frontend service and reload nginx
+      
+      - name: Start frontend service and reload nginx
+        run: |
           echo "Starting frontend service and reloading nginx..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
