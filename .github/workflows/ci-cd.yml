@@ -92,9 +92,8 @@ jobs:
           echo "Available VMs in resource group ${{ env.RESOURCE_GROUP }}:"
           az vm list --resource-group ${{ env.RESOURCE_GROUP }} --query "[].{Name:name, Status:powerState}" -o table
       
-      - name: Deploy backend to Azure VM
+      - name: Stop backend service
         run: |
-          # Stop backend service
           echo "Stopping backend service..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
@@ -103,8 +102,9 @@ jobs:
             --scripts "
               sudo systemctl stop eveabacus-backend 2>/dev/null || true
             "
-          
-          # Create storage account for large files
+      
+      - name: Setup storage for backend deployment
+        run: |
           echo "Setting up storage for backend deployment..."
           STORAGE_ACCOUNT_NAME="evebackend$(date +%s)"
           az storage account create \
@@ -136,8 +136,6 @@ jobs:
             --name backend-artifacts.tar.gz \
             --file backend-artifacts.tar.gz
           
-          # Deploy backend from storage
-          echo "Deploying backend from storage..."
           # Generate SAS token for backend artifacts
           BACKEND_SAS=$(az storage blob generate-sas \
             --account-name $STORAGE_ACCOUNT_NAME \
@@ -149,6 +147,12 @@ jobs:
             --full-uri \
             --output tsv)
           
+          echo "BACKEND_SAS=$BACKEND_SAS" >> $GITHUB_ENV
+          echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
+      
+      - name: Deploy backend to VM
+        run: |
+          echo "Deploying backend from storage..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -159,7 +163,7 @@ jobs:
               sudo rm -rf /var/www/eveabacus/*
               cd /tmp
               echo 'Downloading backend artifacts...'
-              curl -L -o backend-artifacts.tar.gz \"$BACKEND_SAS\"
+              curl -L -o backend-artifacts.tar.gz \"${{ env.BACKEND_SAS }}\"
               echo 'Extracting backend artifacts...'
               echo 'Checking tar file contents before extraction:'
               tar -tzf backend-artifacts.tar.gz | head -20
@@ -202,7 +206,7 @@ jobs:
         run: |
           echo "Cleaning up storage account..."
           az storage account delete \
-            --name $STORAGE_ACCOUNT_NAME \
+            --name ${{ env.STORAGE_ACCOUNT_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --yes
       
@@ -419,9 +423,8 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Deploy frontend to Azure VM
+      - name: Stop frontend service
         run: |
-          # Stop frontend service
           echo "Stopping frontend service..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
@@ -430,8 +433,9 @@ jobs:
             --scripts "
               sudo systemctl stop eveabacus-frontend 2>/dev/null || true
             "
-          
-          # Create storage account for large files
+      
+      - name: Setup storage for frontend deployment
+        run: |
           echo "Setting up storage for frontend deployment..."
           STORAGE_ACCOUNT_NAME="evefrontend$(date +%s)"
           az storage account create \
@@ -463,8 +467,6 @@ jobs:
             --name frontend-artifacts.tar.gz \
             --file frontend-artifacts.tar.gz
           
-          # Deploy frontend from storage
-          echo "Deploying frontend from storage..."
           # Generate SAS token for frontend artifacts
           FRONTEND_SAS=$(az storage blob generate-sas \
             --account-name $STORAGE_ACCOUNT_NAME \
@@ -476,6 +478,12 @@ jobs:
             --full-uri \
             --output tsv)
           
+          echo "FRONTEND_SAS=$FRONTEND_SAS" >> $GITHUB_ENV
+          echo "STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> $GITHUB_ENV
+      
+      - name: Deploy frontend to VM
+        run: |
+          echo "Deploying frontend from storage..."
           az vm run-command invoke \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.VM_NAME }} \
@@ -496,7 +504,7 @@ jobs:
               # Download frontend artifacts
               cd /tmp/deploy-frontend
               echo 'Downloading frontend artifacts...'
-              curl -L -o frontend-artifacts.tar.gz \"$FRONTEND_SAS\"
+              curl -L -o frontend-artifacts.tar.gz \"${{ env.FRONTEND_SAS }}\"
               echo 'Extracting frontend artifacts with verbose output:'
               tar -xzf frontend-artifacts.tar.gz
               
@@ -559,7 +567,7 @@ jobs:
         run: |
           echo "Cleaning up storage account..."
           az storage account delete \
-            --name $STORAGE_ACCOUNT_NAME \
+            --name ${{ env.STORAGE_ACCOUNT_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --yes
       
