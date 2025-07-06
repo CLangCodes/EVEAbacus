@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { ApiError, withDetailedLogging } from '../../../../lib/middleware';
 import { rateLimit } from '../../../../lib/rateLimit';
 import { backendService } from '../../../../lib/backendService';
-import { redisCache } from '../../../../lib/redisCache';
+import { withCache } from '../../../../lib/cache';
 
 /**
  * @openapi
@@ -45,11 +45,8 @@ export async function GET(req: NextRequest) {
   return withDetailedLogging(req, async () => {
     const cacheKey = 'planet-types';
     
-    const results = await redisCache.withCache(cacheKey, async () => {
+    const results = await withCache(cacheKey, 3600, async () => {
       return await backendService.getPlanetTypes();
-    }, {
-      ttl: 3600, // Cache for 1 hour
-      prefix: 'api'
     });
     
     // Ensure we return an array even if the backend returns unexpected data
