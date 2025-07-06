@@ -197,11 +197,14 @@ jobs:
               echo 'Backend deployment complete'
             "
           
-          echo "Cleaning up storage account..."
-          az storage account delete \
-            --name $STORAGE_ACCOUNT_NAME \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --yes
+          # Clean up storage account
+          if: always()
+          run: |
+            echo "Cleaning up storage account..."
+            az storage account delete \
+              --name $STORAGE_ACCOUNT_NAME \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --yes
           
           # Start backend service
           echo "Starting backend service..."
@@ -547,11 +550,13 @@ jobs:
             "
           
           # Clean up storage account
-          echo "Cleaning up storage account..."
-          az storage account delete \
-            --name $STORAGE_ACCOUNT_NAME \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --yes
+          if: always()
+          run: |
+            echo "Cleaning up storage ccount..."
+            az storage account delete \
+              --name $STORAGE_ACCOUNT_NAME \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --yes
           
           # Start frontend service and reload nginx
           echo "Starting frontend service and reloading nginx..."
