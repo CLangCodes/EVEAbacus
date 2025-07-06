@@ -196,15 +196,15 @@ jobs:
               rm -f backend-artifacts.tar.gz
               echo 'Backend deployment complete'
             "
-          
-          # Clean up storage account
-          if: always()
-          run: |
-            echo "Cleaning up storage account..."
-            az storage account delete \
-              --name $STORAGE_ACCOUNT_NAME \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --yes
+      
+      - name: Clean up storage account
+        if: always()
+        run: |
+          echo "Cleaning up storage account..."
+          az storage account delete \
+            --name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --yes
       
       - name: Start backend service
         run: |
@@ -553,15 +553,15 @@ jobs:
               rm -f frontend-artifacts.tar.gz
               echo 'Frontend deployment complete'
             "
-          
-          # Clean up storage account
-          if: always()
-          run: |
-            echo "Cleaning up storage account..."
-            az storage account delete \
-              --name $STORAGE_ACCOUNT_NAME \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --yes
+      
+      - name: Clean up storage account
+        if: always()
+        run: |
+          echo "Cleaning up storage account..."
+          az storage account delete \
+            --name $STORAGE_ACCOUNT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --yes
       
       - name: Start frontend service and reload nginx
         run: |
