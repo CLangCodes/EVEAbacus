@@ -186,11 +186,11 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
             >
               <option value={1}>Manufacture</option>
-              <option value={3}>TE Research</option>
-              <option value={4}>ME Research</option>
-              <option value={5}>Copy</option>
-              <option value={8}>Invention</option>
-              <option value={11}>Reaction</option>
+              {/* <option value={3}>TE Research</option> */}
+              {/* <option value={4}>ME Research</option> */}
+              {/* <option value={5}>Copy</option> */}
+              {/* <option value={8}>Invention</option> */}
+              {/* <option value={11}>Reaction</option> */}
             </select>
           </div>
 
