@@ -259,7 +259,7 @@ export function PICalc({ className = "" }: PICalcProps) {
 
   return (
     <div className={`space-y-1 ${className}`}>
-      <div>
+      <div className="-mt-11">
         <h3 className="text-2xl font-bold text-gray-400 mb-2">PI Planet Explorer</h3>
         <p className="text-gray-600">
           Find the perfect planet to start your infrastructure on in New Eden! 
