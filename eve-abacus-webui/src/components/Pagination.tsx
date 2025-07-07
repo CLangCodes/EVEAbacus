@@ -63,7 +63,7 @@ export function Pagination({
 
   return (
     <div className={`flex items-center justify-between ${className}`}>
-      <div className="text-sm text-gray-700">
+      <div className="text-sm text-gray-700 dark:text-gray-300">
         Showing {startItem} to {endItem} of {totalCount} results
       </div>
       
@@ -71,7 +71,7 @@ export function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
         >
           Previous
         </button>
@@ -79,14 +79,14 @@ export function Pagination({
         {getPageNumbers().map((page, index) => (
           <React.Fragment key={index}>
             {page === '...' ? (
-              <span className="px-2 py-1 text-sm text-gray-500">...</span>
+              <span className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400">...</span>
             ) : (
               <button
                 onClick={() => onPageChange(page as number)}
                 className={`px-3 py-1 text-sm border rounded-md ${
                   currentPage === page
                     ? 'bg-blue-500 text-white border-blue-500'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 {page}
@@ -98,7 +98,7 @@ export function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
         >
           Next
         </button>

@@ -26,7 +26,7 @@ export function PICalc({ className = "" }: PICalcProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
 
   const jumpRangeOptions = [0, 1, 2, 3, 4, 5, 10];
   const securityStatusOptions = ['High Sec', 'Low Sec', 'Null Sec'];
@@ -258,64 +258,64 @@ export function PICalc({ className = "" }: PICalcProps) {
   ];
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">PI Planet Explorer</h3>
+    <div className={`space-y-1 ${className}`}>
+      <div className="-mt-11">
+        <h3 className="text-2xl font-bold text-gray-400 mb-2">PI Planet Explorer</h3>
         <p className="text-gray-600">
           Find the perfect planet to start your infrastructure on in New Eden! 
           The smaller the planet is, the less CPU/PG you need for minimum length links. 
           Balance that against resource availability, and squeeze the most profit out!
         </p>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Autocomplete
-          value={focalSystemName}
-          onChange={setFocalSystemName}
-          onSelect={setFocalSystemName}
-          onSearch={searchSolarSystems}
-          label="Select Focal System"
-          placeholder="e.g. Jita, Dodixie"
-          className="min-w-[300px]"
-        />
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Range
-          </label>
-          <select
-            value={systemJumpRange}
-            onChange={(e) => setSystemJumpRange(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            {jumpRangeOptions.map(option => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </div>
-
-        <MultiSelect
-          options={planetTypes}
-          selectedValues={selectedPlanetTypes}
-          onChange={setSelectedPlanetTypes}
-          label="Planet Type"
-          placeholder="Select planet types..."
-        />
-
-        <MultiSelect
-          options={securityStatusOptions}
-          selectedValues={selectedSecurityStatus}
-          onChange={setSelectedSecurityStatus}
-          label="Security Status"
-          placeholder="Select security status..."
-        />
-      </div>
-
-      {/* Page Size Selector */}
-      {focalSystemName && Array.isArray(validSolarSystems) && validSolarSystems.includes(focalSystemName) && (
-        <div className="flex items-center space-x-4">
+        <div className="flex items-end w-fit gap-4">
+          <Autocomplete
+            value={focalSystemName}
+            onChange={setFocalSystemName}
+            onSelect={setFocalSystemName}
+            onSearch={searchSolarSystems}
+            label="Select Focal System"
+            placeholder="e.g. Jita, Dodixie"
+            className="min-w-[300px]"
+          />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Range
+            </label>
+            <select
+              value={systemJumpRange}
+              onChange={(e) => setSystemJumpRange(Number(e.target.value))}
+              className="w-20 px-3 py-2 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
+              {jumpRangeOptions.map(option => (
+                <option key={option} value={option} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">{option}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-2">
+            <div className="flex gap-4">
+              <MultiSelect
+                className="w-[200px]"
+                options={planetTypes}
+                selectedValues={selectedPlanetTypes}
+                onChange={setSelectedPlanetTypes}
+                label="Planet Type"
+                placeholder="Select planet types..."
+              />
+              <MultiSelect
+                className="w-[200px]"
+                options={securityStatusOptions}
+                selectedValues={selectedSecurityStatus}
+                onChange={setSelectedSecurityStatus}
+                label="Security Status"
+                placeholder="Select security status..."
+              />
+            </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 w-[125px]">
               Results per page
             </label>
             <select
@@ -324,21 +324,24 @@ export function PICalc({ className = "" }: PICalcProps) {
                 setPageSize(Number(e.target.value));
                 setCurrentPage(1); // Reset to first page when changing page size
               }}
-              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 h-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
+              <option value={10} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">10</option>
+              <option value={25} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">25</option>
+              <option value={50} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">50</option>
+              <option value={100} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">100</option>
             </select>
           </div>
-          {totalCount > 0 && (
-            <div className="text-sm text-gray-600">
-              Total results: {totalCount}
-            </div>
-          )}
+          <div>
+            {/* Results Count */}
+            {focalSystemName && Array.isArray(validSolarSystems) && validSolarSystems.includes(focalSystemName) && totalCount > 0 && (
+              <div className="text-sm text-gray-600 dark:text-gray-400 w-[125px]">
+                Total results: {totalCount}
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {focalSystemName && Array.isArray(validSolarSystems) && validSolarSystems.includes(focalSystemName) ? (
         <>
