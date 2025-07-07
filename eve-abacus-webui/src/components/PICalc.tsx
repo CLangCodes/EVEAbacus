@@ -258,28 +258,26 @@ export function PICalc({ className = "" }: PICalcProps) {
   ];
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-1 ${className}`}>
       <div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">PI Planet Explorer</h3>
+        <h3 className="text-2xl font-bold text-gray-400 mb-2">PI Planet Explorer</h3>
         <p className="text-gray-600">
           Find the perfect planet to start your infrastructure on in New Eden! 
           The smaller the planet is, the less CPU/PG you need for minimum length links. 
           Balance that against resource availability, and squeeze the most profit out!
         </p>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Autocomplete
-          value={focalSystemName}
-          onChange={setFocalSystemName}
-          onSelect={setFocalSystemName}
-          onSearch={searchSolarSystems}
-          label="Select Focal System"
-          placeholder="e.g. Jita, Dodixie"
-          className="min-w-[300px]"
-        />
-
         <div className="flex items-end w-fit gap-4">
+          <Autocomplete
+            value={focalSystemName}
+            onChange={setFocalSystemName}
+            onSelect={setFocalSystemName}
+            onSearch={searchSolarSystems}
+            label="Select Focal System"
+            placeholder="e.g. Jita, Dodixie"
+            className="min-w-[300px]"
+          />
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Range
@@ -315,15 +313,9 @@ export function PICalc({ className = "" }: PICalcProps) {
               />
             </div>
           </div>
-          
-        </div>
-      </div>
 
-      {/* Page Size Selector and Results Count */}
-      {focalSystemName && Array.isArray(validSolarSystems) && validSolarSystems.includes(focalSystemName) && (
-        <div className="flex items-center space-x-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 w-[125px]">
               Results per page
             </label>
             <select
@@ -340,13 +332,16 @@ export function PICalc({ className = "" }: PICalcProps) {
               <option value={100} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">100</option>
             </select>
           </div>
-          {totalCount > 0 && (
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Total results: {totalCount}
-            </div>
-          )}
+          <div>
+            {/* Results Count */}
+            {focalSystemName && Array.isArray(validSolarSystems) && validSolarSystems.includes(focalSystemName) && totalCount > 0 && (
+              <div className="text-sm text-gray-600 dark:text-gray-400 w-[125px]">
+                Total results: {totalCount}
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {focalSystemName && Array.isArray(validSolarSystems) && validSolarSystems.includes(focalSystemName) ? (
         <>
