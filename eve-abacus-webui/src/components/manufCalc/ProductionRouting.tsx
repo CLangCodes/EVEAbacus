@@ -1,14 +1,40 @@
 'use client';
 
 import React from 'react';
+import { DataTable, Column } from '../DataTable';
 
 interface ProductionRoutingProps {
   productionRoutingString: string[];
 }
 
+interface RouteItem extends Record<string, unknown> {
+  id: number;
+  route: string;
+}
+
 export default function ProductionRouting({ productionRoutingString }: ProductionRoutingProps) {
   // Ensure productionRoutingString is an array
   const routingString = Array.isArray(productionRoutingString) ? productionRoutingString : [];
+
+  // Transform string array to objects for DataTable
+  const routeData: RouteItem[] = routingString.map((route, index) => ({
+    id: index + 1,
+    route: route
+  }));
+
+  const columns: Column<RouteItem>[] = [
+    {
+      key: 'id',
+      header: '#',
+      width: 'w-16',
+      sortable: true
+    },
+    {
+      key: 'route',
+      header: 'Production Route',
+      sortable: true
+    }
+  ];
 
   if (!routingString || routingString.length === 0) {
     return (
@@ -34,13 +60,12 @@ export default function ProductionRouting({ productionRoutingString }: Productio
         </div>
         
         <div className="p-6">
-          <div className="space-y-2">
-            {routingString.map((route, index) => (
-              <div key={index} className="text-sm text-gray-700 dark:text-gray-300 py-1">
-                {route}
-              </div>
-            ))}
-          </div>
+          <DataTable
+            data={routeData}
+            columns={columns}
+            emptyMessage="No production routes found. Add some orders first."
+            className="w-full"
+          />
         </div>
       </div>
     </div>

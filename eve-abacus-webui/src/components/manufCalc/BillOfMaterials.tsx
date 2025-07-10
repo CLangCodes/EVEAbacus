@@ -1,14 +1,40 @@
 'use client';
 
 import React from 'react';
+import { DataTable, Column } from '../DataTable';
 
 interface BillOfMaterialsProps {
   billOfMaterialsString: string[];
 }
 
+interface MaterialItem extends Record<string, unknown> {
+  id: number;
+  material: string;
+}
+
 export default function BillOfMaterials({ billOfMaterialsString }: BillOfMaterialsProps) {
   // Ensure billOfMaterialsString is an array
   const materialsString = Array.isArray(billOfMaterialsString) ? billOfMaterialsString : [];
+
+  // Transform string array to objects for DataTable
+  const materialData: MaterialItem[] = materialsString.map((material, index) => ({
+    id: index + 1,
+    material: material
+  }));
+
+  const columns: Column<MaterialItem>[] = [
+    {
+      key: 'id',
+      header: '#',
+      width: 'w-16',
+      sortable: true
+    },
+    {
+      key: 'material',
+      header: 'Material',
+      sortable: true
+    }
+  ];
 
   const exportShoppingList = () => {
     if (materialsString.length > 0) {
@@ -56,13 +82,12 @@ export default function BillOfMaterials({ billOfMaterialsString }: BillOfMateria
         </div>
         
         <div className="p-6">
-          <div className="space-y-2">
-            {materialsString.map((material, index) => (
-              <div key={index} className="text-sm text-gray-700 dark:text-gray-300 py-1">
-                {material}
-              </div>
-            ))}
-          </div>
+          <DataTable
+            data={materialData}
+            columns={columns}
+            emptyMessage="No materials to display. Add some orders first."
+            className="w-full"
+          />
         </div>
       </div>
 
