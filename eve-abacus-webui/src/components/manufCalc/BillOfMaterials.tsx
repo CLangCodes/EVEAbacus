@@ -2,50 +2,113 @@
 
 import React from 'react';
 import { DataTable, Column } from '../DataTable';
+import type { BOMLineItem } from '@/types/manufacturing';
 
 interface BillOfMaterialsProps {
-  billOfMaterialsString: string[];
+  billOfMaterials: BOMLineItem[];
 }
 
 interface MaterialItem extends Record<string, unknown> {
   id: number;
-  material: string;
+  name: string;
+  typeId: number;
+  requisitioned: number;
+  groupName?: string;
+  categoryName?: string;
+  lowestSellPrice?: number;
+  sellStation?: string;
+  lowestBuyPrice?: number;
+  buyStation?: string;
 }
 
-export default function BillOfMaterials({ billOfMaterialsString }: BillOfMaterialsProps) {
-  // Ensure billOfMaterialsString is an array
-  const materialsString = Array.isArray(billOfMaterialsString) ? billOfMaterialsString : [];
+export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProps) {
+  // Ensure billOfMaterials is an array
+  const materials = Array.isArray(billOfMaterials) ? billOfMaterials : [];
 
-  // Transform string array to objects for DataTable
-  const materialData: MaterialItem[] = materialsString.map((material, index) => ({
+  // Transform BOMLineItem objects to table data
+  const materialData: MaterialItem[] = materials.map((material, index) => ({
     id: index + 1,
-    material: material
+    name: material.name,
+    typeId: material.typeId,
+    requisitioned: material.requisitioned,
+    groupName: material.item?.group?.groupName,
+    categoryName: material.item?.group?.category?.categoryName,
+    lowestSellPrice: material.lowestSellPrice,
+    sellStation: material.sellStation,
+    lowestBuyPrice: material.lowestBuyPrice,
+    buyStation: material.buyStation
   }));
 
   const columns: Column<MaterialItem>[] = [
     {
       key: 'id',
       header: '#',
-      width: 'w-16',
+      width: 'w-12',
       sortable: true
     },
     {
-      key: 'material',
+      key: 'name',
       header: 'Material',
       sortable: true
+    },
+    {
+      key: 'groupName',
+      header: 'Group',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'categoryName',
+      header: 'Category',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'requisitioned',
+      header: 'Qty',
+      sortable: true,
+      render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'lowestSellPrice',
+      header: 'Lowest Sell',
+      sortable: true,
+      render: (value) => value ? `Ƶ${(value as number).toLocaleString()}` : 'N/A'
+    },
+    {
+      key: 'sellStation',
+      header: 'Sell Station',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'lowestBuyPrice',
+      header: 'Highest Buy',
+      sortable: true,
+      render: (value) => value ? `Ƶ${(value as number).toLocaleString()}` : 'N/A'
+    },
+    {
+      key: 'buyStation',
+      header: 'Buy Station',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
     }
   ];
 
   const exportShoppingList = () => {
-    if (materialsString.length > 0) {
-      const exportText = materialsString.join('\n');
+    if (materials.length > 0) {
+      const exportText = materials.map(material => 
+        `${material.name} x${material.requisitioned.toLocaleString()}`
+      ).join('\n');
       navigator.clipboard.writeText(exportText);
     }
   };
 
   const downloadShoppingList = () => {
-    if (materialsString.length > 0) {
-      const exportText = materialsString.join('\n');
+    if (materials.length > 0) {
+      const exportText = materials.map(material => 
+        `${material.name} x${material.requisitioned.toLocaleString()}`
+      ).join('\n');
       const blob = new Blob([exportText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -58,7 +121,7 @@ export default function BillOfMaterials({ billOfMaterialsString }: BillOfMateria
     }
   };
 
-  if (!materialsString || materialsString.length === 0) {
+  if (!materials || materials.length === 0) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">

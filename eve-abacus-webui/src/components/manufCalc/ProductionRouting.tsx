@@ -2,41 +2,116 @@
 
 import React from 'react';
 import { DataTable, Column } from '../DataTable';
+import type { ProductionRoute } from '@/types/manufacturing';
 
 interface ProductionRoutingProps {
-  productionRoutingString: string[];
+  productionRouting: ProductionRoute[];
 }
 
 interface RouteItem extends Record<string, unknown> {
   id: number;
-  route: string;
+  blueprintName: string;
+  materialName: string;
+  requisitioned: number;
+  copies: number;
+  runs: number;
+  produced: number;
+  me: number;
+  te: number;
+  producedPerRun: number;
+  groupName?: string;
+  categoryName?: string;
 }
 
-export default function ProductionRouting({ productionRoutingString }: ProductionRoutingProps) {
-  // Ensure productionRoutingString is an array
-  const routingString = Array.isArray(productionRoutingString) ? productionRoutingString : [];
+export default function ProductionRouting({ productionRouting }: ProductionRoutingProps) {
+  // Ensure productionRouting is an array
+  const routes = Array.isArray(productionRouting) ? productionRouting : [];
 
-  // Transform string array to objects for DataTable
-  const routeData: RouteItem[] = routingString.map((route, index) => ({
+  // Transform ProductionRoute objects to table data
+  const routeData: RouteItem[] = routes.map((route, index) => ({
     id: index + 1,
-    route: route
+    blueprintName: route.blueprintName || 'N/A',
+    materialName: route.materialName,
+    requisitioned: route.requisitioned,
+    copies: route.order.copies,
+    runs: route.order.runs,
+    produced: route.produced,
+    me: route.order.me,
+    te: route.order.te,
+    producedPerRun: route.producedPerRun,
+    groupName: route.materialMetaData?.group?.groupName,
+    categoryName: route.materialMetaData?.group?.category?.categoryName
   }));
 
   const columns: Column<RouteItem>[] = [
     {
       key: 'id',
       header: '#',
-      width: 'w-16',
+      width: 'w-12',
       sortable: true
     },
     {
-      key: 'route',
-      header: 'Production Route',
+      key: 'blueprintName',
+      header: 'Blueprint',
+      sortable: true
+    },
+    {
+      key: 'materialName',
+      header: 'Material',
+      sortable: true
+    },
+    {
+      key: 'groupName',
+      header: 'Group',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'categoryName',
+      header: 'Category',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'requisitioned',
+      header: 'Qty',
+      sortable: true,
+      render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'copies',
+      header: 'Copies',
+      sortable: true
+    },
+    {
+      key: 'runs',
+      header: 'Runs',
+      sortable: true
+    },
+    {
+      key: 'produced',
+      header: 'Produced',
+      sortable: true,
+      render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'producedPerRun',
+      header: 'Per Run',
+      sortable: true
+    },
+    {
+      key: 'me',
+      header: 'ME',
+      sortable: true
+    },
+    {
+      key: 'te',
+      header: 'TE',
       sortable: true
     }
   ];
 
-  if (!routingString || routingString.length === 0) {
+  if (!routes || routes.length === 0) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">

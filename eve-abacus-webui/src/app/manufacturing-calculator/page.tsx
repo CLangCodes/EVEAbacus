@@ -76,6 +76,12 @@ export default function ManufacturingCalculator() {
         stationIds: selectedStations // Use the selected stations
       };
 
+      console.log('Sending manufacturing request:', {
+        orderDTOs: request.orderDTOs,
+        stationIds: request.stationIds,
+        stationCount: request.stationIds.length
+      });
+
       const result = await apiService.getManufacturingBatch(request);
       setManufBatch(result);
       setActiveTab('results');

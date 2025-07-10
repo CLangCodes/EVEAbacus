@@ -46,7 +46,7 @@ export default function StationSelection({ selectedStations, onStationsChange }:
     };
 
     loadStations();
-  }, [selectedStations.length, memoizedOnStationsChange]);
+  }, []); // Remove the dependencies that were causing the infinite loop
 
   const handleStationToggle = (station: string) => {
     const newSelection = selectedStations.includes(station)

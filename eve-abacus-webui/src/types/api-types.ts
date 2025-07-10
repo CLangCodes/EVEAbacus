@@ -1,6 +1,9 @@
 // Auto-generated types from .NET API models
 // These should match the C# models in EVEAbacus.Domain/Models/Calculator/
 
+// Import types from manufacturing.ts
+import type { ProductionRoute, BOMLineItem } from './manufacturing';
+
 // Core manufacturing types
 export interface OrderDTO {
   blueprintName: string;
@@ -143,6 +146,8 @@ export interface MarketProfile {
 export interface ManufBatch {
   productionRoutingString: string[];
   billOfMaterialsString: string[];
+  productionRouting: ProductionRoute[];
+  billOfMaterials: BOMLineItem[];
   stationBillOfMaterials: unknown[];
   purchaseOrders: PurchaseRequisition[];
   marketProfile: MarketProfile;
