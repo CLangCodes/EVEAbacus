@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { DataTable, Column } from '../DataTable';
 import type { SupplyPlan, ProcurementPlan } from '@/types/manufacturing';
 
 interface SupplyPlanProps {
@@ -8,9 +9,68 @@ interface SupplyPlanProps {
 }
 
 interface ProcurementPlanContainerProps {
-  procurementPlan: ProcurementPlan}
+  procurementPlan: ProcurementPlan;
+}
+
+interface PurchaseRequisitionItem extends Record<string, unknown> {
+  id: number;
+  name: string;
+  quantity: number;
+  volumeRemain: number;
+  price: number;
+  volume: number;
+  stationName: string;
+}
 
 function ProcurementPlanContainer({ procurementPlan }: ProcurementPlanContainerProps) {
+  // Transform PurchaseRequisition objects to table data
+  const requisitionData: PurchaseRequisitionItem[] = procurementPlan.purchaseRequisitions.map((item, index) => ({
+    id: index + 1,
+    name: item.name,
+    quantity: item.quantity,
+    volumeRemain: item.marketOrder?.volumeRemain || 0,
+    price: item.price,
+    volume: (item.item.volume || 0) * item.quantity,
+    stationName: procurementPlan.stationName
+  }));
+
+  const columns: Column<PurchaseRequisitionItem>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      width: 'w-60'
+    },
+    {
+      key: 'quantity',
+      header: 'Qty',
+      sortable: true,
+      width: 'w-20',
+      render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'volumeRemain',
+      header: 'Remaining',
+      sortable: true,
+      width: 'w-20',
+      render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'price',
+      header: 'Price (Ƶ)',
+      sortable: true,
+      width: 'w-32',
+      render: (value) => (value as number)?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'
+    },
+    {
+      key: 'volume',
+      header: 'Volume (m³)',
+      sortable: true,
+      width: 'w-32',
+      render: (value) => (value as number)?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'
+    }
+  ];
+
   const exportShoppingList = () => {
     if (procurementPlan.marketImport.length > 0) {
       const exportText = procurementPlan.marketImport.join('\n');
@@ -21,49 +81,13 @@ function ProcurementPlanContainer({ procurementPlan }: ProcurementPlanContainerP
   return (
     <div className="space-y-4">
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Qty
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Remaining
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Price (Ƶ)
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Volume (m³)
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {procurementPlan.purchaseRequisitions.map((item, index) => (
-                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {item.quantity.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {item.marketOrder?.volumeRemain || 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {((item.item.volume || 0) * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="p-6">
+          <DataTable
+            data={requisitionData}
+            columns={columns}
+            emptyMessage="No purchase requisitions to display."
+            className="w-full"
+          />
         </div>
       </div>
 
