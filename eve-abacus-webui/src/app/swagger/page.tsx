@@ -21,19 +21,7 @@ interface SwaggerUIBundle {
   }): void;
 }
 
-interface SwaggerRequest {
-  url: string;
-  method: string;
-  headers?: Record<string, string>;
-  body?: string;
-}
 
-interface SwaggerResponse {
-  status: number;
-  statusText: string;
-  url: string;
-  body?: string;
-}
 
 declare global {
   interface Window {
