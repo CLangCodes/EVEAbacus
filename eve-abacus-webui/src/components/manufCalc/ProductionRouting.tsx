@@ -78,17 +78,6 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
       sortable: true
     },
     {
-      key: 'produced',
-      header: 'Produced',
-      sortable: true,
-      render: (value) => (value as number)?.toLocaleString() || '0'
-    },
-    {
-      key: 'producedPerRun',
-      header: 'Per Run',
-      sortable: true
-    },
-    {
       key: 'me',
       header: 'ME',
       sortable: true
