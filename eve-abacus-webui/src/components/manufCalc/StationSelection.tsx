@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '@/services/api';
 
 interface StationSelectionProps {
@@ -11,6 +11,7 @@ interface StationSelectionProps {
 export default function StationSelection({ selectedStations, onStationsChange }: StationSelectionProps) {
   const [availableStations, setAvailableStations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasUserSelected = useRef(false);
 
   // Memoize the callback to prevent unnecessary re-renders
   const memoizedOnStationsChange = useCallback(onStationsChange, [onStationsChange]);
@@ -21,6 +22,10 @@ export default function StationSelection({ selectedStations, onStationsChange }:
         setLoading(true);
         const stations = await apiService.getMarketHubs();
         setAvailableStations(stations);
+        // Only auto-select all on first load, not after user interaction
+        if (selectedStations.length === 0 && !hasUserSelected.current) {
+          memoizedOnStationsChange(stations);
+        }
       } catch (error) {
         console.error('Error loading market hubs:', error);
         // Fallback to default stations
@@ -44,6 +49,7 @@ export default function StationSelection({ selectedStations, onStationsChange }:
   }, [memoizedOnStationsChange, selectedStations.length]);
 
   const handleStationToggle = (station: string) => {
+    hasUserSelected.current = true;
     const newSelection = selectedStations.includes(station)
       ? selectedStations.filter(s => s !== station)
       : [...selectedStations, station];
@@ -52,10 +58,12 @@ export default function StationSelection({ selectedStations, onStationsChange }:
   };
 
   const handleSelectAll = () => {
+    hasUserSelected.current = true;
     onStationsChange(availableStations);
   };
 
   const handleSelectNone = () => {
+    hasUserSelected.current = true;
     onStationsChange([]);
   };
 
