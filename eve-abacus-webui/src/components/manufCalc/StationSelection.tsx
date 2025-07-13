@@ -21,11 +21,6 @@ export default function StationSelection({ selectedStations, onStationsChange }:
         setLoading(true);
         const stations = await apiService.getMarketHubs();
         setAvailableStations(stations);
-        
-        // If no stations are selected, default to all stations
-        if (selectedStations.length === 0) {
-          memoizedOnStationsChange(stations);
-        }
       } catch (error) {
         console.error('Error loading market hubs:', error);
         // Fallback to default stations
