@@ -41,58 +41,32 @@ export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProp
 
   const columns: Column<MaterialItem>[] = [
     {
-      key: 'id',
-      header: '#',
-      width: 'w-12',
-      sortable: true
-    },
-    {
       key: 'name',
       header: 'Material',
-      sortable: true
+      sortable: true,
+      width: 'w-60'
     },
     {
       key: 'groupName',
       header: 'Group',
       sortable: true,
+      width: 'w-60',
       render: (value) => (value as string) || 'N/A'
     },
     {
       key: 'categoryName',
       header: 'Category',
       sortable: true,
+      width: 'w-60',
       render: (value) => (value as string) || 'N/A'
     },
     {
       key: 'requisitioned',
       header: 'Qty',
       sortable: true,
+      width: 'w-15',
       render: (value) => (value as number)?.toLocaleString() || '0'
     },
-    {
-      key: 'lowestSellPrice',
-      header: 'Lowest Sell',
-      sortable: true,
-      render: (value) => value ? `Ƶ${(value as number).toLocaleString()}` : 'N/A'
-    },
-    {
-      key: 'sellStation',
-      header: 'Sell Station',
-      sortable: true,
-      render: (value) => (value as string) || 'N/A'
-    },
-    {
-      key: 'lowestBuyPrice',
-      header: 'Highest Buy',
-      sortable: true,
-      render: (value) => value ? `Ƶ${(value as number).toLocaleString()}` : 'N/A'
-    },
-    {
-      key: 'buyStation',
-      header: 'Buy Station',
-      sortable: true,
-      render: (value) => (value as string) || 'N/A'
-    }
   ];
 
   const exportShoppingList = () => {
