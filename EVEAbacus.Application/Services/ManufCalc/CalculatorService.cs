@@ -214,11 +214,28 @@ public class CalculatorService
         else
         {
             List<long> ids = new List<long>();
+            Console.WriteLine($"Received station names: {string.Join(", ", stationNames)}");
+            
             foreach (var name in stationNames)
             {
-                ids.Add((long)(await _mapService.GetStationId(name) ?? 0));
+                // Check if the input is a station ID (numeric string)
+                if (long.TryParse(name, out long stationId))
+                {
+                    // Input is already a station ID
+                    Console.WriteLine($"Station ID: '{name}' -> Using as-is: {stationId}");
+                    ids.Add(stationId);
+                }
+                else
+                {
+                    // Input is a station name, need to look it up
+                    var foundStationId = await _mapService.GetStationId(name);
+                    Console.WriteLine($"Station name: '{name}' -> Station ID: {foundStationId}");
+                    ids.Add((long)(foundStationId ?? 0));
+                }
             }
+            
             SelectedMarketIds = ids.ToArray();
+            Console.WriteLine($"Final selected market IDs: {string.Join(", ", SelectedMarketIds)}");
         }
     }
     // The Manufacturing Batch contains the orders, production routing, and Bill of Materials, as well as pricing information

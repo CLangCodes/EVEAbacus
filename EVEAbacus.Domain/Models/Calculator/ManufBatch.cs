@@ -5,10 +5,8 @@ namespace EVEAbacus.Domain.Models.Calculator
 {
     public class ManufBatch
     {
-        [JsonIgnore]
         public ProductionRoute[] ProductionRouting { get; set; } = [];
         public string[] ProductionRoutingString { get; set; } = [];
-        [JsonIgnore]
         public BOMLineItem[] BillOfMaterials { get; set; } = [];
         public string[] BillOfMaterialsString { get; set; } = [];
         public List<StationBillOfMaterials> StationBillOfMaterials { get; set; } = [];

@@ -57,11 +57,11 @@ export default function ManufacturingResults({ manufBatch, loading = false }: Ma
       case 0:
         return (
           <BillOfMaterials 
-            billOfMaterialsString={manufBatch.billOfMaterialsString} 
+            billOfMaterials={manufBatch.billOfMaterials || []} 
           />
         );
       case 1:
-        return <ProductionRouting productionRoutingString={manufBatch.productionRoutingString} />;
+        return <ProductionRouting productionRouting={manufBatch.productionRouting || []} />;
       case 2:
         console.log('Supply Plan Debug:', {
           hasSupplyPlan: !!manufBatch.supplyPlan,

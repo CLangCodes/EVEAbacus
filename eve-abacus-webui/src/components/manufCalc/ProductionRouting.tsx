@@ -1,16 +1,95 @@
 'use client';
 
 import React from 'react';
+import { DataTable, Column } from '../DataTable';
+import type { ProductionRoute } from '@/types/manufacturing';
 
 interface ProductionRoutingProps {
-  productionRoutingString: string[];
+  productionRouting: ProductionRoute[];
 }
 
-export default function ProductionRouting({ productionRoutingString }: ProductionRoutingProps) {
-  // Ensure productionRoutingString is an array
-  const routingString = Array.isArray(productionRoutingString) ? productionRoutingString : [];
+interface RouteItem extends Record<string, unknown> {
+  id: number;
+  blueprintName: string;
+  materialName: string;
+  requisitioned: number;
+  copies: number;
+  runs: number;
+  produced: number;
+  me: number;
+  te: number;
+  producedPerRun: number;
+  groupName?: string;
+  categoryName?: string;
+}
 
-  if (!routingString || routingString.length === 0) {
+export default function ProductionRouting({ productionRouting }: ProductionRoutingProps) {
+  // Ensure productionRouting is an array
+  const routes = Array.isArray(productionRouting) ? productionRouting : [];
+
+  // Transform ProductionRoute objects to table data
+  const routeData: RouteItem[] = routes.map((route, index) => ({
+    id: index + 1,
+    blueprintName: route.blueprintName || 'N/A',
+    materialName: route.materialName,
+    requisitioned: route.requisitioned,
+    copies: route.order.copies,
+    runs: route.order.runs,
+    produced: route.produced,
+    me: route.order.me,
+    te: route.order.te,
+    producedPerRun: route.producedPerRun,
+    groupName: route.materialMetaData?.group?.groupName,
+    categoryName: route.materialMetaData?.group?.category?.categoryName
+  }));
+
+  const columns: Column<RouteItem>[] = [
+    {
+      key: 'blueprintName',
+      header: 'Blueprint',
+      sortable: true
+    },
+    {
+      key: 'groupName',
+      header: 'Group',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'categoryName',
+      header: 'Category',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'requisitioned',
+      header: 'Qty',
+      sortable: true,
+      render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'copies',
+      header: 'Copies',
+      sortable: true
+    },
+    {
+      key: 'runs',
+      header: 'Runs',
+      sortable: true
+    },
+    {
+      key: 'me',
+      header: 'ME',
+      sortable: true
+    },
+    {
+      key: 'te',
+      header: 'TE',
+      sortable: true
+    }
+  ];
+
+  if (!routes || routes.length === 0) {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">
@@ -34,13 +113,12 @@ export default function ProductionRouting({ productionRoutingString }: Productio
         </div>
         
         <div className="p-6">
-          <div className="space-y-2">
-            {routingString.map((route, index) => (
-              <div key={index} className="text-sm text-gray-700 dark:text-gray-300 py-1">
-                {route}
-              </div>
-            ))}
-          </div>
+          <DataTable
+            data={routeData}
+            columns={columns}
+            emptyMessage="No production routes found. Add some orders first."
+            className="w-full"
+          />
         </div>
       </div>
     </div>
