@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface SwaggerUIBundle {
   (config: { 
@@ -15,10 +15,24 @@ interface SwaggerUIBundle {
     showExtensions?: boolean;
     showCommonExtensions?: boolean;
     tryItOutEnabled?: boolean;
-    requestInterceptor?: (request: any) => any;
-    responseInterceptor?: (response: any) => any;
+    requestInterceptor?: (request: unknown) => unknown;
+    responseInterceptor?: (response: unknown) => unknown;
     theme?: string;
   }): void;
+}
+
+interface SwaggerRequest {
+  url: string;
+  method: string;
+  headers?: Record<string, string>;
+  body?: string;
+}
+
+interface SwaggerResponse {
+  status: number;
+  statusText: string;
+  url: string;
+  body?: string;
 }
 
 declare global {
@@ -67,24 +81,7 @@ export default function SwaggerPage() {
     };
   }, [isDarkMode]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (window.SwaggerUIBundle) {
-        initializeSwagger();
-      } else {
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js';
-        script.onload = () => {
-          if (window.SwaggerUIBundle) {
-            initializeSwagger();
-          }
-        };
-        document.body.appendChild(script);
-      }
-    }
-  }, [isDarkMode, swaggerInitialized]);
-
-  const initializeSwagger = () => {
+  const initializeSwagger = useCallback(() => {
     if (window.SwaggerUIBundle && !swaggerInitialized) {
       window.SwaggerUIBundle({
         url: '/api/swagger',
@@ -100,18 +97,35 @@ export default function SwaggerPage() {
         showCommonExtensions: true,
         tryItOutEnabled: true,
         theme: isDarkMode ? 'dark' : 'light',
-        requestInterceptor: (request: any) => {
+        requestInterceptor: (request: unknown) => {
           console.log('Swagger request:', request);
           return request;
         },
-        responseInterceptor: (response: any) => {
+        responseInterceptor: (response: unknown) => {
           console.log('Swagger response:', response);
           return response;
         },
       });
       setSwaggerInitialized(true);
     }
-  };
+  }, [isDarkMode, swaggerInitialized]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (window.SwaggerUIBundle) {
+        initializeSwagger();
+      } else {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js';
+        script.onload = () => {
+          if (window.SwaggerUIBundle) {
+            initializeSwagger();
+          }
+        };
+        document.body.appendChild(script);
+      }
+    }
+  }, [initializeSwagger]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -180,6 +194,18 @@ export default function SwaggerPage() {
           isDarkMode ? 'text-gray-400' : 'text-gray-500'
         }`}>
           <p>API Version: v1.0</p>
+          <p>
+            For more information, visit the{' '}
+            <a 
+              href="https://blazor.eveabacus.com/swaggerComp" 
+              className={`hover:underline ${
+                isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
+              }`}
+            >
+              backend Swagger documentation
+            </a>
+            .
+          </p>
         </div>
       </div>
     </div>

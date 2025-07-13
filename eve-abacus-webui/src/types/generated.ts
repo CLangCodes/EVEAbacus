@@ -2174,6 +2174,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        BOMLineItem: {
+            /** Format: int32 */
+            typeId?: number;
+            name?: string | null;
+            /** Format: int32 */
+            requisitioned?: number;
+            item: components["schemas"]["Item"];
+            marketHistory?: components["schemas"]["MarketRegionHistory"][] | null;
+            purchaseRequisitions?: components["schemas"]["PurchaseRequisition"][] | null;
+            marketStats?: components["schemas"]["MarketStat"][] | null;
+            /** Format: double */
+            readonly lowestSellPrice?: number | null;
+            readonly sellStation?: string | null;
+            /** Format: double */
+            readonly lowestBuyPrice?: number | null;
+            readonly buyStation?: string | null;
+        };
         BPMaterial: {
             /** Format: int32 */
             blueprintTypeId?: number | null;
@@ -2384,7 +2401,9 @@ export interface components {
             bpMaterials?: components["schemas"]["BPMaterial"][] | null;
         };
         ManufBatch: {
+            productionRouting?: components["schemas"]["ProductionRoute"][] | null;
             productionRoutingString?: string[] | null;
+            billOfMaterials?: components["schemas"]["BOMLineItem"][] | null;
             billOfMaterialsString?: string[] | null;
             stationBillOfMaterials?: components["schemas"]["StationBillOfMaterials"][] | null;
             purchaseOrders?: components["schemas"]["PurchaseRequisition"][] | null;
@@ -2469,10 +2488,70 @@ export interface components {
             /** Format: double */
             readonly profitBuyOrder?: number;
         };
+        MarketRegionHistory: {
+            /** Format: int32 */
+            regionId?: number;
+            /** Format: int32 */
+            typeId?: number;
+            /** Format: double */
+            average?: number;
+            /** Format: date-time */
+            date?: string;
+            /** Format: double */
+            highest?: number;
+            /** Format: double */
+            lowest?: number;
+            /** Format: int64 */
+            orderCount?: number;
+            /** Format: int64 */
+            volume?: number;
+        };
+        MarketStat: {
+            /** Format: date-time */
+            dateTime?: string;
+            /** Format: int32 */
+            typeId?: number;
+            /** Format: int64 */
+            stationId?: number;
+            /** Format: int32 */
+            regionId?: number;
+            stationName?: string | null;
+            /** Format: double */
+            averageSellPrice?: number;
+            /** Format: int64 */
+            sellVolume?: number;
+            /** Format: double */
+            averageBuyPrice?: number;
+            /** Format: int64 */
+            buyVolume?: number;
+        };
         Name: {
             /** Format: int64 */
             itemId?: number;
             itemName?: string | null;
+        };
+        Order: {
+            /** Format: int32 */
+            blueprintTypeId?: number;
+            /** Format: int32 */
+            activityId?: number;
+            /** Format: int32 */
+            productTypeId?: number;
+            productName: string | null;
+            product: components["schemas"]["Item"];
+            blueprintName: string | null;
+            /** Format: int32 */
+            copies?: number;
+            /** Format: int32 */
+            runs?: number;
+            /** Format: int32 */
+            readonly quantity?: number;
+            /** Format: int32 */
+            me?: number;
+            /** Format: int32 */
+            te?: number;
+            /** Format: int32 */
+            parentBlueprintTypeId?: number | null;
         };
         PIPlannerRequest: {
             focalSystemName?: string | null;
@@ -2535,6 +2614,32 @@ export interface components {
             readonly marketImport?: string[] | null;
             /** Format: double */
             readonly estimatedCost?: number;
+        };
+        ProductionRoute: {
+            /** Format: int32 */
+            materialTypeId?: number;
+            materialName?: string | null;
+            /** Format: int32 */
+            blueprintTypeId?: number;
+            blueprintName?: string | null;
+            /** Format: int32 */
+            requisitioned?: number;
+            order: components["schemas"]["Order"];
+            orders?: components["schemas"]["Order"][] | null;
+            /** Format: int32 */
+            producedPerRun: number;
+            /** Format: int32 */
+            readonly produced?: number;
+            /** Format: int32 */
+            inventory?: number | null;
+            /** Format: double */
+            averageSellPrice?: number | null;
+            /** Format: double */
+            averageBuyPrice?: number | null;
+            blueprintMetaData?: components["schemas"]["Item"];
+            materialMetaData?: components["schemas"]["Item"];
+            materialMarketHistory?: components["schemas"]["MarketRegionHistory"][] | null;
+            marketStats?: components["schemas"]["MarketStat"][] | null;
         };
         PurchaseRequisition: {
             /** Format: int64 */
