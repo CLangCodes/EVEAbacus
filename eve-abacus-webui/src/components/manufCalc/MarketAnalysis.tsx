@@ -51,7 +51,7 @@ export default function MarketAnalysis({ marketProfile }: MarketAnalysisProps) {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Material Cost</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {formatCurrency(marketProfile.materialCost)} Ƶ
                   </p>
                 </div>
@@ -68,7 +68,7 @@ export default function MarketAnalysis({ marketProfile }: MarketAnalysisProps) {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Revenue (Sell)</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {formatCurrency(marketProfile.revenueSellOrder)} Ƶ
                   </p>
                 </div>
@@ -85,7 +85,7 @@ export default function MarketAnalysis({ marketProfile }: MarketAnalysisProps) {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Revenue (Buy)</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {formatCurrency(marketProfile.revenueBuyOrder)} Ƶ
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export default function MarketAnalysis({ marketProfile }: MarketAnalysisProps) {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Profit (Sell)</p>
-                  <p className={`text-2xl font-semibold ${getProfitColor(marketProfile.profitSellOrder)}`}>
+                  <p className={`text-lg font-semibold ${getProfitColor(marketProfile.profitSellOrder)}`}>
                     {formatCurrency(marketProfile.profitSellOrder)} Ƶ
                   </p>
                 </div>
