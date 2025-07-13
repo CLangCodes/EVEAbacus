@@ -45,19 +45,8 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
 
   const columns: Column<RouteItem>[] = [
     {
-      key: 'id',
-      header: '#',
-      width: 'w-12',
-      sortable: true
-    },
-    {
       key: 'blueprintName',
       header: 'Blueprint',
-      sortable: true
-    },
-    {
-      key: 'materialName',
-      header: 'Material',
       sortable: true
     },
     {
