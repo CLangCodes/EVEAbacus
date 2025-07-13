@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '@/services/api';
 
 interface StationSelectionProps {
@@ -8,9 +8,39 @@ interface StationSelectionProps {
   onStationsChange: (stations: string[]) => void;
 }
 
+const STORAGE_KEY = 'selectedStations';
+
 export default function StationSelection({ selectedStations, onStationsChange }: StationSelectionProps) {
   const [availableStations, setAvailableStations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasUserSelected = useRef(false);
+
+  // On mount, load from localStorage if available
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          if (parsed.length > 0) {
+            hasUserSelected.current = true;
+            onStationsChange(parsed);
+          } else {
+            // If user previously selected none, mark as interacted
+            hasUserSelected.current = true;
+            onStationsChange([]);
+          }
+        }
+      } catch {}
+    }
+    // else: let the normal logic run (auto-select all on first load)
+    // eslint-disable-next-line
+  }, []);
+
+  // Save to localStorage whenever selection changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedStations));
+  }, [selectedStations]);
 
   // Memoize the callback to prevent unnecessary re-renders
   const memoizedOnStationsChange = useCallback(onStationsChange, [onStationsChange]);
@@ -21,9 +51,9 @@ export default function StationSelection({ selectedStations, onStationsChange }:
         setLoading(true);
         const stations = await apiService.getMarketHubs();
         setAvailableStations(stations);
-        
-        // If no stations are selected, default to all stations
-        if (selectedStations.length === 0) {
+
+        // Only auto-select all on first load, not after user interaction or if loaded from storage
+        if (selectedStations.length === 0 && !hasUserSelected.current) {
           memoizedOnStationsChange(stations);
         }
       } catch (error) {
@@ -37,7 +67,7 @@ export default function StationSelection({ selectedStations, onStationsChange }:
           'Hek VIII - Moon 12 - Boundless Creation Factory'
         ];
         setAvailableStations(defaultStations);
-        if (selectedStations.length === 0) {
+        if (selectedStations.length === 0 && !hasUserSelected.current) {
           memoizedOnStationsChange(defaultStations);
         }
       } finally {
@@ -48,19 +78,22 @@ export default function StationSelection({ selectedStations, onStationsChange }:
     loadStations();
   }, [memoizedOnStationsChange, selectedStations.length]);
 
+  // Mark that the user has interacted
   const handleStationToggle = (station: string) => {
+    hasUserSelected.current = true;
     const newSelection = selectedStations.includes(station)
       ? selectedStations.filter(s => s !== station)
       : [...selectedStations, station];
-    
     onStationsChange(newSelection);
   };
 
   const handleSelectAll = () => {
+    hasUserSelected.current = true;
     onStationsChange(availableStations);
   };
 
   const handleSelectNone = () => {
+    hasUserSelected.current = true;
     onStationsChange([]);
   };
 
