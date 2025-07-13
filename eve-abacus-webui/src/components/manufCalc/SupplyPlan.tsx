@@ -28,6 +28,8 @@ function ProcurementPlanContainer({ procurementPlan }: ProcurementPlanContainerP
     id: index + 1,
     name: item.name,
     quantity: item.quantity,
+    groupName: item.item.group.groupName,
+    categoryName: item.item.group.category.categoryName,
     volumeRemain: item.marketOrder?.volumeRemain || 0,
     price: item.price,
     volume: (item.item.volume || 0) * item.quantity,
@@ -47,6 +49,18 @@ function ProcurementPlanContainer({ procurementPlan }: ProcurementPlanContainerP
       sortable: true,
       width: 'w-20',
       render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'groupName',
+      header: 'Group',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
+    },
+    {
+      key: 'categoryName',
+      header: 'Category',
+      sortable: true,
+      render: (value) => (value as string) || 'N/A'
     },
     {
       key: 'volumeRemain',
