@@ -33,9 +33,21 @@ export function Autocomplete({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const justSelected = useRef(false); // <-- Add this line
+  const [lastSelectedValue, setLastSelectedValue] = useState<string>(''); // <-- Add this line
 
   // Debounce search
   useEffect(() => {
+    if (justSelected.current) {
+      justSelected.current = false;
+      return;
+    }
+    // Only show suggestions if value is different from last selected value
+    if (value === lastSelectedValue) {
+      setSuggestions([]);
+      setIsOpen(false);
+      return;
+    }
     const timeoutId = setTimeout(async () => {
       if (value.length >= minSearchLength) {
         setIsLoading(true);
@@ -58,7 +70,7 @@ export function Autocomplete({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [value, minSearchLength, onSearch]);
+  }, [value, minSearchLength, onSearch, lastSelectedValue]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -84,6 +96,10 @@ export function Autocomplete({
     if (!newValue) {
       setSuggestions([]);
       setIsOpen(false);
+    }
+    // If the user types something different, clear lastSelectedValue
+    if (lastSelectedValue && newValue !== lastSelectedValue) {
+      setLastSelectedValue('');
     }
   };
 
@@ -116,6 +132,8 @@ export function Autocomplete({
   };
 
   const handleSelect = (suggestion: string) => {
+    justSelected.current = true;
+    setLastSelectedValue(suggestion); // <-- Add this line
     onSelect(suggestion);
     onChange(suggestion);
     setIsOpen(false);
