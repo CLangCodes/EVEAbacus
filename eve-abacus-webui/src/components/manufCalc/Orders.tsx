@@ -15,7 +15,7 @@ interface OrdersProps {
 }
 
 export default function Orders({ className = '', orders: externalOrders, onOrdersChange }: OrdersProps) {
-  const { orders: internalOrders, addOrder: internalAddOrder, updateOrder: internalUpdateOrder, deleteOrder: internalDeleteOrder, isLoading } = useOrderStorage();
+  const { orders: internalOrders, addOrder: internalAddOrder, updateOrder: internalUpdateOrder, deleteOrder: internalDeleteOrder, clearOrders: internalClearOrders, isLoading } = useOrderStorage();
   
   // Use external orders if provided, otherwise use internal orders
   const orders = externalOrders || internalOrders;
@@ -39,11 +39,22 @@ export default function Orders({ className = '', orders: externalOrders, onOrder
       onOrdersChange(newOrders);
     } : internalDeleteOrder;
 
+  const clearAllOrders = onOrdersChange
+    ? () => onOrdersChange([])
+    : internalClearOrders;
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [filterText, setFilterText] = useState('');
   const [sortBy, setSortBy] = useState<'blueprintName' | 'copies' | 'runs' | 'me' | 'te'>('blueprintName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleClearAllOrders = () => {
+    if (orders.length === 0) return;
+    if (confirm('Are you sure you want to delete ALL orders? This cannot be undone.')) {
+      clearAllOrders();
+    }
+  };
 
   const filteredAndSortedOrders = orders
     .filter(order => 
@@ -107,13 +118,27 @@ export default function Orders({ className = '', orders: externalOrders, onOrder
             Manage your blueprint manufacturing orders
           </p>
         </div>
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Create Order
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+          >
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Create Order
+          </button>
+          <button
+            onClick={handleClearAllOrders}
+            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+            disabled={orders.length === 0}
+            title="Delete all orders"
+          >
+            {/* Trash icon SVG inline for now */}
+            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear Orders
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
