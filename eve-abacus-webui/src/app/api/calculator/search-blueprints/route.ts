@@ -52,9 +52,9 @@ export async function GET(req: NextRequest) {
     const blueprints = Array.isArray(results) ? results : [];
     console.log('Final blueprint search results:', blueprints);
     
-    if (blueprints.length === 0) {
-      throw new ApiError(404, 'No blueprints found matching the search term');
-    }
+    // if (blueprints.length === 0) {
+    // throw new ApiError(404, 'No blueprints found matching the search term');
+    // }
     
     return blueprints;
   });

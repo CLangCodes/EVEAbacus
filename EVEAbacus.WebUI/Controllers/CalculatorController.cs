@@ -89,7 +89,7 @@ namespace EVEAbacus.WebUI.Controllers
                 
                 if (results == null || !results.Any())
                 {
-                    return NotFound("No blueprints found matching the search term");
+                    results = Array.Empty<string>();
                 }
 
                 return Ok(results);
