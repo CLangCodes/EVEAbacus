@@ -77,7 +77,7 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
         if (!validation) {
           newErrors.blueprintName = 'Invalid blueprint name or activity combination';
           setErrors(newErrors);
-          setBlueprintValidation(null);
+          setBlueprintValidation(null);g
           setIsValidating(false);
           return false;
         }
@@ -115,7 +115,7 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
         return newErrors;
       });
     }
-    // Clear blueprint validation when blueprint name changes
+    // Only clear blueprint validation if the user is typing in the blueprintName field
     if (field === 'blueprintName') {
       setBlueprintValidation(null);
     }
@@ -126,12 +126,30 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
     handleInputChange(field, numValue);
   };
 
-  const handleBlueprintSelect = (blueprintName: string) => {
+  const handleBlueprintSelect = async (blueprintName: string) => {
     handleInputChange('blueprintName', blueprintName);
-    setBlueprintValidation(null); // Clear previous validation
+    setIsValidating(true);
+    try {
+      const validation = await apiService.validateBlueprint(blueprintName, formData.activityId);
+      setBlueprintValidation(validation);
+      if (!validation) {
+        setErrors(prev => ({ ...prev, blueprintName: 'Invalid blueprint name or activity combination' }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.blueprintName;
+          return newErrors;
+        });
+      }
+    } catch (error) {
+      setBlueprintValidation(null);
+      setErrors(prev => ({ ...prev, blueprintName: 'Failed to validate blueprint' }));
+    } finally {
+      setIsValidating(false);
+    }
   };
 
-  const isSubmitDisabled = !formData.blueprintName.trim() || isValidating;
+  const isSubmitDisabled = !formData.blueprintName.trim() || isValidating || !blueprintValidation;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -164,6 +182,7 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
           />
 
           {/* Blueprint Validation Info */}
+          {/*
           {blueprintValidation && (
             <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
               <div className="text-sm text-green-800 dark:text-green-200">
@@ -174,7 +193,7 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
               </div>
             </div>
           )}
-
+          */}
           {/* Activity */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
