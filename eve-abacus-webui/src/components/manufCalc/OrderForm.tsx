@@ -77,7 +77,7 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
         if (!validation) {
           newErrors.blueprintName = 'Invalid blueprint name or activity combination';
           setErrors(newErrors);
-          setBlueprintValidation(null);g
+          setBlueprintValidation(null);
           setIsValidating(false);
           return false;
         }
