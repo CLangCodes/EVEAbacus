@@ -141,7 +141,7 @@ export function OrderForm({ order, onSubmit, onCancel }: OrderFormProps) {
           return newErrors;
         });
       }
-    } catch (error) {
+    } catch (_error) {
       setBlueprintValidation(null);
       setErrors(prev => ({ ...prev, blueprintName: 'Failed to validate blueprint' }));
     } finally {
