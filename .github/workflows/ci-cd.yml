@@ -72,6 +72,8 @@ jobs:
       
       - name: Download backend artifacts
         uses: actions/download-artifact@v4
+        env:
+          NODE_OPTIONS: --trace-deprecation
         with:
           name: backend-artifacts
           path: ./backend-artifacts
@@ -414,6 +416,8 @@ jobs:
       
       - name: Download frontend artifacts
         uses: actions/download-artifact@v4
+        env:
+          NODE_OPTIONS: --trace-deprecation
         with:
           name: frontend-artifacts
           path: ./frontend-artifacts
