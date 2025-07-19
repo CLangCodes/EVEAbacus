@@ -2,6 +2,43 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 
+/**
+ * @openapi
+ * /api/calculator/manufacturing-batch:
+ *   post:
+ *     tags:
+ *       - calculator
+ *     summary: Calculate manufacturing batch
+ *     description: Calculates a complete manufacturing batch analysis including Bill of Materials, Production Routing, and Market Analysis
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               orderDTOs:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                 description: Array of manufacturing orders
+ *               stationIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Array of station IDs for market analysis
+ *     responses:
+ *       200:
+ *         description: Manufacturing batch calculation results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Bad request - invalid input data
+ *       500:
+ *         description: Internal server error
+ */
 export async function POST(request: NextRequest) {
   try {
     console.log('Manufacturing batch route called');
