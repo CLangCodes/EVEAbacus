@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
   try {
     // Try to fetch from backend first
     const backendSwaggerUrl = `${BACKEND_BASE_URL}/swagger/v1/swagger.json`;
