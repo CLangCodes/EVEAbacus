@@ -107,8 +107,8 @@ function ProcurementPlanContainer({ procurementPlan }: ProcurementPlanContainerP
 
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          <p>Total Cost: {procurementPlan.estimatedCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ƶ</p>
-          <p>Total Volume: {procurementPlan.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³</p>
+          <p>Station Total Cost: {procurementPlan.estimatedCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ƶ</p>
+          <p>Station Total Volume: {procurementPlan.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³</p>
         </div>
         <button
           onClick={exportShoppingList}
