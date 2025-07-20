@@ -6,6 +6,7 @@ import Script from "next/script";
 import Analytics from "@/components/Analytics";
 import ConsentMode from "@/components/ConsentMode";
 import ConsentSettings from "@/components/ConsentSettings";
+import AdSenseLoader from "@/components/AdSenseLoader";
 
 
 
@@ -63,6 +64,7 @@ export default function RootLayout({
       >
         <ConsentMode />
         <ConsentSettings />
+        <AdSenseLoader />
         <Analytics />
         <NavMenu />
         <main className="p-4">
