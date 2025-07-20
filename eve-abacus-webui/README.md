@@ -46,7 +46,7 @@ src/
 │   └── cookies.test.ts              # Cookie utility tests
 └── app/
     └── manufacturing-calculator/
-        └── page.tsx                 # Main calculator page (unified version)
+        └── page.tsx                 # Main calculator page
 ```
 
 ### Data Flow

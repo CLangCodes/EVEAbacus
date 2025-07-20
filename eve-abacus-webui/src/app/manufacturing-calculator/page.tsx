@@ -10,7 +10,7 @@ import { OrderFormDTO } from '@/components/manufCalc/OrderFormDTO';
 import { OrdersDataGrid } from '@/components/manufCalc/OrdersDataGrid';
 import ManufacturingResults from '@/components/manufCalc/ManufacturingResults';
 
-export default function ManufacturingCalculatorUnified() {
+export default function ManufacturingCalculator() {
   const [selectedStations, setSelectedStations] = useState<string[]>([]);
   const [manufBatch, setManufBatch] = useState<ManufBatch | null>(null);
   const [calculating, setCalculating] = useState(false);
@@ -197,7 +197,7 @@ export default function ManufacturingCalculatorUnified() {
           <div className="flex items-center justify-between h-16">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Manufacturing Calculator (Unified)
+                Manufacturing Calculator
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Real-time EVE Online Industry Planning Tool
