@@ -107,21 +107,25 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <div className={className}>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+        <table className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600 ${
+                  className={`px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600 ${
                     column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600' : ''
                   } ${column.width || ''}`}
+                  style={{
+                    minWidth: column.width?.includes('w-8') ? '32px' : undefined,
+                    width: column.width?.includes('w-8') ? 'auto' : undefined
+                  }}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>{column.header}</span>
+                    <span className="truncate">{column.header}</span>
                     {column.sortable && (
-                      <span className="text-xs">{getSortIcon(column.key)}</span>
+                      <span className="text-xs flex-shrink-0">{getSortIcon(column.key)}</span>
                     )}
                   </div>
                 </th>
@@ -137,7 +141,11 @@ export function DataTable<T extends Record<string, unknown>>({
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}
-                    className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-600"
+                    className="px-2 py-2 text-sm text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-600"
+                    style={{
+                      minWidth: column.width?.includes('w-8') ? '32px' : undefined,
+                      width: column.width?.includes('w-8') ? 'auto' : undefined
+                    }}
                   >
                     {column.render 
                       ? column.render(row[column.key], row)

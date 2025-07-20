@@ -4,19 +4,17 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '@/services/api';
 import type { ManufBatch, OrderDTO } from '@/types/manufacturing';
 import type { Order } from '@/types/orders';
-import { PlusIcon, TrashIcon, FilterIcon, SortAscendingIcon } from '@/components/Icons';
+import { PlusIcon, TrashIcon } from '@/components/Icons';
 import { useOrderCookies } from '@/hooks/useOrderCookies';
 import { OrderFormDTO } from '@/components/manufCalc/OrderFormDTO';
-import { OrderCardReadOnly } from '@/components/manufCalc/OrderCardReadOnly';
+import { OrdersDataGrid } from '@/components/manufCalc/OrdersDataGrid';
 import ManufacturingResults from '@/components/manufCalc/ManufacturingResults';
 
 export default function ManufacturingCalculatorUnified() {
   const [selectedStations, setSelectedStations] = useState<string[]>([]);
   const [manufBatch, setManufBatch] = useState<ManufBatch | null>(null);
   const [calculating, setCalculating] = useState(false);
-  const [filterText, setFilterText] = useState('');
-  const [sortBy, setSortBy] = useState<'blueprintName' | 'copies' | 'runs' | 'me' | 'te'>('blueprintName');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
 
   // Available stations - will be loaded from API
   const [availableStations, setAvailableStations] = useState<string[]>([]);
@@ -188,24 +186,7 @@ export default function ManufacturingCalculatorUnified() {
     debouncedCalculation(orders, selectedStations);
   }, [orders, selectedStations, debouncedCalculation]);
 
-  const filteredAndSortedOrders = orders
-    .filter(order => 
-      order.blueprintName.toLowerCase().includes(filterText.toLowerCase())
-    )
-    .sort((a, b) => {
-      const aValue = a[sortBy];
-      const bValue = b[sortBy];
-      
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortOrder === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      
-      return sortOrder === 'asc' 
-        ? (aValue as number) - (bValue as number)
-        : (bValue as number) - (aValue as number);
-    });
+
 
   // Manual calculation trigger for testing
   const triggerCalculation = () => {
@@ -259,246 +240,189 @@ export default function ManufacturingCalculatorUnified() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Orders and Station Selection */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Orders Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Manufacturing Orders
-                  </h2>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={startCreatingOrder}
-                      className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      <PlusIcon className="w-4 h-4 mr-1" />
-                      Add Order
-                    </button>
-                    <button
-                      onClick={clearAllOrders}
-                      className="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                      disabled={orders.length === 0}
-                      title="Delete all orders"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Filters and Search */}
-                <div className="mb-4">
-                  <div className="flex flex-col sm:flex-row gap-2">
+        <div className="space-y-6">
+          {/* Main Container - Orders, Market Hubs, and Results */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6">
+              {editingOrder ? (
+                <OrderFormDTO
+                  editingOrder={editingOrder}
+                  onUpdate={updateEditingOrder}
+                  onSave={saveEditingOrder}
+                  onCancel={cancelEditing}
+                  isValidating={isValidating}
+                />
+              ) : (
+                <div className="space-y-6">
+                  {/* Orders and Market Hubs Row */}
+                  <div className="flex gap-6 overflow-x-auto">
+                    {/* Orders Section - 80% width */}
                     <div className="flex-1">
-                      <div className="relative">
-                        <FilterIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Search blueprints..."
-                          value={filterText}
-                          onChange={(e) => setFilterText(e.target.value)}
-                          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        />
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          Orders
+                        </h2>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={startCreatingOrder}
+                            className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                          >
+                            <PlusIcon className="w-4 h-4 mr-1" />
+                            Add Order
+                          </button>
+                          <button
+                            onClick={clearAllOrders}
+                            className="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                            disabled={orders.length === 0}
+                            title="Delete all orders"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as 'blueprintName' | 'copies' | 'runs' | 'me' | 'te')}
-                        className="px-2 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="blueprintName">Name</option>
-                        <option value="copies">Copies</option>
-                        <option value="runs">Runs</option>
-                        <option value="me">ME</option>
-                        <option value="te">TE</option>
-                      </select>
-                      <button
-                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                        className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <SortAscendingIcon className={`w-4 h-4 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Orders List */}
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {filteredAndSortedOrders.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="text-gray-400 dark:text-gray-500">
-                        <svg className="mx-auto h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p className="text-sm">No orders found</p>
-                        <button
-                          onClick={startCreatingOrder}
-                          className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
-                        >
-                          Add your first order
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    filteredAndSortedOrders.map((order) => (
-                      <OrderCardReadOnly
-                        key={order.id}
-                        order={order}
+                                          {/* Orders Data Grid */}
+                    <div className="max-h-64 overflow-x-auto overflow-y-auto">
+                      <OrdersDataGrid
+                        orders={orders}
                         onEdit={startEditingOrder}
                         onDelete={deleteOrder}
-                        isSelected={editingOrder?.id === order.id}
+                        editingOrderId={editingOrder?.id}
+                        className="w-full"
                       />
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
+                    </div>
+                    </div>
 
-            {/* Station Selection */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Market Hubs
-                  </h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedStations(availableStations)}
-                      className="text-xs text-blue-600 hover:text-blue-700"
-                    >
-                      Select All
-                    </button>
-                    <button
-                      onClick={() => setSelectedStations([])}
-                      className="text-xs text-gray-600 hover:text-gray-700"
-                    >
-                      Clear All
-                    </button>
+                    {/* Market Hubs Section - 25% width */}
+                    <div className="w-1/4 min-w-48 flex-shrink-0">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Market Hubs
+                        </h3>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setSelectedStations(availableStations)}
+                            className="text-xs text-blue-600 hover:text-blue-700"
+                          >
+                            All
+                          </button>
+                          <button
+                            onClick={() => setSelectedStations([])}
+                            className="text-xs text-gray-600 hover:text-gray-700"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        {availableStations.map((station) => {
+                          const shortName = station.split(' ')[0]; // Extract first word (e.g., "Jita", "Amarr")
+                          return (
+                            <label key={station} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedStations.includes(station)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedStations(prev => [...prev, station]);
+                                  } else {
+                                    setSelectedStations(prev => prev.filter(s => s !== station));
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                                                          <div className="ml-2 flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 break-words">
+                                {shortName}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 break-words" title={station}>
+                                {station}
+                              </div>
+                            </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {selectedStations.length} of {availableStations.length} stations selected
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Manufacturing Results Section */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                      Manufacturing Results
+                    </h2>
+                    <ManufacturingResults manufBatch={manufBatch || undefined} loading={calculating} />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  {availableStations.map((station) => {
-                    const shortName = station.split(' ')[0]; // Extract first word (e.g., "Jita", "Amarr")
-                    return (
-                      <label key={station} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedStations.includes(station)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedStations(prev => [...prev, station]);
-                            } else {
-                              setSelectedStations(prev => prev.filter(s => s !== station));
-                            }
-                          }}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div className="ml-2 flex-1">
-                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {shortName}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={station}>
-                            {station}
-                          </div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {selectedStations.length} of {availableStations.length} stations selected
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
+          </div>
 
-            {/* Debug Info */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Debug Info
-                </h3>
-                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <div>Orders: {orders.length}</div>
-                  <div>Valid Orders: {getValidOrders().length}</div>
-                  <div>Selected Stations: {selectedStations.length}</div>
-                  <div>Calculating: {calculating ? 'Yes' : 'No'}</div>
-                  <div>Has Results: {manufBatch ? 'Yes' : 'No'}</div>
-                  <div>Editing Order: {editingOrder ? 'Yes' : 'No'}</div>
-                  {manufBatch && (
-                    <>
-                      <div>BOM Count: {manufBatch.billOfMaterials?.length || 0}</div>
-                      <div>Supply Plan: {manufBatch.supplyPlan?.procurementPlans?.length || 0} plans</div>
-                      <div>Material Cost: {manufBatch.marketProfile?.materialCost || 0} Ƶ</div>
-                      <div>Revenue Sell: {manufBatch.marketProfile?.revenueSellOrder || 0} Ƶ</div>
-                      <div>Revenue Buy: {manufBatch.marketProfile?.revenueBuyOrder || 0} Ƶ</div>
-                    </>
-                  )}
-                  {orders.length > 0 && (
-                    <div className="mt-2">
-                      <div className="font-medium">Order Details:</div>
-                      {orders.map((order, index) => (
-                        <div key={order.id} className="ml-2 text-xs">
-                          {index + 1}. {order.blueprintName || '(empty)'} - {order.copies} copies, {order.runs} runs
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+          {/* Debug Info - Moved to bottom as a separate card */}
+          {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Debug Info
+              </h3>
+              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <div>Orders: {orders.length}</div>
+                <div>Valid Orders: {getValidOrders().length}</div>
+                <div>Selected Stations: {selectedStations.length}</div>
+                <div>Calculating: {calculating ? 'Yes' : 'No'}</div>
+                <div>Has Results: {manufBatch ? 'Yes' : 'No'}</div>
+                <div>Editing Order: {editingOrder ? 'Yes' : 'No'}</div>
+                {manufBatch && (
+                  <>
+                    <div>BOM Count: {manufBatch.billOfMaterials?.length || 0}</div>
+                    <div>Supply Plan: {manufBatch.supplyPlan?.procurementPlans?.length || 0} plans</div>
+                    <div>Material Cost: {manufBatch.marketProfile?.materialCost || 0} Ƶ</div>
+                    <div>Revenue Sell: {manufBatch.marketProfile?.revenueSellOrder || 0} Ƶ</div>
+                    <div>Revenue Buy: {manufBatch.marketProfile?.revenueBuyOrder || 0} Ƶ</div>
+                  </>
+                )}
+                {orders.length > 0 && (
+                  <div className="mt-2">
+                    <div className="font-medium">Order Details:</div>
+                    {orders.map((order, index) => (
+                      <div key={order.id} className="ml-2 text-xs">
+                        {index + 1}. {order.blueprintName || '(empty)'} - {order.copies} copies, {order.runs} runs
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div> */}
+              
+              {/* Manual Calculation Button */}
+              {/* <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 space-y-2">
+                <button
+                  onClick={triggerCalculation}
+                  disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
+                  className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  {calculating ? 'Calculating...' : 'Manual Calculate'}
+                </button>
+                <p className="text-xs text-gray-500">
+                  Force calculation (bypasses debouncing)
+                </p>
                 
-                {/* Manual Calculation Button */}
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 space-y-2">
-                  <button
-                    onClick={triggerCalculation}
-                    disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
-                    className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    {calculating ? 'Calculating...' : 'Manual Calculate'}
-                  </button>
-                  <p className="text-xs text-gray-500">
-                    Force calculation (bypasses debouncing)
-                  </p>
-                  
-                  <button
-                    onClick={refreshMarketData}
-                    disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
-                    className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    {calculating ? 'Refreshing...' : 'Refresh Market Data'}
-                  </button>
-                  <p className="text-xs text-gray-500">
-                    Force refresh of market data from EVE ESI
-                  </p>
-                </div>
-              </div>
+                <button
+                  onClick={refreshMarketData}
+                  disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
+                  className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  {calculating ? 'Refreshing...' : 'Refresh Market Data'}
+                </button>
+                <p className="text-xs text-gray-500">
+                  Force refresh of market data from EVE ESI
+                </p>
+              </div> 
             </div>
-          </div>
-
-          {/* Right Column - Results or Edit Form */}
-          <div className="lg:col-span-2">
-            {editingOrder ? (
-              <OrderFormDTO
-                editingOrder={editingOrder}
-                onUpdate={updateEditingOrder}
-                onSave={saveEditingOrder}
-                onCancel={cancelEditing}
-                isValidating={isValidating}
-              />
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Manufacturing Results
-                  </h2>
-                  <ManufacturingResults manufBatch={manufBatch || undefined} loading={calculating} />
-                </div>
-              </div>
-            )}
-          </div>
+          </div>*/}
         </div>
       </div>
     </div>
