@@ -6,10 +6,49 @@ import * as CookieConsentNS from 'vanilla-cookieconsent';
 
 export default function CookieConsentBanner() {
   useEffect(() => {
+    // Add dark mode class to html element for cookie consent
+    document.documentElement.classList.add('cc--darkmode');
+    
     const CookieConsent = CookieConsentNS as any;
     if (!CookieConsent || typeof CookieConsent.run !== 'function') {
       console.error('CookieConsent is undefined');
       return;
+    }
+    function handleConsent({ cookie }: { cookie: { categories: string[] } }) {
+      if (cookie.categories.includes('analytics')) {
+        if (!document.getElementById('ga4-js')) {
+          const gaScript = document.createElement('script');
+          gaScript.id = 'ga4-js';
+          gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z3LZYRG3N4';
+          gaScript.async = true;
+          document.head.appendChild(gaScript);
+
+          const inlineScript = document.createElement('script');
+          inlineScript.id = 'ga4-init';
+          inlineScript.innerHTML = `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-Z3LZYRG3N4', {
+              page_path: window.location.pathname,
+            });
+          `;
+          document.head.appendChild(inlineScript);
+        }
+      }
+      if (cookie.categories.includes('targeting')) {
+        if (!document.getElementById('adsense-js')) {
+          const adScript = document.createElement('script');
+          adScript.id = 'adsense-js';
+          adScript.async = true;
+          adScript.src = 'https://pagead2.googlesyndication.com/pagead/js?client=ca-pub-2093140217864166';
+          adScript.crossOrigin = 'anonymous';
+          document.head.appendChild(adScript);
+        }
+      }
+      if (typeof window !== 'undefined' && CookieConsent) {
+        window.CookieConsent = CookieConsent;
+      }
     }
     CookieConsent.run({
       categories: {
@@ -17,7 +56,6 @@ export default function CookieConsentBanner() {
         analytics: { toggle: true },
         targeting: { toggle: true }
       },
-      theme: 'dark',
       language: {
         default: 'en',
         translations: {
@@ -72,43 +110,12 @@ export default function CookieConsentBanner() {
           position: 'left'
         }
       },
-      onConsent: ({ cookie }: { cookie: { categories: string[] } }) => {
-        if (cookie.categories.includes('analytics')) {
-          if (!document.getElementById('ga4-js')) {
-            const gaScript = document.createElement('script');
-            gaScript.id = 'ga4-js';
-            gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z3LZYRG3N4';
-            gaScript.async = true;
-            document.head.appendChild(gaScript);
-
-            const inlineScript = document.createElement('script');
-            inlineScript.id = 'ga4-init';
-            inlineScript.innerHTML = `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-Z3LZYRG3N4', {
-                page_path: window.location.pathname,
-              });
-            `;
-            document.head.appendChild(inlineScript);
-          }
-        }
-        if (cookie.categories.includes('targeting')) {
-          if (!document.getElementById('adsense-js')) {
-            const adScript = document.createElement('script');
-            adScript.id = 'adsense-js';
-            adScript.async = true;
-            adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2093140217864166';
-            adScript.crossOrigin = 'anonymous';
-            document.head.appendChild(adScript);
-          }
-        }
-      }
+      onConsent: handleConsent,
+      onFirstConsent: handleConsent
     });
-    // Expose to window for settings button
+    // Expose to window for settings button (initial load)
     if (typeof window !== 'undefined' && CookieConsent) {
-      (window as any).CookieConsent = CookieConsent;
+      window.CookieConsent = CookieConsent;
     }
   }, []);
 
