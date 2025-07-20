@@ -8,9 +8,12 @@ A modern Next.js application for EVE Online manufacturing calculations and indus
 - **Order Management**: Complete CRUD operations for manufacturing orders
 - **Session Storage**: Persistent order storage with session storage and cookie backup
 - **Modern UI**: Responsive design with Tailwind CSS and dark mode support
-- **Dashboard Layout**: Clean, modern dashboard with tabbed navigation
+- **Unified Layout**: Combined orders, market hubs, and results in single view
 - **Order Statistics**: Real-time statistics and metrics
 - **Search & Filter**: Advanced filtering and sorting capabilities
+- **Market Hub Selection**: Multi-station market data analysis
+- **Real-time Calculation**: Debounced manufacturing calculations with backend integration
+- **Responsive Design**: Optimized for 720p screens and mobile devices
 
 ### 🚧 In Development
 - Bill of Materials (BOM) calculation
@@ -25,15 +28,15 @@ A modern Next.js application for EVE Online manufacturing calculations and indus
 src/
 ├── components/
 │   ├── Icons.tsx                    # Custom SVG icons
+│   ├── DataTable.tsx                # Generic data table component
 │   └── manufCalc/
-│       ├── Orders.tsx               # Main orders management
-│       ├── OrderCard.tsx            # Individual order display
-│       ├── OrderForm.tsx            # Create/edit order modal
-│       ├── OrderStats.tsx           # Statistics dashboard
-│       ├── BillOfMaterials.tsx      # BOM calculator (placeholder)
-│       ├── MarketAnalysis.tsx       # Market analysis (placeholder)
-│       ├── ProductionRouting.tsx    # Production routing (placeholder)
-│       └── SupplyPlan.tsx           # Supply planning (placeholder)
+│       ├── OrdersDataGrid.tsx       # Orders display with pagination
+│       ├── OrderFormDTO.tsx         # Create/edit order form
+│       ├── ManufacturingResults.tsx # Results display with tabs
+│       ├── BillOfMaterials.tsx      # BOM display component
+│       ├── MarketAnalysis.tsx       # Market analysis component
+│       ├── ProductionRouting.tsx    # Production routing component
+│       └── SupplyPlan.tsx           # Supply planning component
 ├── hooks/
 │   └── useOrderStorage.ts           # Order persistence hook
 ├── types/
@@ -43,7 +46,7 @@ src/
 │   └── cookies.test.ts              # Cookie utility tests
 └── app/
     └── manufacturing-calculator/
-        └── page.tsx                 # Main calculator page
+        └── page.tsx                 # Main calculator page (unified version)
 ```
 
 ### Data Flow
