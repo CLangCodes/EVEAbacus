@@ -149,17 +149,11 @@ export default function SupplyPlan({ supplyPlan }: SupplyPlanProps) {
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        {/* <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Supply Plan</h2>
-          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            <p>Total Cost: {supplyPlan.estimatedTotalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ƶ</p>
-            <p>Total Volume: {supplyPlan.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³</p>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+          
+        </div> */}
+        <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
             {supplyPlan.procurementPlans.map((plan, index) => (
               <button
                 key={index}
@@ -176,7 +170,10 @@ export default function SupplyPlan({ supplyPlan }: SupplyPlanProps) {
               </button>
             ))}
           </nav>
-        </div>
+        {/* Tabs */}
+        {/* <div className="border-b border-gray-200 dark:border-gray-700">
+          
+        </div> */}
 
         {/* Tab Content */}
         <div className="p-6">
@@ -184,6 +181,10 @@ export default function SupplyPlan({ supplyPlan }: SupplyPlanProps) {
             <ProcurementPlanContainer procurementPlan={supplyPlan.procurementPlans[activeTab]} />
           )}
         </div>
+        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <p>Total Cost: {supplyPlan.estimatedTotalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ƶ</p>
+            <p>Total Volume: {supplyPlan.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m³</p>
+          </div>
       </div>
     </div>
   );

@@ -108,18 +108,18 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        {/* <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Production Routing</h2>
-        </div>
-        
-        <div className="p-6">
-          <DataTable
+        </div> */}
+        <DataTable
             data={routeData}
             columns={columns}
             emptyMessage="No production routes found. Add some orders first."
             className="w-full"
           />
-        </div>
+        {/* <div className="p-6">
+          
+        </div> */}
       </div>
     </div>
   );
