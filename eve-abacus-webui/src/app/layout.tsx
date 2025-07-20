@@ -4,10 +4,10 @@ import "./globals.css";
 import { NavMenu } from "@/components/NavMenu";
 import Script from "next/script";
 import Analytics from "@/components/Analytics";
-import 'vanilla-cookieconsent/dist/cookieconsent.css';
-import { useEffect } from 'react';
-import CookieConsentBanner from '@/components/CookieConsentBanner';
-import CookieSettingsFooter from '@/components/CookieSettingsFooter';
+import ConsentMode from "@/components/ConsentMode";
+import ConsentSettings from "@/components/ConsentSettings";
+
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,20 +30,44 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+        <html lang="en">
       <head>
-        {/* CookieConsentBanner will handle script injection. */}
+        {/* Google Analytics with Consent Mode v2 */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-Z3LZYRG3N4"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            
+            // Initialize with default consent (denied)
+            gtag('consent', 'default', {
+              'ad_storage': 'denied',
+              'analytics_storage': 'denied',
+              'functionality_storage': 'denied',
+              'personalization_storage': 'denied',
+              'security_storage': 'granted'
+            });
+            
+            gtag('config', 'G-Z3LZYRG3N4', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <CookieConsentBanner />
+        <ConsentMode />
+        <ConsentSettings />
         <Analytics />
         <NavMenu />
         <main className="p-4">
           {children}
         </main>
-        <CookieSettingsFooter />
       </body>
     </html>
   );
