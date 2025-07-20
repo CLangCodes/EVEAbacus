@@ -4,6 +4,10 @@ import "./globals.css";
 import { NavMenu } from "@/components/NavMenu";
 import Script from "next/script";
 import Analytics from "@/components/Analytics";
+import 'vanilla-cookieconsent/dist/cookieconsent.css';
+import { useEffect } from 'react';
+import CookieConsentBanner from '@/components/CookieConsentBanner';
+import CookieSettingsFooter from '@/components/CookieSettingsFooter';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,34 +32,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google Analytics */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-Z3LZYRG3N4"
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-Z3LZYRG3N4', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
-
-        <script 
-          async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2093140217864166"
-          crossOrigin="anonymous"/>
+        {/* CookieConsentBanner will handle script injection. */}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <CookieConsentBanner />
         <Analytics />
         <NavMenu />
         <main className="p-4">
           {children}
         </main>
+        <CookieSettingsFooter />
       </body>
     </html>
   );
