@@ -9,7 +9,7 @@ declare global {
       targetId: string,
       params?: Record<string, unknown>
     ) => void;
-    dataLayer?: any[];
+    dataLayer?: unknown[];
   }
 }
 
@@ -34,7 +34,7 @@ export default function ConsentMode() {
       try {
         const parsed = JSON.parse(savedConsent);
         consentState = { ...defaultConsent, ...parsed };
-      } catch (e) {
+      } catch {
         console.warn('Failed to parse saved consent, using defaults');
       }
     }
@@ -88,7 +88,7 @@ export default function ConsentMode() {
         clearOptions.forEach(option => {
           try {
             document.cookie = option;
-          } catch (e) {
+          } catch {
             // Ignore domain errors
           }
         });
@@ -99,8 +99,8 @@ export default function ConsentMode() {
     };
 
     // Expose consent management to window
-    (window as any).updateGoogleConsent = updateConsent;
-    (window as any).getGoogleConsent = () => consentState;
+    (window as unknown as Record<string, unknown>).updateGoogleConsent = updateConsent;
+    (window as unknown as Record<string, unknown>).getGoogleConsent = () => consentState;
 
     // Create a simple consent banner if no consent has been given
     if (!savedConsent) {
