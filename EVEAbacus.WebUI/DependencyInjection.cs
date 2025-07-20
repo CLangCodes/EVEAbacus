@@ -1,15 +1,12 @@
-﻿using Blazored.SessionStorage;
-using EVEAbacus.Application.Interfaces;
+﻿using EVEAbacus.Application.Interfaces;
 using EVEAbacus.Domain.Models.Calculator;
 using EVEAbacus.Infrastructure;
 using EVEAbacus.WebUI.Controllers;
 using EVEAbacus.WebUI.Filters;
-using EVEAbacus.WebUI.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.OpenApi.Models;
-using MudBlazor.Services;
 using System.Reflection;
 
 namespace EVEAbacus.WebUI
@@ -18,17 +15,16 @@ namespace EVEAbacus.WebUI
     {
         public static IServiceCollection AddWebUIServices(this IServiceCollection services)
         {
-            services.AddRazorComponents()
-                .AddInteractiveServerComponents();
-
-            services.AddRazorPages();
-
-            services.AddServerSideBlazor()
-                .AddCircuitOptions(options => { options.DetailedErrors = true; });
-            services.AddBlazoredSessionStorage();
-            services.AddMudServices();
-
-            services.AddScoped<ICalcSessionService, CalcSessionService>();
+            // Add CORS services
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
 
             services.AddControllers();
 

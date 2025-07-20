@@ -1,6 +1,5 @@
 using EVEAbacus.Application;
 using EVEAbacus.Infrastructure;
-using EVEAbacus.WebUI.Components;
 using Microsoft.AspNetCore.HttpOverrides;
 using EVEAbacus.WebUI;
 
@@ -17,17 +16,6 @@ builder.Services
     .AddApplicationServices()
     .AddInfrastructureServices(builder.Configuration)
     .AddWebUIServices();
-
-// Add CORS services
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins("https://blazor.eveabacus.com, http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
 
 var app = builder.Build();
 
@@ -55,13 +43,8 @@ app.UseAuthorization();
 app.MapInfrastructureEndpoints();
 app.UseCors();
 app.UseStaticFiles();
-app.UseAntiforgery();
 
 app.MapControllers();
-app.MapRazorPages();
-
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {

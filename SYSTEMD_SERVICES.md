@@ -17,7 +17,7 @@ This repository contains systemd service files for the EVE Abacus application co
 - **Service Name**: `eveabacus-frontend`
 - **Description**: EVE Abacus Next.js Frontend
 - **Working Directory**: `/var/www/eveabacus/frontend`
-- **Executable**: `/usr/local/lib/node_modules/pnpm/bin/pnpm.cjs start`
+- **Executable**: `node server.js`
 - **User**: `www-data`
 - **Port**: `3000`
 - **Environment**: Production

@@ -13,10 +13,6 @@
             "args": [],
             "cwd": "${workspaceFolder}/EVEAbacus.WebUI",
             "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-            },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
             },
@@ -33,10 +29,6 @@
             "args": [],
             "cwd": "${workspaceFolder}/EVEAbacus.WebUI",
             "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-            },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Production"
             },
