@@ -5,7 +5,7 @@ import { apiService } from '@/services/api';
 import type { ManufBatch, OrderDTO } from '@/types/manufacturing';
 import type { Order } from '@/types/orders';
 import { PlusIcon, TrashIcon } from '@/components/Icons';
-import { useOrderCookies } from '@/hooks/useOrderCookies';
+import { useOrderCookies, type EditableOrderDTO } from '@/hooks/useOrderCookies';
 import { OrderFormDTO } from '@/components/manufCalc/OrderFormDTO';
 import { OrdersDataGrid } from '@/components/manufCalc/OrdersDataGrid';
 import ManufacturingResults from '@/components/manufCalc/ManufacturingResults';
@@ -81,8 +81,7 @@ export default function ManufacturingCalculatorUnified() {
     updateEditingOrder,
     saveEditingOrder,
     deleteOrder,
-    clearAllOrders,
-    getValidOrders
+    clearAllOrders
   } = useOrderCookies();
 
   // Simplified debouncing implementation
@@ -188,30 +187,7 @@ export default function ManufacturingCalculatorUnified() {
 
 
 
-  // Manual calculation trigger for testing
-  const triggerCalculation = () => {
-    const validOrders = orders.filter(order => order.blueprintName.trim() !== '');
-    if (validOrders.length > 0 && selectedStations.length > 0) {
-      debouncedCalculation(orders, selectedStations);
-    }
-  };
 
-  // Refresh market data
-  const refreshMarketData = async () => {
-    console.log('Refreshing market data...');
-    setCalculating(true);
-    try {
-      // First, trigger a calculation to refresh market data
-      const validOrders = orders.filter(order => order.blueprintName.trim() !== '');
-      if (validOrders.length > 0 && selectedStations.length > 0) {
-        await debouncedCalculation(orders, selectedStations);
-      }
-    } catch (error) {
-      console.error('Error refreshing market data:', error);
-    } finally {
-      setCalculating(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -287,7 +263,7 @@ export default function ManufacturingCalculatorUnified() {
                         orders={orders}
                         onEdit={startEditingOrder}
                         onDelete={deleteOrder}
-                        editingOrderId={editingOrder?.id}
+                        editingOrderId={(editingOrder as EditableOrderDTO | null)?.id}
                         className="w-full"
                       />
                     </div>
