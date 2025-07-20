@@ -15,7 +15,6 @@ export function NavMenu() {
         <div className="space-x-4">
           <Link href="/" className="text-gray-300 hover:text-white">Home</Link>
           <Link href="/manufacturing-calculator" className="text-gray-300 hover:text-white">Manufacturing Calculator</Link>
-          <Link href="/manufacturing-calculator-unified" className="text-gray-300 hover:text-white">Manufacturing Calculator (Unified)</Link>
           <Link href="/pi-planner" className="text-gray-300 hover:text-white">PI Planner</Link>
           <Link href="/invention-suggestion" className="text-gray-300 hover:text-white">Invention Suggestion</Link>
           <Link href="/swagger" className="text-gray-300 hover:text-white">API (Swagger)</Link>
