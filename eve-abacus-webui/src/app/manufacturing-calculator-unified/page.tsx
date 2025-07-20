@@ -18,29 +18,49 @@ export default function ManufacturingCalculatorUnified() {
   const [sortBy, setSortBy] = useState<'blueprintName' | 'copies' | 'runs' | 'me' | 'te'>('blueprintName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Available stations
-  const availableStations = ['Jita 4-4', 'Amarr VIII', 'Dodixie', 'Rens', 'Hek'];
+  // Available stations - will be loaded from API
+  const [availableStations, setAvailableStations] = useState<string[]>([]);
 
-  // Load selected stations from localStorage on mount
+  // Load available stations and selected stations from localStorage on mount
   useEffect(() => {
-    const loadSelectedStations = () => {
+    const loadStations = async () => {
       try {
+        // Load full station names from API
+        const stations = await apiService.getMarketHubs();
+        setAvailableStations(stations);
+        
+        // Load selected stations from localStorage
         const savedStations = localStorage.getItem('manufacturing-selected-stations');
         if (savedStations) {
           const parsedStations = JSON.parse(savedStations);
           setSelectedStations(parsedStations);
         } else {
           // Default to all stations selected
-          setSelectedStations(availableStations);
+          setSelectedStations(stations);
         }
       } catch (error) {
-        console.error('Error loading selected stations:', error);
-        // Fallback to all stations selected
-        setSelectedStations(availableStations);
+        console.error('Error loading market hubs:', error);
+        // Fallback to default stations with full names
+        const defaultStations = [
+          'Jita IV - Moon 4 - Caldari Navy Assembly Plant',
+          'Amarr VIII (Oris) - Emperor Family Academy', 
+          'Dodixie IX - Moon 20 - Federation Navy Assembly Plant',
+          'Rens VI - Moon 8 - Brutor Tribe Treasury',
+          'Hek VIII - Moon 12 - Boundless Creation Factory'
+        ];
+        setAvailableStations(defaultStations);
+        
+        const savedStations = localStorage.getItem('manufacturing-selected-stations');
+        if (savedStations) {
+          const parsedStations = JSON.parse(savedStations);
+          setSelectedStations(parsedStations);
+        } else {
+          setSelectedStations(defaultStations);
+        }
       }
     };
 
-    loadSelectedStations();
+    loadStations();
   }, []);
 
   // Save selected stations to localStorage whenever they change
@@ -125,6 +145,28 @@ export default function ManufacturingCalculatorUnified() {
 
         const result = await apiService.getManufacturingBatch(request);
         console.log('Received manufacturing result:', result);
+        
+        // Debug the received data
+        if (result) {
+          console.log('Debug - ManufBatch details:', {
+            hasBillOfMaterials: !!result.billOfMaterials,
+            billOfMaterialsCount: result.billOfMaterials?.length || 0,
+            hasSupplyPlan: !!result.supplyPlan,
+            supplyPlanProcurementPlans: result.supplyPlan?.procurementPlans?.length || 0,
+            hasMarketProfile: !!result.marketProfile,
+            marketProfileMaterialCost: result.marketProfile?.materialCost || 0,
+            marketProfileRevenueSell: result.marketProfile?.revenueSellOrder || 0,
+            marketProfileRevenueBuy: result.marketProfile?.revenueBuyOrder || 0,
+            billOfMaterialsDetails: result.billOfMaterials?.map(bom => ({
+              name: bom.name,
+              requisitioned: bom.requisitioned,
+              hasMarketStats: !!bom.marketStats,
+              marketStatsCount: bom.marketStats?.length || 0,
+              lowestSellPrice: bom.lowestSellPrice || 0
+            }))
+          });
+        }
+        
         setManufBatch(result);
       } catch (error) {
         console.error('Error calculating manufacturing batch:', error);
@@ -170,6 +212,23 @@ export default function ManufacturingCalculatorUnified() {
     const validOrders = orders.filter(order => order.blueprintName.trim() !== '');
     if (validOrders.length > 0 && selectedStations.length > 0) {
       debouncedCalculation(orders, selectedStations);
+    }
+  };
+
+  // Refresh market data
+  const refreshMarketData = async () => {
+    console.log('Refreshing market data...');
+    setCalculating(true);
+    try {
+      // First, trigger a calculation to refresh market data
+      const validOrders = orders.filter(order => order.blueprintName.trim() !== '');
+      if (validOrders.length > 0 && selectedStations.length > 0) {
+        await debouncedCalculation(orders, selectedStations);
+      }
+    } catch (error) {
+      console.error('Error refreshing market data:', error);
+    } finally {
+      setCalculating(false);
     }
   };
 
@@ -321,23 +380,33 @@ export default function ManufacturingCalculatorUnified() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {availableStations.map((station) => (
-                    <label key={station} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedStations.includes(station)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedStations(prev => [...prev, station]);
-                          } else {
-                            setSelectedStations(prev => prev.filter(s => s !== station));
-                          }
-                        }}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{station}</span>
-                    </label>
-                  ))}
+                  {availableStations.map((station) => {
+                    const shortName = station.split(' ')[0]; // Extract first word (e.g., "Jita", "Amarr")
+                    return (
+                      <label key={station} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedStations.includes(station)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedStations(prev => [...prev, station]);
+                            } else {
+                              setSelectedStations(prev => prev.filter(s => s !== station));
+                            }
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div className="ml-2 flex-1">
+                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {shortName}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={station}>
+                            {station}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
                 <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -360,6 +429,15 @@ export default function ManufacturingCalculatorUnified() {
                   <div>Calculating: {calculating ? 'Yes' : 'No'}</div>
                   <div>Has Results: {manufBatch ? 'Yes' : 'No'}</div>
                   <div>Editing Order: {editingOrder ? 'Yes' : 'No'}</div>
+                  {manufBatch && (
+                    <>
+                      <div>BOM Count: {manufBatch.billOfMaterials?.length || 0}</div>
+                      <div>Supply Plan: {manufBatch.supplyPlan?.procurementPlans?.length || 0} plans</div>
+                      <div>Material Cost: {manufBatch.marketProfile?.materialCost || 0} Ƶ</div>
+                      <div>Revenue Sell: {manufBatch.marketProfile?.revenueSellOrder || 0} Ƶ</div>
+                      <div>Revenue Buy: {manufBatch.marketProfile?.revenueBuyOrder || 0} Ƶ</div>
+                    </>
+                  )}
                   {orders.length > 0 && (
                     <div className="mt-2">
                       <div className="font-medium">Order Details:</div>
@@ -373,7 +451,7 @@ export default function ManufacturingCalculatorUnified() {
                 </div>
                 
                 {/* Manual Calculation Button */}
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 space-y-2">
                   <button
                     onClick={triggerCalculation}
                     disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
@@ -381,8 +459,19 @@ export default function ManufacturingCalculatorUnified() {
                   >
                     {calculating ? 'Calculating...' : 'Manual Calculate'}
                   </button>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500">
                     Force calculation (bypasses debouncing)
+                  </p>
+                  
+                  <button
+                    onClick={refreshMarketData}
+                    disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
+                    className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    {calculating ? 'Refreshing...' : 'Refresh Market Data'}
+                  </button>
+                  <p className="text-xs text-gray-500">
+                    Force refresh of market data from EVE ESI
                   </p>
                 </div>
               </div>
