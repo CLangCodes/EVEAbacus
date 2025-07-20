@@ -14,9 +14,10 @@ export default function CookieConsentBanner() {
     CookieConsent.run({
       categories: {
         necessary: { enabled: true, readOnly: true },
-        analytics: {},
-        targeting: {}
+        analytics: { toggle: true },
+        targeting: { toggle: true }
       },
+      theme: 'dark',
       language: {
         default: 'en',
         translations: {
@@ -41,15 +42,18 @@ export default function CookieConsentBanner() {
                 },
                 {
                   title: 'Strictly necessary cookies',
-                  description: 'These cookies are essential for the proper functioning of our website.'
+                  description: 'These cookies are essential for the proper functioning of our website.',
+                  linkedCategory: 'necessary'
                 },
                 {
                   title: 'Analytics cookies',
-                  description: 'These cookies help us understand how visitors interact with our website.'
+                  description: 'These cookies help us understand how visitors interact with our website.',
+                  linkedCategory: 'analytics'
                 },
                 {
                   title: 'Targeting cookies',
-                  description: 'These cookies are used for advertising and tracking purposes.'
+                  description: 'These cookies are used for advertising and tracking purposes.',
+                  linkedCategory: 'targeting'
                 }
               ]
             }
