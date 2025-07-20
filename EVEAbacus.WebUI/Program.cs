@@ -1,6 +1,5 @@
 using EVEAbacus.Application;
 using EVEAbacus.Infrastructure;
-using EVEAbacus.WebUI.Components;
 using Microsoft.AspNetCore.HttpOverrides;
 using EVEAbacus.WebUI;
 
@@ -55,13 +54,8 @@ app.UseAuthorization();
 app.MapInfrastructureEndpoints();
 app.UseCors();
 app.UseStaticFiles();
-app.UseAntiforgery();
 
 app.MapControllers();
-app.MapRazorPages();
-
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
