@@ -165,3 +165,4 @@ csx/
 
 # Ignore PublishProfiles for VS2022
 **/Properties/PublishProfiles/
+scripts/temp
