@@ -4,7 +4,11 @@ import { useEffect } from "react";
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
+    gtag?: (
+        command: "config" | "event" | "js",
+        targetId: string,
+        params?: Record<string, unknown>
+      ) => void;
   }
 }
 
