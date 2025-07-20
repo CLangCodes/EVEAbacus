@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Autocomplete } from '@/components/Autocomplete';
 import { apiService } from '@/services/api';
 import type { EditableOrderDTO } from '@/hooks/useOrderCookies';

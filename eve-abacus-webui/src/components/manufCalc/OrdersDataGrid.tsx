@@ -27,7 +27,7 @@ export function OrdersDataGrid({
 }: OrdersDataGridProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm] = useState('');
 
   const getActivityName = (activityId: number) => {
     switch (activityId) {
