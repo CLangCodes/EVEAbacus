@@ -15,13 +15,16 @@ namespace EVEAbacus.WebUI
     {
         public static IServiceCollection AddWebUIServices(this IServiceCollection services)
         {
-            // Removed Blazor and UI services
-            // services.AddRazorComponents().AddInteractiveServerComponents();
-            // services.AddRazorPages();
-            // services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
-            // services.AddBlazoredSessionStorage();
-            // services.AddMudServices();
-            // services.AddScoped<ICalcSessionService, CalcSessionService>();
+            // Add CORS services
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
 
             services.AddControllers();
 

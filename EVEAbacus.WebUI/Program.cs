@@ -17,17 +17,6 @@ builder.Services
     .AddInfrastructureServices(builder.Configuration)
     .AddWebUIServices();
 
-// Add CORS services
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins("https://blazor.eveabacus.com, http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
