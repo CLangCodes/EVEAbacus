@@ -282,7 +282,7 @@ export default function ManufacturingCalculatorUnified() {
                       </div>
 
                                           {/* Orders Data Grid */}
-                    <div className="max-h-64 overflow-x-auto overflow-y-auto">
+                    <div className="overflow-x-auto">
                       <OrdersDataGrid
                         orders={orders}
                         onEdit={startEditingOrder}
