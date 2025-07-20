@@ -6,8 +6,6 @@ interface ConsentState {
   ad_storage: 'granted' | 'denied';
   analytics_storage: 'granted' | 'denied';
   functionality_storage: 'granted' | 'denied';
-  personalization_storage: 'granted' | 'denied';
-  security_storage: 'granted' | 'denied';
 }
 
 export default function ConsentSettings() {
@@ -15,9 +13,7 @@ export default function ConsentSettings() {
   const [consent, setConsent] = useState<ConsentState>({
     ad_storage: 'denied',
     analytics_storage: 'denied',
-    functionality_storage: 'denied',
-    personalization_storage: 'denied',
-    security_storage: 'granted'
+    functionality_storage: 'granted'
   });
 
   useEffect(() => {
@@ -31,7 +27,7 @@ export default function ConsentSettings() {
         console.warn('Failed to parse saved consent');
       }
     }
-  }, []);
+  }, [isOpen]); // Reload when modal opens
 
   const updateConsent = (newConsent: Partial<ConsentState>) => {
     const updatedConsent = { ...consent, ...newConsent };
@@ -39,6 +35,23 @@ export default function ConsentSettings() {
     
     // Save to localStorage
     localStorage.setItem('google_consent', JSON.stringify(updatedConsent));
+    
+    // Clear cookies if consent is revoked
+    if (newConsent.analytics_storage === 'denied' && consent.analytics_storage === 'granted') {
+      // Clear Google Analytics cookies
+      clearCookies(['_ga', '_ga_', '_gid', '_gat']);
+    }
+    
+    if (newConsent.ad_storage === 'denied' && consent.ad_storage === 'granted') {
+      // Clear AdSense cookies
+      clearCookies(['_gads', '_gac_', '_gcl_au', '_gcl_dc']);
+      // Remove AdSense script if it exists
+      const adsenseScript = document.getElementById('adsense-script');
+      if (adsenseScript) {
+        adsenseScript.remove();
+        console.log('AdSense script removed');
+      }
+    }
     
     // Update gtag consent
     if (window.gtag) {
@@ -51,6 +64,30 @@ export default function ConsentSettings() {
     }
   };
 
+  const clearCookies = (cookieNames: string[]) => {
+    console.log('Attempting to clear tracking cookies...');
+    
+    // Try to clear what we can from client-side
+    cookieNames.forEach(cookieName => {
+      const clearOptions = [
+        `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`,
+        `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`,
+        `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`,
+      ];
+      
+      clearOptions.forEach(option => {
+        try {
+          document.cookie = option;
+        } catch (e) {
+          // Ignore domain errors
+        }
+      });
+    });
+    
+    console.log('Consent revoked. Tracking has been stopped.');
+    console.log('Note: Some cookies may remain in browser storage but are no longer active for tracking.');
+  };
+
   const handleSave = () => {
     updateConsent(consent);
     setIsOpen(false);
@@ -61,8 +98,6 @@ export default function ConsentSettings() {
       ad_storage: 'granted' as const,
       analytics_storage: 'granted' as const,
       functionality_storage: 'granted' as const,
-      personalization_storage: 'granted' as const,
-      security_storage: 'granted' as const
     };
     setConsent(allGranted);
     updateConsent(allGranted);
@@ -70,12 +105,13 @@ export default function ConsentSettings() {
   };
 
   const handleRejectAll = () => {
+    // Clear all tracking cookies
+    clearCookies(['_ga', '_ga_', '_gid', '_gat', '_gads', '_gac_', '_gcl_au', '_gcl_dc']);
+    
     const allDenied = {
       ad_storage: 'denied' as const,
       analytics_storage: 'denied' as const,
-      functionality_storage: 'denied' as const,
-      personalization_storage: 'denied' as const,
-      security_storage: 'granted' as const
+      functionality_storage: 'granted' as const, // Always granted
     };
     setConsent(allDenied);
     updateConsent(allDenied);
@@ -153,7 +189,7 @@ export default function ConsentSettings() {
             <label style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <input
                 type="checkbox"
-                checked={consent.security_storage === 'granted'}
+                checked={true}
                 disabled
                 style={{ width: '16px', height: '16px' }}
               />
@@ -161,6 +197,21 @@ export default function ConsentSettings() {
             </label>
             <p style={{ margin: '0 0 0 28px', fontSize: '14px', opacity: 0.7 }}>
               Essential for website security and cannot be disabled.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <input
+                type="checkbox"
+                checked={true}
+                disabled
+                style={{ width: '16px', height: '16px' }}
+              />
+              <span style={{ fontWeight: '500' }}>Functionality Cookies (Required)</span>
+            </label>
+            <p style={{ margin: '0 0 0 28px', fontSize: '14px', opacity: 0.7 }}>
+              Essential for website functionality and cannot be disabled.
             </p>
           </div>
 
@@ -194,35 +245,6 @@ export default function ConsentSettings() {
             </p>
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <input
-                type="checkbox"
-                checked={consent.functionality_storage === 'granted'}
-                onChange={(e) => updateConsent({ functionality_storage: e.target.checked ? 'granted' : 'denied' })}
-                style={{ width: '16px', height: '16px' }}
-              />
-              <span style={{ fontWeight: '500' }}>Functionality Cookies</span>
-            </label>
-            <p style={{ margin: '0 0 0 28px', fontSize: '14px', opacity: 0.7 }}>
-              Enable enhanced functionality and personalization.
-            </p>
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <input
-                type="checkbox"
-                checked={consent.personalization_storage === 'granted'}
-                onChange={(e) => updateConsent({ personalization_storage: e.target.checked ? 'granted' : 'denied' })}
-                style={{ width: '16px', height: '16px' }}
-              />
-              <span style={{ fontWeight: '500' }}>Personalization Cookies</span>
-            </label>
-            <p style={{ margin: '0 0 0 28px', fontSize: '14px', opacity: 0.7 }}>
-              Remember your preferences and provide personalized content.
-            </p>
-          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>

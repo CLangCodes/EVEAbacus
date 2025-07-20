@@ -22,8 +22,7 @@ export default function ConsentMode() {
     const defaultConsent = {
       ad_storage: 'denied',
       analytics_storage: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
+      functionality_storage: 'granted', // Always granted for functionality
       security_storage: 'granted' // Always granted for security
     };
 
@@ -49,6 +48,21 @@ export default function ConsentMode() {
     const updateConsent = (newConsent: Partial<typeof defaultConsent>) => {
       const updatedConsent = { ...consentState, ...newConsent };
       
+      // Clear cookies if consent is revoked
+      if (newConsent.analytics_storage === 'denied' && consentState.analytics_storage === 'granted') {
+        clearCookies(['_ga', '_ga_', '_gid', '_gat']);
+      }
+      
+      if (newConsent.ad_storage === 'denied' && consentState.ad_storage === 'granted') {
+        clearCookies(['_gads', '_gac_', '_gcl_au', '_gcl_dc']);
+        // Remove AdSense script if it exists
+        const adsenseScript = document.getElementById('adsense-script');
+        if (adsenseScript) {
+          adsenseScript.remove();
+          console.log('AdSense script removed');
+        }
+      }
+      
       // Save to localStorage
       localStorage.setItem('google_consent', JSON.stringify(updatedConsent));
       
@@ -58,6 +72,30 @@ export default function ConsentMode() {
       }
       
       consentState = updatedConsent;
+    };
+
+    const clearCookies = (cookieNames: string[]) => {
+      console.log('Attempting to clear tracking cookies...');
+      
+      // Try to clear what we can from client-side
+      cookieNames.forEach(cookieName => {
+        const clearOptions = [
+          `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`,
+          `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`,
+          `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`,
+        ];
+        
+        clearOptions.forEach(option => {
+          try {
+            document.cookie = option;
+          } catch (e) {
+            // Ignore domain errors
+          }
+        });
+      });
+      
+      console.log('Consent revoked. Tracking has been stopped.');
+      console.log('Note: Some cookies may remain in browser storage but are no longer active for tracking.');
     };
 
     // Expose consent management to window
@@ -132,9 +170,7 @@ export default function ConsentMode() {
     document.getElementById('consent-necessary')?.addEventListener('click', () => {
       (window as any).updateGoogleConsent({
         ad_storage: 'denied',
-        analytics_storage: 'denied',
-        functionality_storage: 'denied',
-        personalization_storage: 'denied'
+        analytics_storage: 'denied'
       });
       banner.remove();
     });
@@ -142,9 +178,7 @@ export default function ConsentMode() {
     document.getElementById('consent-all')?.addEventListener('click', () => {
       (window as any).updateGoogleConsent({
         ad_storage: 'granted',
-        analytics_storage: 'granted',
-        functionality_storage: 'granted',
-        personalization_storage: 'granted'
+        analytics_storage: 'granted'
       });
       banner.remove();
     });
