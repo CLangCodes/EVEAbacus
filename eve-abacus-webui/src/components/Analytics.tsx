@@ -9,7 +9,7 @@ declare global {
         targetId: string,
         params?: Record<string, unknown>
       ) => void;
-    dataLayer?: any[];
+    dataLayer?: unknown[];
   }
 }
 

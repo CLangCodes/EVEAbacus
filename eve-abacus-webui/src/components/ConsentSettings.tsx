@@ -23,7 +23,7 @@ export default function ConsentSettings() {
       try {
         const parsed = JSON.parse(savedConsent);
         setConsent(parsed);
-      } catch (e) {
+      } catch {
         console.warn('Failed to parse saved consent');
       }
     }
@@ -59,8 +59,9 @@ export default function ConsentSettings() {
     }
     
     // Update global consent function
-    if ((window as any).updateGoogleConsent) {
-      (window as any).updateGoogleConsent(updatedConsent);
+    const updateGoogleConsent = (window as unknown as Record<string, unknown>).updateGoogleConsent as ((consent: Partial<ConsentState>) => void) | undefined;
+    if (updateGoogleConsent) {
+      updateGoogleConsent(updatedConsent);
     }
   };
 
@@ -75,13 +76,13 @@ export default function ConsentSettings() {
         `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`,
       ];
       
-      clearOptions.forEach(option => {
-        try {
-          document.cookie = option;
-        } catch (e) {
-          // Ignore domain errors
-        }
-      });
+              clearOptions.forEach(option => {
+          try {
+            document.cookie = option;
+          } catch {
+            // Ignore domain errors
+          }
+        });
     });
     
     console.log('Consent revoked. Tracking has been stopped.');
