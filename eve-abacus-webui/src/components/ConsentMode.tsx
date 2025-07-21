@@ -168,18 +168,24 @@ export default function ConsentMode() {
 
     // Add event listeners
     document.getElementById('consent-necessary')?.addEventListener('click', () => {
-      (window as any).updateGoogleConsent({
-        ad_storage: 'denied',
-        analytics_storage: 'denied'
-      });
+      const updateGoogleConsent = (window as unknown as Record<string, unknown>).updateGoogleConsent as ((consent: { ad_storage?: 'granted' | 'denied'; analytics_storage?: 'granted' | 'denied' }) => void) | undefined;
+      if (updateGoogleConsent) {
+        updateGoogleConsent({
+          ad_storage: 'denied',
+          analytics_storage: 'denied'
+        });
+      }
       banner.remove();
     });
 
     document.getElementById('consent-all')?.addEventListener('click', () => {
-      (window as any).updateGoogleConsent({
-        ad_storage: 'granted',
-        analytics_storage: 'granted'
-      });
+      const updateGoogleConsent = (window as unknown as Record<string, unknown>).updateGoogleConsent as ((consent: { ad_storage?: 'granted' | 'denied'; analytics_storage?: 'granted' | 'denied' }) => void) | undefined;
+      if (updateGoogleConsent) {
+        updateGoogleConsent({
+          ad_storage: 'granted',
+          analytics_storage: 'granted'
+        });
+      }
       banner.remove();
     });
   };
