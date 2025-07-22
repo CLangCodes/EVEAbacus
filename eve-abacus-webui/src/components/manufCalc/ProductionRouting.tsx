@@ -50,6 +50,12 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
     }
   };
 
+  const copyQuantity = (quantity: number) => {
+    if (quantity && quantity > 0) {
+      navigator.clipboard.writeText(quantity.toString());
+    }
+  };
+
   const columns: Column<RouteItem>[] = [
     {
       key: 'blueprintName',
@@ -84,7 +90,18 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
       key: 'requisitioned',
       header: 'Qty',
       sortable: true,
-      render: (value) => (value as number)?.toLocaleString() || '0'
+      render: (value, row) => (
+        <div className="flex items-center justify-between">
+          <span className="truncate">{(value as number)?.toLocaleString() || '0'}</span>
+          <button
+            onClick={() => copyQuantity(row.requisitioned as number)}
+            className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex-shrink-0 ml-2"
+            title="Copy quantity to clipboard"
+          >
+            <DocumentDuplicateIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )
     },
     {
       key: 'copies',
