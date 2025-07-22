@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { DataTable, Column } from '../DataTable';
+import { DocumentDuplicateIcon } from '../Icons';
 import type { ProductionRoute } from '@/types/manufacturing';
 
 interface ProductionRoutingProps {
@@ -43,11 +44,29 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
     categoryName: route.materialMetaData?.group?.category?.categoryName
   }));
 
+  const copyBlueprintName = (blueprintName: string) => {
+    if (blueprintName && blueprintName !== 'N/A') {
+      navigator.clipboard.writeText(blueprintName);
+    }
+  };
+
   const columns: Column<RouteItem>[] = [
     {
       key: 'blueprintName',
       header: 'Blueprint',
-      sortable: true
+      sortable: true,
+      render: (value, row) => (
+        <div className="flex items-center justify-between">
+          <span className="truncate">{value as string}</span>
+          <button
+            onClick={() => copyBlueprintName(row.blueprintName as string)}
+            className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex-shrink-0 ml-2"
+            title="Copy blueprint name to clipboard"
+          >
+            <DocumentDuplicateIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )
     },
     {
       key: 'groupName',
