@@ -18,12 +18,8 @@ const options = {
     },
     servers: [
       {
-        url: process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.eveabacus.com',
+        url: process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://eveabacus.com',
         description: process.env.NODE_ENV === 'development' ? 'Development server' : 'Production server',
-      },
-      {
-        url: 'https://eveabacus.com',
-        description: 'Production frontend',
       },
     ],
     components: {

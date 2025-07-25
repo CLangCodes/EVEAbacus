@@ -35,7 +35,7 @@ app.UseSwagger(c =>
         // Use production URL in production, localhost in development
         var serverUrl = app.Environment.IsDevelopment() 
             ? "http://localhost:5000" 
-            : "https://api.eveabacus.com";
+            : "https://eveabacus.com";
         swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = serverUrl } };
     });
 });
@@ -54,6 +54,18 @@ app.UseAuthorization();
 app.UseCors();
 app.MapInfrastructureEndpoints();
 //app.UseStaticFiles();
+
+// Add debugging middleware for CORS
+app.Use(async (context, next) =>
+{
+    var origin = context.Request.Headers["Origin"].ToString();
+    var method = context.Request.Method;
+    var path = context.Request.Path;
+    
+    Console.WriteLine($"Request: {method} {path} from Origin: {origin}");
+    
+    await next();
+});
 
 app.MapControllers();
 
