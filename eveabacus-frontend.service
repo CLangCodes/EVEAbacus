@@ -12,6 +12,7 @@ User=www-data
 Environment=NODE_ENV=production
 Environment=PORT=3000
 Environment=BACKEND_URL=http://localhost:5000
+Environment=OPENAPI_SPEC_URL=http://localhost:5000/swagger/v1/swagger.json
 
 [Install]
 WantedBy=multi-user.target 
