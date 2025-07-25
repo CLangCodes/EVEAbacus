@@ -32,7 +32,11 @@ app.UseSwagger(c =>
 {
     c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
     {
-        swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = "http://localhost:5000" } };
+        // Use production URL in production, localhost in development
+        var serverUrl = app.Environment.IsDevelopment() 
+            ? "http://localhost:5000" 
+            : "https://api.eveabacus.com";
+        swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = serverUrl } };
     });
 });
 app.UseSwaggerUI(c =>

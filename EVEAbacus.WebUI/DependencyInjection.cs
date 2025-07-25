@@ -20,9 +20,15 @@ namespace EVEAbacus.WebUI
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:3000")
+                    // In production, only allow specific origins
+                    policy.WithOrigins(
+                            "https://eveabacus.com",
+                            "https://www.eveabacus.com",
+                            "https://api.eveabacus.com"
+                        )
                         .AllowAnyHeader()
-                        .AllowAnyMethod();
+                        .AllowAnyMethod()
+                        .AllowCredentials();
                 });
             });
 
