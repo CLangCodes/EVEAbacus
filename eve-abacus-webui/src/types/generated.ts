@@ -24,17 +24,74 @@ export interface paths {
          */
         post: {
             parameters: {
-                query?: {
-                    "api-version"?: string;
-                };
+                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
+            requestBody: {
                 content: {
-                    "application/json-patch+json": components["schemas"]["ManufacturingBatchRequest"];
-                    "application/json": components["schemas"]["ManufacturingBatchRequest"];
+                    /** @example {
+                     *       "orderDTOs": [
+                     *         {
+                     *           "blueprintName": "Tritanium",
+                     *           "activityId": 1,
+                     *           "copies": 1,
+                     *           "runs": 10,
+                     *           "me": 0,
+                     *           "te": 0
+                     *         }
+                     *       ],
+                     *       "stationIds": [
+                     *         "60003760",
+                     *         "60008494"
+                     *       ]
+                     *     } */
+                    "application/json": {
+                        /** @description Array of manufacturing orders */
+                        orderDTOs: {
+                            /**
+                             * @description Name of the blueprint (optional)
+                             * @example Tritanium
+                             */
+                            blueprintName?: string;
+                            /**
+                             * @description Activity ID (1 = Manufacturing, 8 = Invention)
+                             * @example 1
+                             */
+                            activityId: number;
+                            /**
+                             * @description Number of blueprint copies
+                             * @example 1
+                             */
+                            copies: number;
+                            /**
+                             * @description Number of production runs
+                             * @example 10
+                             */
+                            runs: number;
+                            /**
+                             * @description Material Efficiency level (0-10)
+                             * @example 0
+                             */
+                            me: number;
+                            /**
+                             * @description Time Efficiency level (0-20)
+                             * @example 0
+                             */
+                            te: number;
+                            /** @description Parent blueprint TypeID (optional) */
+                            parentBlueprintTypeId?: number | null;
+                        }[];
+                        /**
+                         * @description Array of station IDs for market analysis (optional)
+                         * @example [
+                         *       "60003760",
+                         *       "60008494"
+                         *     ]
+                         */
+                        stationIds?: string[] | null;
+                    };
                     "text/json": components["schemas"]["ManufacturingBatchRequest"];
                     "application/*+json": components["schemas"]["ManufacturingBatchRequest"];
                 };
@@ -81,71 +138,6 @@ export interface paths {
                         "text/plain": components["schemas"]["ProblemDetails"];
                         "application/json": components["schemas"]["ProblemDetails"];
                         "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/Abacus/test": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Test endpoint for Swagger schema
-         * @description Simple test endpoint to verify that Swagger can generate schemas correctly.
-         *
-         *     **Rate Limiting:**
-         *     - 20 requests per second
-         *     - 100 requests per minute
-         *     - 1000 requests per hour
-         */
-        post: {
-            parameters: {
-                query?: {
-                    "api-version"?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json-patch+json": components["schemas"]["TestRequest"];
-                    "application/json": components["schemas"]["TestRequest"];
-                    "text/json": components["schemas"]["TestRequest"];
-                    "application/*+json": components["schemas"]["TestRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        /** @description The API versions supported by this endpoint */
-                        "api-supported-versions"?: string;
-                        /** @description The content type of the response */
-                        "content-type"?: string;
-                        /** @description The date and time when the response was generated */
-                        date?: string;
-                        /** @description The server software used to handle the request */
-                        server?: string;
-                        /** @description The encoding used to transfer the response */
-                        "transfer-encoding"?: string;
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": string;
-                        "application/json": string;
-                        "text/json": string;
                     };
                 };
             };
@@ -395,10 +387,69 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
+            requestBody: {
                 content: {
-                    "application/json-patch+json": components["schemas"]["ManufacturingBatchRequest"];
-                    "application/json": components["schemas"]["ManufacturingBatchRequest"];
+                    /** @example {
+                     *       "orderDTOs": [
+                     *         {
+                     *           "blueprintName": "Tritanium",
+                     *           "activityId": 1,
+                     *           "copies": 1,
+                     *           "runs": 10,
+                     *           "me": 0,
+                     *           "te": 0
+                     *         }
+                     *       ],
+                     *       "stationIds": [
+                     *         "60003760",
+                     *         "60008494"
+                     *       ]
+                     *     } */
+                    "application/json": {
+                        /** @description Array of manufacturing orders */
+                        orderDTOs: {
+                            /**
+                             * @description Name of the blueprint (optional)
+                             * @example Tritanium
+                             */
+                            blueprintName?: string;
+                            /**
+                             * @description Activity ID (1 = Manufacturing, 8 = Invention)
+                             * @example 1
+                             */
+                            activityId: number;
+                            /**
+                             * @description Number of blueprint copies
+                             * @example 1
+                             */
+                            copies: number;
+                            /**
+                             * @description Number of production runs
+                             * @example 10
+                             */
+                            runs: number;
+                            /**
+                             * @description Material Efficiency level (0-10)
+                             * @example 0
+                             */
+                            me: number;
+                            /**
+                             * @description Time Efficiency level (0-20)
+                             * @example 0
+                             */
+                            te: number;
+                            /** @description Parent blueprint TypeID (optional) */
+                            parentBlueprintTypeId?: number | null;
+                        }[];
+                        /**
+                         * @description Array of station IDs for market analysis (optional)
+                         * @example [
+                         *       "60003760",
+                         *       "60008494"
+                         *     ]
+                         */
+                        stationIds?: string[] | null;
+                    };
                     "text/json": components["schemas"]["ManufacturingBatchRequest"];
                     "application/*+json": components["schemas"]["ManufacturingBatchRequest"];
                 };
@@ -936,7 +987,6 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json-patch+json": string[];
                     "application/json": string[];
                     "text/json": string[];
                     "application/*+json": string[];
@@ -1270,16 +1320,13 @@ export interface paths {
          */
         post: {
             parameters: {
-                query?: {
-                    "api-version"?: string;
-                };
+                query?: never;
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json-patch+json": components["schemas"]["PIPlannerRequest"];
                     "application/json": components["schemas"]["PIPlannerRequest"];
                     "text/json": components["schemas"]["PIPlannerRequest"];
                     "application/*+json": components["schemas"]["PIPlannerRequest"];
@@ -2601,8 +2648,6 @@ export interface components {
             me?: number;
             /** Format: int32 */
             te?: number;
-            /** Format: int32 */
-            parentBlueprintTypeId?: number | null;
         };
         PIPlannerRequest: {
             focalSystemName?: string | null;
@@ -2837,16 +2882,6 @@ export interface components {
             readonly estimatedTotalCost?: number;
             /** Format: double */
             readonly totalVolume?: number;
-        };
-        /** @description Simple test request model */
-        TestRequest: {
-            /** @description The name to test */
-            name?: string | null;
-            /**
-             * Format: int32
-             * @description The count to test
-             */
-            count?: number;
         };
         ValidationProblemDetails: {
             type?: string | null;
