@@ -22,12 +22,12 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
       // Update the servers to point to the backend API
       backendSwagger.servers = [
         {
-          url: 'http://localhost:5000',
-          description: 'Development server',
+          url: process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.eveabacus.com',
+          description: process.env.NODE_ENV === 'development' ? 'Development server' : 'Production server',
         },
         {
           url: 'https://eveabacus.com',
-          description: 'Production server',
+          description: 'Production frontend',
         },
       ];
       
