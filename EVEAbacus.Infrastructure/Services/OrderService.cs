@@ -78,7 +78,7 @@ namespace EVEAbacus.Infrastructure.Services
             int materialQuantity = (int)material.Quantity!;
             bool childBPInventable = _sdeService.IsBlueprintProductOfInvention(childBPId);
             int mEff = childBPInventable ? 2 : 10;
-            int tEff = childBPInventable ? 4 : 10;
+            int tEff = childBPInventable ? 4 : 20;
 
             return new Order()
             {
