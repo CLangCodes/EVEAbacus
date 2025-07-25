@@ -125,7 +125,7 @@ export default function SwaggerPage() {
           <p>
             For more information, visit the{' '}
             <a 
-              href="https://blazor.eveabacus.com/swaggerComp" 
+              href="https://eveabacus.com/swagger-ui" 
               className="text-blue-400 hover:text-blue-300 hover:underline"
             >
               backend Swagger documentation

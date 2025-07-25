@@ -34,11 +34,7 @@ namespace EVEAbacus.WebUI
                 });
             });
 
-            services.AddControllers()
-                .AddNewtonsoftJson(options =>
-                {
-                    options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
-                });
+            services.AddControllers();
 
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
