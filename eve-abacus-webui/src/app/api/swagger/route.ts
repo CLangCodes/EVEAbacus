@@ -35,10 +35,22 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
         },
       ];
       
-      // Create a custom Swagger spec with frontend API routes
+            // Create a comprehensive frontend Swagger spec with all API routes
       const frontendSwagger = {
-        ...backendSwagger,
+        openapi: "3.0.4",
+        info: {
+          title: "EVE Abacus Frontend API",
+          description: "Frontend API routes for EVE Online manufacturing and production calculations",
+          version: "v1"
+        },
+        servers: [
+          {
+            url: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://eveabacus.com',
+            description: process.env.NODE_ENV === 'development' ? 'Frontend API (Development)' : 'Frontend API (Production)',
+          },
+        ],
         paths: {
+          // Calculator endpoints
           '/api/calculator/market-hubs': {
             get: {
               tags: ['calculator'],
@@ -56,9 +68,7 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
                     }
                   }
                 },
-                '500': {
-                  description: 'Internal server error'
-                }
+                '500': { description: 'Internal server error' }
               }
             }
           },
@@ -94,9 +104,11 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
               }
             }
           },
-          '/api/calculator/manufacturing-batch': {
+
+          // Abacus endpoints
+          '/api/abacus/manuf-batch': {
             post: {
-              tags: ['calculator'],
+              tags: ['abacus'],
               summary: 'Calculate manufacturing batch',
               description: 'Calculates a complete manufacturing batch analysis including Bill of Materials, Production Routing, and Market Analysis',
               requestBody: {
@@ -131,12 +143,102 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
                   }
                 },
                 '400': { description: 'Bad request - invalid input data' },
+                '404': { description: 'Not found' },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          '/api/abacus/invention-suggestion': {
+            post: {
+              tags: ['abacus'],
+              summary: 'Get invention suggestions',
+              description: 'Returns a list of blueprints suitable for invention based on character\'s R&D skills',
+              parameters: [
+                {
+                  in: 'query',
+                  name: 'skillIds',
+                  schema: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  description: 'Array of EVE Online R&D skill IDs',
+                  required: true
+                }
+              ],
+              responses: {
+                '200': {
+                  description: 'List of suitable blueprints for invention',
+                  content: {
+                    'application/json': {
+                      schema: { type: 'object' }
+                    }
+                  }
+                },
+                '400': { description: 'Bad request - missing skill IDs' },
+                '404': { description: 'No suitable blueprints found' },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          '/api/abacus/pi-planner': {
+            post: {
+              tags: ['abacus'],
+              summary: 'Find planets for Planetary Interaction',
+              description: 'Finds planets suitable for Planetary Interaction (PI) within a specified range of a focal system',
+              parameters: [
+                {
+                  in: 'query',
+                  name: 'focalSystemName',
+                  schema: { type: 'string' },
+                  description: 'Name of the EVE Online solar system to use as the center point',
+                  required: true
+                },
+                {
+                  in: 'query',
+                  name: 'range',
+                  schema: { type: 'integer', minimum: 1, maximum: 10 },
+                  description: 'Number of jumps from the focal system to search (1-10)',
+                  required: true
+                },
+                {
+                  in: 'query',
+                  name: 'securityStatus',
+                  schema: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  description: 'Array of security status filters (e.g., [\'highsec\', \'lowsec\', \'nullsec\'])'
+                },
+                {
+                  in: 'query',
+                  name: 'planetTypes',
+                  schema: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  description: 'Array of planet types to filter by (e.g., [\'Barren\', \'Gas\', \'Ice\', \'Lava\', \'Oceanic\', \'Plasma\', \'Storm\', \'Temperate\'])'
+                }
+              ],
+              responses: {
+                '200': {
+                  description: 'List of suitable planets for PI',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'array',
+                        items: { type: 'object' }
+                      }
+                    }
+                  }
+                },
+                '400': { description: 'Bad request - invalid parameters' },
+                '404': { description: 'No suitable planets found' },
                 '500': { description: 'Internal server error' }
               }
             }
           }
         }
-             };
+      };
        
        console.log('Successfully created frontend Swagger spec');
        return NextResponse.json(frontendSwagger);
