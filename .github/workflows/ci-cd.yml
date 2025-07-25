@@ -325,8 +325,8 @@ jobs:
       - name: Build frontend
         run: |
           echo "Building frontend with standalone output..."
-          # Use the production backend URL for type generation
-          OPENAPI_SPEC_URL="http://localhost:5000/swagger/v1/swagger.json" pnpm build
+          # Build with type generation (will use fallback types if backend unavailable)
+          pnpm build
           echo "Build completed. Checking output..."
           ls -la .next/ || echo "No .next directory found after build"
           ls -la .next/standalone/ || echo "No standalone directory found after build"

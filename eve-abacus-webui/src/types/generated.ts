@@ -2795,3 +2795,33 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;
+
+// Fallback types when backend is not available during build
+// This file will be overwritten when the backend is accessible
+
+export interface ApiError {
+  error: string;
+  details?: string;
+  debug?: Record<string, any>;
+}
+
+export interface HealthResponse {
+  status: string;
+  timestamp: string;
+  version: string;
+  service: string;
+}
+
+export interface DatabaseHealthResponse {
+  status: string;
+  database: string;
+  timestamp: string;
+  responseTime: string;
+  message?: string;
+}
+
+// Add more fallback types as needed
+export type GeneratedTypes = {
+  // This will be replaced by actual generated types
+  [key: string]: any;
+};
