@@ -60,7 +60,8 @@ namespace EVEAbacus.WebUI.Controllers
                 if (canConnect)
                 {
                     // Optional: Perform a simple query to ensure full connectivity
-                    var testQuery = await _dbContext.Set<object>().FromSqlRaw("SELECT 1").FirstOrDefaultAsync();
+                    // Use a simple SQL query without requiring a specific entity
+                    var testQuery = await _dbContext.Database.ExecuteSqlRawAsync("SELECT 1");
                     
                     return Ok(new DatabaseHealthResponse
                     {
