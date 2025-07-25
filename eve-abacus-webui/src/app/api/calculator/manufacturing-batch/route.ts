@@ -51,12 +51,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     console.log('Manufacturing batch request:', {
-              url: `${BACKEND_BASE_URL}/api/v1/calculator/manufacturing-batch`,
+              url: `${BACKEND_BASE_URL}/api/v1.0/Calculator/manufacturing-batch`,
       method: 'POST',
       body: JSON.stringify(body, null, 2)
     });
 
-          const response = await fetch(`${BACKEND_BASE_URL}/api/v1/calculator/manufacturing-batch`, {
+          const response = await fetch(`${BACKEND_BASE_URL}/api/v1.0/Calculator/manufacturing-batch`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

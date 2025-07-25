@@ -35,17 +35,28 @@ import { backendService } from '../../../../lib/backendService';
 export async function GET(req: NextRequest) {
   return withErrorHandling(req, async () => {
     console.log('Getting market hubs');
-    const marketHubs = await backendService.getMarketHubs();
-    console.log('Backend market hubs result:', marketHubs);
     
-    // Ensure we return an array even if the backend returns unexpected data
-    const hubs = Array.isArray(marketHubs) ? marketHubs : [];
-    console.log('Final market hubs result:', hubs);
-    
-    if (hubs.length === 0) {
-      throw new ApiError(404, 'No market hubs found');
+    try {
+      const marketHubs = await backendService.getMarketHubs();
+      console.log('Backend market hubs result:', marketHubs);
+      
+      // Ensure we return an array even if the backend returns unexpected data
+      const hubs = Array.isArray(marketHubs) ? marketHubs : [];
+      console.log('Final market hubs result:', hubs);
+      
+      if (hubs.length === 0) {
+        throw new ApiError(404, 'No market hubs found');
+      }
+      
+      return hubs;
+    } catch (error) {
+      console.error('Error in market hubs route:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        name: error instanceof Error ? error.name : 'Unknown error type'
+      });
+      throw error;
     }
-    
-    return hubs;
   });
 } 

@@ -25,7 +25,8 @@ namespace EVEAbacus.WebUI
                             "https://eveabacus.com",
                             "http://eveabacus.com",
                             "https://www.eveabacus.com",
-                            "http://www.eveabacus.com"
+                            "http://www.eveabacus.com",
+                            "http://localhost:3000"
                         )
                         .AllowAnyHeader()
                         .AllowAnyMethod()

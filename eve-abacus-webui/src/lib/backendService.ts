@@ -87,7 +87,12 @@ class BackendService {
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
         try {
-          const response = await fetch(`${this.baseUrl}${endpoint}`, {
+          const fullUrl = `${this.baseUrl}${endpoint}`;
+          console.log(`BackendService making request to: ${fullUrl}`);
+          console.log(`BackendService baseUrl: ${this.baseUrl}`);
+          console.log(`BackendService endpoint: ${endpoint}`);
+          
+          const response = await fetch(fullUrl, {
             ...options,
             signal: controller.signal,
             headers: {
@@ -220,7 +225,7 @@ class BackendService {
 
   // Search blueprints endpoint
   async searchBlueprints(searchTerm: string): Promise<string[]> {
-    const endpoint = `/api/v1/calculator/search-blueprints?searchTerm=${encodeURIComponent(searchTerm)}`;
+    const endpoint = `/api/v1.0/Calculator/search-blueprints?searchTerm=${encodeURIComponent(searchTerm)}`;
     
     console.log('Backend service calling blueprint search endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -238,7 +243,7 @@ class BackendService {
 
   // Get blueprint TypeID by name
   async getBlueprintTypeId(blueprintName: string): Promise<number> {
-    const endpoint = `/api/v1/calculator/blueprint-type-id?blueprintName=${encodeURIComponent(blueprintName)}`;
+    const endpoint = `/api/v1.0/Calculator/blueprint-type-id?blueprintName=${encodeURIComponent(blueprintName)}`;
     
     console.log('Backend service calling blueprint TypeID endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -256,7 +261,7 @@ class BackendService {
 
   // Get product TypeID by blueprint TypeID and activity
   async getProductTypeId(blueprintTypeId: number, activityId: number): Promise<number> {
-    const endpoint = `/api/v1/calculator/product-type-id?blueprintTypeId=${blueprintTypeId}&activityId=${activityId}`;
+    const endpoint = `/api/v1.0/Calculator/product-type-id?blueprintTypeId=${blueprintTypeId}&activityId=${activityId}`;
     
     console.log('Backend service calling product TypeID endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -274,7 +279,7 @@ class BackendService {
 
   // Validate blueprint and get both TypeIDs
   async validateBlueprint(blueprintName: string, activityId: number): Promise<BlueprintValidationResponse> {
-    const endpoint = `/api/v1/calculator/validate-blueprint?blueprintName=${encodeURIComponent(blueprintName)}&activityId=${activityId}`;
+    const endpoint = `/api/v1.0/Calculator/validate-blueprint?blueprintName=${encodeURIComponent(blueprintName)}&activityId=${activityId}`;
     
     console.log('Backend service calling blueprint validation endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -292,7 +297,7 @@ class BackendService {
 
   // Get market hubs
   async getMarketHubs(): Promise<string[]> {
-    const endpoint = '/api/v1/calculator/market-hubs';
+    const endpoint = '/api/v1.0/Calculator/market-hubs';
     
     console.log('Backend service calling market hubs endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -310,7 +315,7 @@ class BackendService {
 
   // Get invention skills
   async getInventionSkills(): Promise<string[]> {
-    const endpoint = '/api/v1/calculator/invention-skills';
+    const endpoint = '/api/v1.0/Calculator/invention-skills';
     
     console.log('Backend service calling invention skills endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -328,7 +333,7 @@ class BackendService {
 
   // Get invention suggestions
   async getInventionSuggestions(inventionSkills: string[]): Promise<string[]> {
-    const endpoint = '/api/v1/calculator/invention-suggestions';
+    const endpoint = '/api/v1.0/Calculator/invention-suggestions';
     
     console.log('Backend service calling invention suggestions endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -350,7 +355,7 @@ class BackendService {
 
 // Create a singleton instance
 const backendService = new BackendService({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://eveabacus.com'),
   timeout: 10000,
 });
 
