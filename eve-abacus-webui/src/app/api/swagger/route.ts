@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const BACKEND_BASE_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://eveabacus.com');
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Always fetch from backend
     const backendSwaggerUrl = `${BACKEND_BASE_URL}/swagger/v1/swagger.json`;

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling } from '../../../../lib/middleware';
 
 const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 
