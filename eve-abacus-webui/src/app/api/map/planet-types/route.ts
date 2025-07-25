@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling } from '../../../../lib/middleware';
+import { NextResponse } from 'next/server';
 
 const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 
@@ -23,7 +22,7 @@ const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
  *       500:
  *         description: Internal server error
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   const startTime = Date.now();
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
