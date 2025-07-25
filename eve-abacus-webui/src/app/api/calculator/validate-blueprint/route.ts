@@ -4,7 +4,7 @@ import { backendService } from '../../../../lib/backendService';
 
 /**
  * @openapi
- * /api/v1.0/calculator/validate-blueprint:
+ * /api/calculator/validate-blueprint:
  *   get:
  *     tags:
  *       - calculator

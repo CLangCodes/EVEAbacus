@@ -220,7 +220,7 @@ class BackendService {
 
   // Search blueprints endpoint
   async searchBlueprints(searchTerm: string): Promise<string[]> {
-    const endpoint = `/api/v1.0/calculator/search-blueprints?searchTerm=${encodeURIComponent(searchTerm)}`;
+    const endpoint = `/api/v1/calculator/search-blueprints?searchTerm=${encodeURIComponent(searchTerm)}`;
     
     console.log('Backend service calling blueprint search endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -238,7 +238,7 @@ class BackendService {
 
   // Get blueprint TypeID by name
   async getBlueprintTypeId(blueprintName: string): Promise<number> {
-    const endpoint = `/api/v1.0/calculator/blueprint-type-id?blueprintName=${encodeURIComponent(blueprintName)}`;
+    const endpoint = `/api/v1/calculator/blueprint-type-id?blueprintName=${encodeURIComponent(blueprintName)}`;
     
     console.log('Backend service calling blueprint TypeID endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -256,7 +256,7 @@ class BackendService {
 
   // Get product TypeID by blueprint TypeID and activity
   async getProductTypeId(blueprintTypeId: number, activityId: number): Promise<number> {
-    const endpoint = `/api/v1.0/calculator/product-type-id?blueprintTypeId=${blueprintTypeId}&activityId=${activityId}`;
+    const endpoint = `/api/v1/calculator/product-type-id?blueprintTypeId=${blueprintTypeId}&activityId=${activityId}`;
     
     console.log('Backend service calling product TypeID endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -274,7 +274,7 @@ class BackendService {
 
   // Validate blueprint and get both TypeIDs
   async validateBlueprint(blueprintName: string, activityId: number): Promise<BlueprintValidationResponse> {
-    const endpoint = `/api/v1.0/calculator/validate-blueprint?blueprintName=${encodeURIComponent(blueprintName)}&activityId=${activityId}`;
+    const endpoint = `/api/v1/calculator/validate-blueprint?blueprintName=${encodeURIComponent(blueprintName)}&activityId=${activityId}`;
     
     console.log('Backend service calling blueprint validation endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -292,7 +292,7 @@ class BackendService {
 
   // Get market hubs
   async getMarketHubs(): Promise<string[]> {
-    const endpoint = '/api/v1.0/calculator/market-hubs';
+    const endpoint = '/api/v1/calculator/market-hubs';
     
     console.log('Backend service calling market hubs endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -310,7 +310,7 @@ class BackendService {
 
   // Get invention skills
   async getInventionSkills(): Promise<string[]> {
-    const endpoint = '/api/v1.0/calculator/invention-skills';
+    const endpoint = '/api/v1/calculator/invention-skills';
     
     console.log('Backend service calling invention skills endpoint:', `${this.baseUrl}${endpoint}`);
 
@@ -328,7 +328,7 @@ class BackendService {
 
   // Get invention suggestions
   async getInventionSuggestions(inventionSkills: string[]): Promise<string[]> {
-    const endpoint = '/api/v1.0/calculator/invention-suggestions';
+    const endpoint = '/api/v1/calculator/invention-suggestions';
     
     console.log('Backend service calling invention suggestions endpoint:', `${this.baseUrl}${endpoint}`);
 
