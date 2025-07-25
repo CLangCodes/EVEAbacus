@@ -33,6 +33,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
+                    "application/json-patch+json": components["schemas"]["ManufacturingBatchRequest"];
                     "application/json": components["schemas"]["ManufacturingBatchRequest"];
                     "text/json": components["schemas"]["ManufacturingBatchRequest"];
                     "application/*+json": components["schemas"]["ManufacturingBatchRequest"];
@@ -331,6 +332,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
+                    "application/json-patch+json": components["schemas"]["ManufacturingBatchRequest"];
                     "application/json": components["schemas"]["ManufacturingBatchRequest"];
                     "text/json": components["schemas"]["ManufacturingBatchRequest"];
                     "application/*+json": components["schemas"]["ManufacturingBatchRequest"];
@@ -869,6 +871,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
+                    "application/json-patch+json": string[];
                     "application/json": string[];
                     "text/json": string[];
                     "application/*+json": string[];
@@ -1211,6 +1214,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
+                    "application/json-patch+json": components["schemas"]["PIPlannerRequest"];
                     "application/json": components["schemas"]["PIPlannerRequest"];
                     "text/json": components["schemas"]["PIPlannerRequest"];
                     "application/*+json": components["schemas"]["PIPlannerRequest"];
@@ -2411,40 +2415,7 @@ export interface components {
             supplyPlan?: components["schemas"]["SupplyPlan"];
         };
         ManufacturingBatchRequest: {
-            orderDTOs?: {
-                /** @description The exact name of the blueprint in EVE Online */
-                blueprintName: string;
-                /**
-                 * Format: int32
-                 * @description Type of activity (1 = Manufacturing, default)
-                 * @default 1
-                 */
-                activityId: number;
-                /**
-                 * Format: int32
-                 * @description Number of blueprint copies to produce (1-1000)
-                 * @default 1
-                 */
-                copies: number;
-                /**
-                 * Format: int32
-                 * @description Number of manufacturing runs per copy (1-1000)
-                 * @default 1
-                 */
-                runs: number;
-                /**
-                 * Format: int32
-                 * @description Material Efficiency level, reduces material requirements (0-10)
-                 * @default 0
-                 */
-                me: number;
-                /**
-                 * Format: int32
-                 * @description Time Efficiency level, reduces production time (must be zero or even, 0-20)
-                 * @default 0
-                 */
-                te: number;
-            }[] | null;
+            orderDTOs?: components["schemas"]["OrderDTO"][] | null;
             stationIds?: string[] | null;
         };
         MarketOrder: {
@@ -2546,6 +2517,21 @@ export interface components {
             runs?: number;
             /** Format: int32 */
             readonly quantity?: number;
+            /** Format: int32 */
+            me?: number;
+            /** Format: int32 */
+            te?: number;
+            /** Format: int32 */
+            parentBlueprintTypeId?: number | null;
+        };
+        OrderDTO: {
+            blueprintName?: string | null;
+            /** Format: int32 */
+            activityId?: number;
+            /** Format: int32 */
+            copies?: number;
+            /** Format: int32 */
+            runs?: number;
             /** Format: int32 */
             me?: number;
             /** Format: int32 */

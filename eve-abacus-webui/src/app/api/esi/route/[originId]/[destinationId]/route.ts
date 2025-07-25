@@ -42,7 +42,7 @@ const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { originId: string; destinationId: string } }
+  { params }: { params: Promise<{ originId: string; destinationId: string }> }
 ) {
   const startTime = Date.now();
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -52,8 +52,9 @@ export async function GET(
     
     const { searchParams } = new URL(request.url);
     const flag = searchParams.get('flag') || 'shortest';
-    const originId = params.originId;
-    const destinationId = params.destinationId;
+    const resolvedParams = await params;
+    const originId = resolvedParams.originId;
+    const destinationId = resolvedParams.destinationId;
     
     if (!originId || !destinationId) {
       return NextResponse.json(
