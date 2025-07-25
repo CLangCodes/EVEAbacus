@@ -33,7 +33,10 @@ const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
  *         description: Internal server error
  */
 export async function POST(request: NextRequest) {
-  return withErrorHandling(request, async () => {
+  const startTime = Date.now();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
     console.log('SDE BlueprintSearch route called');
     
     const { searchParams } = new URL(request.url);
@@ -75,13 +78,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await response.json();
+    // Check if response is JSON or plain text
+    const contentType = response.headers.get('content-type');
+    let data;
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      // Handle plain text response
+      data = await response.text();
+    }
     
     console.log('SDE BlueprintSearch response:', {
       status: response.status,
-      data: JSON.stringify(data, null, 2)
+      contentType,
+      data: typeof data === 'string' ? data : JSON.stringify(data, null, 2)
     });
 
+    // Return raw data for Swagger UI compatibility
     return NextResponse.json(data);
-  });
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    
+    console.error('SDE BlueprintSearch error:', {
+      requestId,
+      error: errorMessage,
+      responseTime,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
+  }
 } 

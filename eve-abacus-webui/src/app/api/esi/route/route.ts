@@ -47,7 +47,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { originId: string; destinationId: string } }
 ) {
-  return withErrorHandling(request, async () => {
+  const startTime = Date.now();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
     console.log('ESI Route route called');
     
     const { searchParams } = new URL(request.url);
@@ -100,6 +103,22 @@ export async function GET(
       data: JSON.stringify(data, null, 2)
     });
 
+    // Return raw data for Swagger UI compatibility
     return NextResponse.json(data);
-  });
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    
+    console.error('ESI Route error:', {
+      requestId,
+      error: errorMessage,
+      responseTime,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
+  }
 } 

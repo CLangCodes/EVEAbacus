@@ -57,7 +57,10 @@ const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
  *         description: Internal server error
  */
 export async function GET(request: NextRequest) {
-  return withErrorHandling(request, async () => {
+  const startTime = Date.now();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
     console.log('Health DB route called');
     
     console.log('Health DB request:', {
@@ -95,6 +98,22 @@ export async function GET(request: NextRequest) {
       data: JSON.stringify(data, null, 2)
     });
 
+    // Return raw data for Swagger UI compatibility
     return NextResponse.json(data);
-  });
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    
+    console.error('Health DB error:', {
+      requestId,
+      error: errorMessage,
+      responseTime,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
+  }
 } 

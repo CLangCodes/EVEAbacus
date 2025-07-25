@@ -76,11 +76,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const data = await response.json();
+    // Check if response is JSON or plain text
+    const contentType = response.headers.get('content-type');
+    let data;
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      // Handle plain text response
+      data = await response.text();
+    }
     
     console.log('SDE GetItemName response:', {
       status: response.status,
-      data: JSON.stringify(data, null, 2)
+      contentType,
+      data: typeof data === 'string' ? data : JSON.stringify(data, null, 2)
     });
 
     // Return raw data for Swagger UI compatibility
