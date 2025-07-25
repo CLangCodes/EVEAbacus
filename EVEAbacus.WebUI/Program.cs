@@ -49,9 +49,10 @@ if (!app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
+app.UseCors();
+
 app.UseAuthorization();
 
-app.UseCors();
 app.MapInfrastructureEndpoints();
 //app.UseStaticFiles();
 

@@ -447,18 +447,26 @@ namespace EVEAbacus.Infrastructure.Services
         {
             try
             {
-                flag ??= "safe";
-                var uri = $"{esiBase}/route/{originSystemId}/{destinationSystemId}/?datasource=tranquility&flag={flag}";
-                string endpoint = uri.ToString();
+                flag ??= "shortest"; // Changed from "safe" to "shortest" to match frontend expectation
+                string endpoint = $"/route/{originSystemId}/{destinationSystemId}/?datasource=tranquility&flag={flag}";
                 string cacheKey = $"route_{originSystemId}_{destinationSystemId}_{flag}";
 
-                var route = await _eSIClient.GetFromESIAsync<List<int>>(endpoint, cacheKey, TimeSpan.FromMinutes(5)) ?? [];
-
+                Console.WriteLine($"ESI Route request: {endpoint}");
+                var route = await _eSIClient.GetFromESIAsync<List<int>>(endpoint, cacheKey, TimeSpan.FromMinutes(5));
+                
+                if (route == null)
+                {
+                    Console.WriteLine($"ESI Route returned null for {originSystemId} -> {destinationSystemId}");
+                    return new List<int>();
+                }
+                
+                Console.WriteLine($"ESI Route returned {route.Count} systems: [{string.Join(", ", route)}]");
                 return route;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching system route: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return null;
             }
         }
@@ -467,11 +475,11 @@ namespace EVEAbacus.Infrastructure.Services
         {
             try
             {
-                flag ??= "safe";
-                var address = $"{esiBase}/route/{originSystemId}/{destinationSystemId}/?datasource=tranquility&flag={flag}";
+                flag ??= "shortest"; // Changed from "safe" to "shortest" to match frontend expectation
+                string endpoint = $"/route/{originSystemId}/{destinationSystemId}/?datasource=tranquility&flag={flag}";
                 
                 string cacheKey = $"jumps_{originSystemId}_{destinationSystemId}_{flag}";
-                var jumps = await GetIntFromESIAsync(address, cacheKey, TimeSpan.FromMinutes(5));
+                var jumps = await GetIntFromESIAsync(endpoint, cacheKey, TimeSpan.FromMinutes(5));
                 return jumps.HasValue ? jumps.Value - 1 : null;
             }
             catch (Exception ex)
@@ -488,9 +496,7 @@ namespace EVEAbacus.Infrastructure.Services
 
                 foreach (var regionId in regionIds)
                 {
-                    var uri = new StringBuilder($"{esiBase}/markets/{regionId}/history/?datasource=tranquility");
-                    uri.Append($"&type_id={typeId}");
-                    string endpoint = uri.ToString();
+                    string endpoint = $"/markets/{regionId}/history/?datasource=tranquility&type_id={typeId}";
                     string cacheKey = $"market_history_{regionId}_{typeId}";
 
                     var marketRegionHistory = await _eSIClient.GetFromESIAsync<MarketRegionHistory>(endpoint, cacheKey, TimeSpan.FromMinutes(5));

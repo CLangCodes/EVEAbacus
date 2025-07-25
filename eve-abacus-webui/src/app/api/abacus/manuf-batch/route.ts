@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withErrorHandling } from '../../../../lib/middleware';
 
 const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 
 /**
  * @openapi
- * /api/calculator/manufacturing-batch:
+ * /api/abacus/manuf-batch:
  *   post:
  *     tags:
- *       - calculator
+ *       - abacus
  *     summary: Calculate manufacturing batch
  *     description: Calculates a complete manufacturing batch analysis including Bill of Materials, Production Routing, and Market Analysis
  *     requestBody:
@@ -25,7 +26,7 @@ const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
  *               stationIds:
  *                 type: array
  *                 items:
- *                   type: integer
+ *                   type: string
  *                 description: Array of station IDs for market analysis
  *     responses:
  *       200:
@@ -36,27 +37,24 @@ const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
  *               type: object
  *       400:
  *         description: Bad request - invalid input data
+ *       404:
+ *         description: Not found
  *       500:
  *         description: Internal server error
  */
 export async function POST(request: NextRequest) {
-  try {
-    console.log('Manufacturing batch route called');
-    console.log('BACKEND_BASE_URL:', BACKEND_BASE_URL);
-    console.log('Environment variables:', {
-      BACKEND_URL: process.env.BACKEND_URL,
-      NODE_ENV: process.env.NODE_ENV
-    });
-
+  return withErrorHandling(request, async () => {
+    console.log('Abacus ManufBatch route called');
+    
     const body = await request.json();
     
-    console.log('Manufacturing batch request:', {
-              url: `${BACKEND_BASE_URL}/api/v1.0/Calculator/manufacturing-batch`,
+    console.log('Abacus ManufBatch request:', {
+      url: `${BACKEND_BASE_URL}/api/Abacus/ManufBatch`,
       method: 'POST',
       body: JSON.stringify(body, null, 2)
     });
 
-          const response = await fetch(`${BACKEND_BASE_URL}/api/v1.0/Calculator/manufacturing-batch`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/api/Abacus/ManufBatch`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -65,14 +63,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error('Backend response error:', {
+      console.error('Backend Abacus ManufBatch response error:', {
         status: response.status,
         statusText: response.statusText,
         url: response.url
       });
       
       const errorText = await response.text();
-      console.error('Backend error response:', errorText);
+      console.error('Backend Abacus ManufBatch error response:', errorText);
       
       return NextResponse.json(
         { error: `Backend request failed: ${response.status} ${response.statusText}`, details: errorText },
@@ -82,18 +80,11 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     
-    console.log('Manufacturing batch response:', {
+    console.log('Abacus ManufBatch response:', {
       status: response.status,
       data: JSON.stringify(data, null, 2)
     });
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('Manufacturing batch API error:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
+  });
 } 
