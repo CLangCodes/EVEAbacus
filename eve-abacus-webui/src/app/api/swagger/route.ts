@@ -555,8 +555,8 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
           '/api/esi/route/{originId}/{destinationId}': {
             get: {
               tags: ['esi'],
-              summary: 'Get number of jumps between systems',
-              description: 'Calculates the number of jumps between two solar systems using EVE Online ESI route finding',
+              summary: 'Get route between systems',
+              description: 'Returns an array of system IDs representing the route between two solar systems using EVE Online ESI route finding',
               parameters: [
                 {
                   in: 'path',
@@ -576,17 +576,20 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
                   in: 'query',
                   name: 'flag',
                   schema: { type: 'string', default: 'shortest' },
-                  description: 'Route finding flag (e.g., "shortest")'
+                  description: 'Route finding flag (e.g., "shortest", "secure", "insecure")'
                 }
               ],
               responses: {
                 '200': {
-                  description: 'Number of jumps between systems',
+                  description: 'Array of system IDs representing the route',
                   content: {
                     'application/json': {
                       schema: {
-                        type: 'integer',
-                        description: 'Number of jumps (-1 if route not found)'
+                        type: 'array',
+                        items: {
+                          type: 'integer'
+                        },
+                        description: 'Array of system IDs in the route (empty array if no route found)'
                       }
                     }
                   }

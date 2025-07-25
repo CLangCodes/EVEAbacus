@@ -64,11 +64,15 @@ namespace EVEAbacus.Infrastructure.Services
 
                     if (!response.IsSuccessStatusCode)
                     {
-                        // Log error here
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"ESI request failed: {response.StatusCode} - {errorContent}");
+                        Console.WriteLine($"Request URL: {request.RequestUri}");
                         return default;
                     }
 
                     var content = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"ESI request successful: {request.RequestUri}");
+                    Console.WriteLine($"Response content: {content}");
                     return JsonConvert.DeserializeObject<T>(content);
                 }
                 finally

@@ -81,12 +81,26 @@ namespace EVEAbacus.WebUI.Controllers
             return Redirect(returnUrl);
         }
         [HttpGet("route/{originId}/{destinationId}")]
-        public async Task<ActionResult<int>> GetNumberofJumps(int originId, int destinationId, string? flag = "shortest")
+        public async Task<ActionResult<List<int>>> GetRoute(int originId, int destinationId, string? flag = "shortest")
         {
-            int jumps;
-            var route = await _esiService.GetRouteAsync(originId, destinationId, flag);
-            jumps = route?.Count() - 1 ?? -1;
-            return Ok(jumps);
+            try
+            {
+                var route = await _esiService.GetRouteAsync(originId, destinationId, flag);
+                
+                if (route == null || route.Count == 0)
+                {
+                    // No route found between the systems
+                    return Ok(new List<int>());
+                }
+                
+                // Return the array of system IDs representing the route
+                return Ok(route);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting route between {originId} and {destinationId}: {ex.Message}");
+                return StatusCode(500, new List<int>());
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling } from '../../../../lib/middleware';
 
 const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
 
@@ -9,35 +8,33 @@ const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
  *   get:
  *     tags:
  *       - esi
- *     summary: Get number of jumps between systems
- *     description: Calculates the number of jumps between two solar systems using EVE Online ESI route finding
+ *     summary: Get route between systems
+ *     description: Returns an array of system IDs representing the route between two solar systems using EVE Online ESI route finding
  *     parameters:
  *       - in: path
  *         name: originId
- *         schema:
- *           type: integer
+ *         schema: { type: 'integer' }
  *         description: TypeID of the origin solar system
  *         required: true
  *       - in: path
  *         name: destinationId
- *         schema:
- *           type: integer
+ *         schema: { type: 'integer' }
  *         description: TypeID of the destination solar system
  *         required: true
  *       - in: query
  *         name: flag
- *         schema:
- *           type: string
- *           default: "shortest"
- *         description: Route finding flag (e.g., "shortest")
+ *         schema: { type: 'string', default: 'shortest' }
+ *         description: Route finding flag (e.g., "shortest", "secure", "insecure")
  *     responses:
  *       200:
- *         description: Number of jumps between systems
+ *         description: Array of system IDs representing the route
  *         content:
  *           application/json:
  *             schema:
- *               type: integer
- *               description: Number of jumps (-1 if route not found)
+ *               type: 'array'
+ *               items:
+ *                 type: 'integer'
+ *               description: Array of system IDs in the route (empty array if no route found)
  *       400:
  *         description: Bad request - invalid parameters
  *       500:
@@ -66,14 +63,14 @@ export async function GET(
     }
     
     console.log('ESI Route request:', {
-      url: `${BACKEND_BASE_URL}/api/v1/ESI/route/${originId}/${destinationId}`,
+      url: `${BACKEND_BASE_URL}/ESI/route/${originId}/${destinationId}`,
       method: 'GET',
       originId,
       destinationId,
       flag
     });
 
-    const response = await fetch(`${BACKEND_BASE_URL}/api/v1/ESI/route/${originId}/${destinationId}?flag=${flag}`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/ESI/route/${originId}/${destinationId}?flag=${flag}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
