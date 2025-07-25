@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_BASE_URL = process.env.BACKEND_URL || 'http://localhost:5000';
+const BACKEND_BASE_URL = process.env.BACKEND_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://eveabacus.com');
 
 export async function GET(req: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
   try {
@@ -22,12 +22,8 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
       // Update the servers to point to the backend API
       backendSwagger.servers = [
         {
-          url: process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://api.eveabacus.com',
+          url: process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://eveabacus.com',
           description: process.env.NODE_ENV === 'development' ? 'Development server' : 'Production server',
-        },
-        {
-          url: 'https://eveabacus.com',
-          description: 'Production frontend',
         },
       ];
       

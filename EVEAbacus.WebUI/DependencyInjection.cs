@@ -20,11 +20,12 @@ namespace EVEAbacus.WebUI
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    // In production, only allow specific origins
+                    // Allow both HTTP and HTTPS for the same domains
                     policy.WithOrigins(
                             "https://eveabacus.com",
+                            "http://eveabacus.com",
                             "https://www.eveabacus.com",
-                            "https://api.eveabacus.com"
+                            "http://www.eveabacus.com"
                         )
                         .AllowAnyHeader()
                         .AllowAnyMethod()
