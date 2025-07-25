@@ -325,7 +325,8 @@ jobs:
       - name: Build frontend
         run: |
           echo "Building frontend with standalone output..."
-          OPENAPI_SPEC_URL="https://blazor.eveabacus.com/swagger/v1/swagger.json" pnpm build
+          # Use the production backend URL for type generation
+          OPENAPI_SPEC_URL="http://localhost:5000/swagger/v1/swagger.json" pnpm build
           echo "Build completed. Checking output..."
           ls -la .next/ || echo "No .next directory found after build"
           ls -la .next/standalone/ || echo "No standalone directory found after build"
@@ -607,6 +608,10 @@ jobs:
                   echo 'Service file not found anywhere - service may not start properly'
                 fi
               fi
+              
+              # Add BACKEND_URL environment variable to the service
+              echo 'Adding BACKEND_URL environment variable...'
+              sudo sed -i '/Environment=PORT=3000/a Environment=BACKEND_URL=${{ secrets.BACKEND_URL }}' /etc/systemd/system/eveabacus-frontend.service
               
               # Reload systemd to pick up the new configuration
               sudo systemctl daemon-reload
