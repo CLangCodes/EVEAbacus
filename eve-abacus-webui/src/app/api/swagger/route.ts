@@ -19,10 +19,10 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
     if (response.ok) {
       const backendSwagger = await response.json();
       
-      // Update the servers to point to the NextJS frontend
+      // Update the servers to point to the backend API
       backendSwagger.servers = [
         {
-          url: 'http://localhost:3000',
+          url: 'http://localhost:5000',
           description: 'Development server',
         },
         {

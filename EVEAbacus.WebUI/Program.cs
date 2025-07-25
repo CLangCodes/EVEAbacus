@@ -2,6 +2,7 @@ using EVEAbacus.Application;
 using EVEAbacus.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using EVEAbacus.WebUI;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseSwagger();
+app.UseSwagger(c =>
+{
+    c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+    {
+        swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = "http://localhost:5000" } };
+    });
+});
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "EVE Abacus API v1");
@@ -40,8 +47,8 @@ if (!app.Environment.IsProduction())
 }
 app.UseAuthorization();
 
-app.MapInfrastructureEndpoints();
 app.UseCors();
+app.MapInfrastructureEndpoints();
 //app.UseStaticFiles();
 
 app.MapControllers();
