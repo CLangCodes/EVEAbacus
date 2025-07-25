@@ -2,6 +2,7 @@
 using EVEAbacus.Domain.Models.API.Requests;
 using EVEAbacus.Domain.Models.Calculator;
 using EVEAbacus.Domain.Models.Map;
+using EVEAbacus.WebUI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -54,6 +55,21 @@ namespace EVEAbacus.WebUI.Controllers
             }
 
             return Ok(manufBatch);
+        }
+
+        /// <summary>
+        /// Test endpoint to verify Swagger schema generation
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Test endpoint for Swagger schema",
+            Description = "Simple test endpoint to verify that Swagger can generate schemas correctly."
+        )]
+        [HttpPost("test")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        public async Task<ActionResult<string>> TestEndpoint(
+            [FromBody] TestRequest request)
+        {
+            return Ok($"Received: {request.Name}, Count: {request.Count}");
         }
 
         /// <summary>

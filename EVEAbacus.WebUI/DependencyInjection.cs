@@ -34,7 +34,11 @@ namespace EVEAbacus.WebUI
                 });
             });
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddNewtonsoftJson(options =>
+                {
+                    options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                });
 
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
@@ -46,10 +50,20 @@ namespace EVEAbacus.WebUI
                     Description = "API for EVE Online manufacturing and production calculations"
                 });
 
-                // Include XML comments
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+                // Include XML comments from WebUI and Domain projects
+                var webUIAssembly = Assembly.GetExecutingAssembly();
+                var webUIAssemblyName = webUIAssembly.GetName().Name;
+                var webUIAssemblyXmlPath = Path.Combine(AppContext.BaseDirectory, $"{webUIAssemblyName}.xml");
+                options.IncludeXmlComments(webUIAssemblyXmlPath, includeControllerXmlComments: true);
+
+                // Include XML comments from Domain project
+                var domainAssembly = typeof(EVEAbacus.Domain.Models.Calculator.OrderDTO).Assembly;
+                var domainAssemblyName = domainAssembly.GetName().Name;
+                var domainAssemblyXmlPath = Path.Combine(AppContext.BaseDirectory, $"{domainAssemblyName}.xml");
+                if (File.Exists(domainAssemblyXmlPath))
+                {
+                    options.IncludeXmlComments(domainAssemblyXmlPath, includeControllerXmlComments: true);
+                }
 
                 // Enable Swagger annotations
                 options.EnableAnnotations();
@@ -58,8 +72,8 @@ namespace EVEAbacus.WebUI
                 options.OperationFilter<SwaggerParameterOperationFilter>();
                 options.OperationFilter<SwaggerHeaderOperationFilter>();
 
-                // Add schema for OrderDTO
-                options.MapType<OrderDTO>(() => OrderDTOSchema.GetSchema());
+                // Add schema for OrderDTO - using automatic generation instead of custom schema
+                // options.MapType<OrderDTO>(() => OrderDTOSchema.GetSchema());
 
                 options.DocumentFilter<ExcludeIdentityPathsFilter>();
             });
