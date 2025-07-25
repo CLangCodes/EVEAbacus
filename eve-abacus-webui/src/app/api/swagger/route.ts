@@ -236,6 +236,365 @@ export async function GET(req: NextRequest) { // eslint-disable-line @typescript
                 '500': { description: 'Internal server error' }
               }
             }
+          },
+          // Map endpoints
+          '/api/map/search-solar-systems': {
+            get: {
+              tags: ['map'],
+              summary: 'Search for EVE Online solar system names',
+              description: 'Returns a list of solar system names matching the search term for autocomplete functionality. If no search term is provided, returns all system names.',
+              parameters: [
+                {
+                  in: 'query',
+                  name: 'searchTerm',
+                  schema: { type: 'string' },
+                  description: 'Optional search term for solar system names'
+                }
+              ],
+              responses: {
+                '200': {
+                  description: 'List of matching solar system names',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'array',
+                        items: { type: 'string' }
+                      }
+                    }
+                  }
+                },
+                '404': { description: 'No matching solar systems found' },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          '/api/map/planet-types': {
+            get: {
+              tags: ['map'],
+              summary: 'Get available planet types',
+              description: 'Returns a list of all planet types that can be used for filtering planetary search results.',
+              responses: {
+                '200': {
+                  description: 'List of available planet types',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'array',
+                        items: { type: 'string' }
+                      }
+                    }
+                  }
+                },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          '/api/map/planets': {
+            post: {
+              tags: ['map'],
+              summary: 'Get planets based on filters',
+              description: 'Returns a paginated list of planets matching the specified criteria for Planetary Interaction planning.',
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        focalSystemName: {
+                          type: 'string',
+                          description: 'Name of the EVE Online solar system to use as the center point'
+                        },
+                        range: {
+                          type: 'integer',
+                          minimum: 0,
+                          description: 'Number of jumps from the focal system to search'
+                        },
+                        securityStatus: {
+                          type: 'array',
+                          items: { type: 'string' },
+                          description: 'Array of security status filters'
+                        },
+                        planetTypes: {
+                          type: 'array',
+                          items: { type: 'string' },
+                          description: 'Array of planet types to filter by'
+                        },
+                        pageNumber: {
+                          type: 'integer',
+                          minimum: 1,
+                          default: 1,
+                          description: 'Page number for pagination'
+                        },
+                        pageSize: {
+                          type: 'integer',
+                          minimum: 1,
+                          maximum: 100,
+                          default: 25,
+                          description: 'Number of items per page'
+                        }
+                      },
+                      required: ['focalSystemName', 'range']
+                    }
+                  }
+                }
+              },
+              responses: {
+                '200': {
+                  description: 'Paginated list of planets matching criteria',
+                  content: {
+                    'application/json': {
+                      schema: { type: 'object' }
+                    }
+                  }
+                },
+                '400': { description: 'Bad request - invalid parameters' },
+                '404': { description: 'Solar system not found' },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          // SDE endpoints
+          '/api/sde/item-name': {
+            get: {
+              tags: ['sde'],
+              summary: 'Get item name by TypeID',
+              description: 'Retrieves the full name of an EVE Online item using its TypeID',
+              parameters: [
+                {
+                  in: 'query',
+                  name: 'id',
+                  schema: { type: 'integer' },
+                  description: 'TypeID of the item',
+                  required: true
+                }
+              ],
+              responses: {
+                '200': {
+                  description: 'Item name',
+                  content: {
+                    'application/json': {
+                      schema: { type: 'string' }
+                    }
+                  }
+                },
+                '404': { description: 'Item not found' },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          '/api/sde/item-id': {
+            get: {
+              tags: ['sde'],
+              summary: 'Get TypeID by item name',
+              description: 'Retrieves the TypeID of an EVE Online item using its exact name (case-sensitive)',
+              parameters: [
+                {
+                  in: 'query',
+                  name: 'name',
+                  schema: { type: 'string' },
+                  description: 'Exact name of the item (case-sensitive)',
+                  required: true
+                }
+              ],
+              responses: {
+                '200': {
+                  description: 'Item TypeID',
+                  content: {
+                    'application/json': {
+                      schema: { type: 'string' }
+                    }
+                  }
+                },
+                '404': { description: 'Item not found' },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          '/api/sde/blueprint-search': {
+            post: {
+              tags: ['sde'],
+              summary: 'Search for blueprints by name',
+              description: 'Performs a search across all blueprints and returns matching names for autocomplete functionality',
+              parameters: [
+                {
+                  in: 'query',
+                  name: 'search',
+                  schema: { type: 'string' },
+                  description: 'Search term for blueprint names',
+                  required: true
+                }
+              ],
+              responses: {
+                '200': {
+                  description: 'List of matching blueprint names',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'array',
+                        items: { type: 'string' }
+                      }
+                    }
+                  }
+                },
+                '404': { description: 'No blueprints found' },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          // Health endpoints
+          '/api/health': {
+            get: {
+              tags: ['health'],
+              summary: 'Get API health status',
+              description: 'Returns the current status of the API service including version and timestamp.',
+              responses: {
+                '200': {
+                  description: 'API health status',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'object',
+                        properties: {
+                          status: {
+                            type: 'string',
+                            example: 'ok'
+                          },
+                          timestamp: {
+                            type: 'string',
+                            format: 'date-time'
+                          },
+                          version: {
+                            type: 'string',
+                            example: '1.0.0'
+                          },
+                          service: {
+                            type: 'string',
+                            example: 'EVE Abacus API'
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          '/api/health/db': {
+            get: {
+              tags: ['health'],
+              summary: 'Get database health status',
+              description: 'Tests the connection to the database and returns the status.',
+              responses: {
+                '200': {
+                  description: 'Database health status',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'object',
+                        properties: {
+                          status: {
+                            type: 'string',
+                            example: 'ok'
+                          },
+                          database: {
+                            type: 'string',
+                            example: 'connected'
+                          },
+                          timestamp: {
+                            type: 'string',
+                            format: 'date-time'
+                          },
+                          responseTime: {
+                            type: 'string',
+                            example: 'fast'
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                '503': {
+                  description: 'Database connection failed',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'object',
+                        properties: {
+                          status: {
+                            type: 'string',
+                            example: 'error'
+                          },
+                          database: {
+                            type: 'string',
+                            example: 'disconnected'
+                          },
+                          timestamp: {
+                            type: 'string',
+                            format: 'date-time'
+                          },
+                          responseTime: {
+                            type: 'string',
+                            example: 'timeout'
+                          },
+                          message: {
+                            type: 'string',
+                            description: 'Error message'
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                '500': { description: 'Internal server error' }
+              }
+            }
+          },
+          // ESI endpoints
+          '/api/esi/route/{originId}/{destinationId}': {
+            get: {
+              tags: ['esi'],
+              summary: 'Get number of jumps between systems',
+              description: 'Calculates the number of jumps between two solar systems using EVE Online ESI route finding',
+              parameters: [
+                {
+                  in: 'path',
+                  name: 'originId',
+                  schema: { type: 'integer' },
+                  description: 'TypeID of the origin solar system',
+                  required: true
+                },
+                {
+                  in: 'path',
+                  name: 'destinationId',
+                  schema: { type: 'integer' },
+                  description: 'TypeID of the destination solar system',
+                  required: true
+                },
+                {
+                  in: 'query',
+                  name: 'flag',
+                  schema: { type: 'string', default: 'shortest' },
+                  description: 'Route finding flag (e.g., "shortest")'
+                }
+              ],
+              responses: {
+                '200': {
+                  description: 'Number of jumps between systems',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        type: 'integer',
+                        description: 'Number of jumps (-1 if route not found)'
+                      }
+                    }
+                  }
+                },
+                '400': { description: 'Bad request - invalid parameters' },
+                '500': { description: 'Internal server error' }
+              }
+            }
           }
         }
       };
