@@ -1,12 +1,13 @@
 const { execSync } = require('child_process');
+const path = require('path');
 
-// Get the OpenAPI spec URL from environment variable or use default
-const openApiUrl = process.env.OPENAPI_SPEC_URL || 'http://localhost:5000/swagger/v1/swagger.json';
+// Use the local swagger file instead of trying to fetch from localhost
+const swaggerFile = path.join(__dirname, '..', '..', 'swagger-output.json');
 
-console.log(`Generating types from: ${openApiUrl}`);
+console.log(`Generating types from: ${swaggerFile}`);
 
 try {
-  execSync(`openapi-typescript "${openApiUrl}" -o src/types/generated.ts --prettier`, {
+  execSync(`openapi-typescript "${swaggerFile}" -o src/types/generated.ts --prettier`, {
     stdio: 'inherit',
     cwd: process.cwd()
   });

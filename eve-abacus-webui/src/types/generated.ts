@@ -91,6 +91,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Abacus/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test endpoint for Swagger schema
+         * @description Simple test endpoint to verify that Swagger can generate schemas correctly.
+         *
+         *     **Rate Limiting:**
+         *     - 20 requests per second
+         *     - 100 requests per minute
+         *     - 1000 requests per hour
+         */
+        post: {
+            parameters: {
+                query?: {
+                    "api-version"?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json-patch+json": components["schemas"]["TestRequest"];
+                    "application/json": components["schemas"]["TestRequest"];
+                    "text/json": components["schemas"]["TestRequest"];
+                    "application/*+json": components["schemas"]["TestRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        /** @description The API versions supported by this endpoint */
+                        "api-supported-versions"?: string;
+                        /** @description The content type of the response */
+                        "content-type"?: string;
+                        /** @description The date and time when the response was generated */
+                        date?: string;
+                        /** @description The server software used to handle the request */
+                        server?: string;
+                        /** @description The encoding used to transfer the response */
+                        "transfer-encoding"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Abacus/InventionSuggestion": {
         parameters: {
             query?: never;
@@ -2773,6 +2838,16 @@ export interface components {
             /** Format: double */
             readonly totalVolume?: number;
         };
+        /** @description Simple test request model */
+        TestRequest: {
+            /** @description The name to test */
+            name?: string | null;
+            /**
+             * Format: int32
+             * @description The count to test
+             */
+            count?: number;
+        };
         ValidationProblemDetails: {
             type?: string | null;
             title?: string | null;
@@ -2795,33 +2870,3 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;
-
-// Fallback types when backend is not available during build
-// This file will be overwritten when the backend is accessible
-
-export interface ApiError {
-  error: string;
-  details?: string;
-  debug?: Record<string, any>;
-}
-
-export interface HealthResponse {
-  status: string;
-  timestamp: string;
-  version: string;
-  service: string;
-}
-
-export interface DatabaseHealthResponse {
-  status: string;
-  database: string;
-  timestamp: string;
-  responseTime: string;
-  message?: string;
-}
-
-// Add more fallback types as needed
-export type GeneratedTypes = {
-  // This will be replaced by actual generated types
-  [key: string]: any;
-};
