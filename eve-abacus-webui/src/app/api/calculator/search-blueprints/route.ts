@@ -4,7 +4,7 @@ import { backendService } from '../../../../lib/backendService';
 
 /**
  * @openapi
- * /api/v1.0/calculator/search-blueprints:
+ * /api/calculator/search-blueprints:
  *   get:
  *     tags:
  *       - calculator
@@ -25,9 +25,19 @@ import { backendService } from '../../../../lib/backendService';
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: string
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 requestId:
+ *                   type: string
  *       400:
  *         description: Bad request - invalid query parameters
  *       404:

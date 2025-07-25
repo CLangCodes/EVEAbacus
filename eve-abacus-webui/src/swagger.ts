@@ -148,19 +148,12 @@ const options = {
       },
     ],
     externalDocs: {
-      description: 'Backend API Documentation',
-      url: 'https://blazor.eveabacus.com/swaggerComp',
+      description: 'API Documentation',
+      url: 'https://eveabacus.com/swagger',
     },
   },
   apis: [
     './src/app/api/**/*.ts',
-    './src/app/api/calculator/**/*.ts',
-    './src/app/api/sde/**/*.ts',
-    './src/app/api/esi/**/*.ts',
-    './src/app/api/abacus/**/*.ts',
-    './src/app/api/map/**/*.ts',
-    './src/app/api/pihelper/**/*.ts',
-    './src/app/api/monitoring/**/*.ts',
   ], // Path to your API route files including all available endpoints
 };
 

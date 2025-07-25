@@ -4,7 +4,7 @@ import { backendService } from '../../../../lib/backendService';
 
 /**
  * @openapi
- * /api/v1.0/calculator/invention-skills:
+ * /api/calculator/invention-skills:
  *   get:
  *     tags:
  *       - calculator

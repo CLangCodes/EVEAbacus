@@ -4,7 +4,7 @@ import { backendService } from '../../../../lib/backendService';
 
 /**
  * @openapi
- * /api/v1.0/calculator/market-hubs:
+ * /api/calculator/market-hubs:
  *   get:
  *     tags:
  *       - calculator
@@ -16,9 +16,19 @@ import { backendService } from '../../../../lib/backendService';
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: string
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 requestId:
+ *                   type: string
  *       500:
  *         description: Internal server error
  */
