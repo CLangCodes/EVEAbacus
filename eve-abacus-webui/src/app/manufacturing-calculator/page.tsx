@@ -131,7 +131,7 @@ export default function ManufacturingCalculator() {
   } = useOrderCookies();
 
   // Use inventory storage hook
-  const { inventory, addInventoryItem } = useInventoryStorage();
+  const { inventory, addInventoryItem, clearInventory } = useInventoryStorage();
 
   // Simplified debouncing implementation
   const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -253,6 +253,19 @@ export default function ManufacturingCalculator() {
     setEditInventoryModal({ isOpen: false, typeId: 0, currentQuantity: 0 });
   }, [editInventoryModal, addInventoryItem, orders, selectedStations, debouncedCalculation]);
 
+  const handleClearInventory = useCallback(() => {
+    clearInventory();
+    // Trigger recalculation after clearing inventory
+    debouncedCalculation(orders, selectedStations);
+    
+    // Show success toast
+    setToast({
+      message: 'All inventory cleared successfully',
+      type: 'success',
+      isVisible: true
+    });
+  }, [clearInventory, orders, selectedStations, debouncedCalculation]);
+
   // Trigger calculation when orders, stations, or inventory change
   useEffect(() => {
     console.log('useEffect triggered - orders or stations changed:', {
@@ -333,6 +346,16 @@ export default function ManufacturingCalculator() {
                             title="Delete all orders"
                           >
                             <TrashIcon className="w-4 h-4" />
+                            Clear Orders
+                          </button>
+                          <button
+                            onClick={handleClearInventory}
+                            className="inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                            disabled={inventory.length === 0}
+                            title="Clear all inventory"
+                          >
+                            <TrashIcon className="w-4 h-4 mr-1" />
+                            Clear Inventory
                           </button>
                         </div>
                       </div>
