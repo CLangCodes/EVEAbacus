@@ -6,15 +6,34 @@ import type { ManufBatch, OrderDTO } from '@/types/manufacturing';
 import type { Order } from '@/types/orders';
 import { PlusIcon, TrashIcon } from '@/components/Icons';
 import { useOrderCookies, type EditableOrderDTO } from '@/hooks/useOrderCookies';
+import { useInventoryStorage } from '@/hooks/useInventoryStorage';
 import { OrderFormDTO } from '@/components/manufCalc/OrderFormDTO';
 import { OrdersDataGrid } from '@/components/manufCalc/OrdersDataGrid';
 import ManufacturingResults from '@/components/manufCalc/ManufacturingResults';
+import Toast from '@/components/Toast';
+import InventoryEditInline from '@/components/InventoryEditInline';
 import { getCookie, setCookie, removeCookie } from '@/utils/cookies';
 
 export default function ManufacturingCalculator() {
   const [selectedStations, setSelectedStations] = useState<string[]>([]);
   const [manufBatch, setManufBatch] = useState<ManufBatch | null>(null);
   const [calculating, setCalculating] = useState(false);
+
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; isVisible: boolean }>({
+    message: '',
+    type: 'info',
+    isVisible: false
+  });
+  const [editInventoryModal, setEditInventoryModal] = useState<{
+    isOpen: boolean;
+    typeId: number;
+    currentQuantity: number;
+    itemName?: string;
+  }>({
+    isOpen: false,
+    typeId: 0,
+    currentQuantity: 0
+  });
 
   // Storage keys
   const STATION_STORAGE_KEY = 'manufacturing-selected-stations';
@@ -111,6 +130,9 @@ export default function ManufacturingCalculator() {
     clearAllOrders
   } = useOrderCookies();
 
+  // Use inventory storage hook
+  const { inventory, addInventoryItem, clearInventory } = useInventoryStorage();
+
   // Simplified debouncing implementation
   const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -158,7 +180,8 @@ export default function ManufacturingCalculator() {
         
         const request = {
           orderDTOs: orderDTOs,
-          stationIds: stations
+          stationIds: stations,
+          inventory: inventory
         };
 
         console.log('Sending manufacturing request:', {
@@ -199,9 +222,51 @@ export default function ManufacturingCalculator() {
         setCalculating(false);
       }
     }, 1000); // Wait 1 second after user stops making changes
+  }, [inventory]);
+
+
+
+
+
+  const handleEditInventory = useCallback((typeId: number, currentQuantity: number, itemName?: string) => {
+    setEditInventoryModal({
+      isOpen: true,
+      typeId,
+      currentQuantity,
+      itemName
+    });
   }, []);
 
-  // Trigger calculation when orders or stations change
+  const handleSaveInventory = useCallback((quantity: number) => {
+    const { typeId } = editInventoryModal;
+    addInventoryItem({ typeId, quantity });
+    // Trigger recalculation after updating inventory
+    debouncedCalculation(orders, selectedStations);
+    
+    // Show success toast
+    setToast({
+      message: `Updated inventory for Type ID ${typeId} to ${quantity.toLocaleString()}`,
+      type: 'success',
+      isVisible: true
+    });
+    
+    setEditInventoryModal({ isOpen: false, typeId: 0, currentQuantity: 0 });
+  }, [editInventoryModal, addInventoryItem, orders, selectedStations, debouncedCalculation]);
+
+  const handleClearInventory = useCallback(() => {
+    clearInventory();
+    // Trigger recalculation after clearing inventory
+    debouncedCalculation(orders, selectedStations);
+    
+    // Show success toast
+    setToast({
+      message: 'All inventory cleared successfully',
+      type: 'success',
+      isVisible: true
+    });
+  }, [clearInventory, orders, selectedStations, debouncedCalculation]);
+
+  // Trigger calculation when orders, stations, or inventory change
   useEffect(() => {
     console.log('useEffect triggered - orders or stations changed:', {
       ordersCount: orders.length,
@@ -257,14 +322,15 @@ export default function ManufacturingCalculator() {
                 />
               ) : (
                 <div className="space-y-6">
-                  {/* Orders and Market Hubs Row */}
+                  {/* Orders/Inventory and Market Hubs Row */}
                   <div className="flex gap-6 overflow-x-auto">
-                    {/* Orders Section - 80% width */}
+                    {/* Orders/Inventory Section - 80% width */}
                     <div className="flex-1">
+                      {/* Tab Navigation */}
                       <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                          Orders
-                        </h2>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Orders ({orders.length})
+                        </h3>
                         <div className="flex gap-2">
                           <button
                             onClick={startCreatingOrder}
@@ -280,20 +346,30 @@ export default function ManufacturingCalculator() {
                             title="Delete all orders"
                           >
                             <TrashIcon className="w-4 h-4" />
+                            Clear Orders
+                          </button>
+                          <button
+                            onClick={handleClearInventory}
+                            className="inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                            disabled={inventory.length === 0}
+                            title="Clear all inventory"
+                          >
+                            <TrashIcon className="w-4 h-4 mr-1" />
+                            Clear Inventory
                           </button>
                         </div>
                       </div>
 
-                                          {/* Orders Data Grid */}
-                    <div className="overflow-x-auto">
-                      <OrdersDataGrid
-                        orders={orders}
-                        onEdit={startEditingOrder}
-                        onDelete={deleteOrder}
-                        editingOrderId={(editingOrder as EditableOrderDTO | null)?.id}
-                        className="w-full"
-                      />
-                    </div>
+                      {/* Orders Content */}
+                      <div className="overflow-x-auto">
+                        <OrdersDataGrid
+                          orders={orders}
+                          onEdit={startEditingOrder}
+                          onDelete={deleteOrder}
+                          editingOrderId={(editingOrder as EditableOrderDTO | null)?.id}
+                          className="w-full"
+                        />
+                      </div>
                     </div>
 
                     {/* Market Hubs Section - 25% width */}
@@ -359,7 +435,7 @@ export default function ManufacturingCalculator() {
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                       Manufacturing Results
                     </h2>
-                    <ManufacturingResults manufBatch={manufBatch || undefined} loading={calculating} />
+                    <ManufacturingResults manufBatch={manufBatch || undefined} loading={calculating} onEditInventory={handleEditInventory} />
                   </div>
                 </div>
               )}
@@ -428,6 +504,24 @@ export default function ManufacturingCalculator() {
           </div>*/}
         </div>
       </div>
-        </div>
+      
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Inventory Edit Modal */}
+      <InventoryEditInline
+        isOpen={editInventoryModal.isOpen}
+        onClose={() => setEditInventoryModal({ isOpen: false, typeId: 0, currentQuantity: 0 })}
+        onSave={handleSaveInventory}
+        typeId={editInventoryModal.typeId}
+        currentQuantity={editInventoryModal.currentQuantity}
+        itemName={editInventoryModal.itemName}
+      />
+    </div>
   );
 } 

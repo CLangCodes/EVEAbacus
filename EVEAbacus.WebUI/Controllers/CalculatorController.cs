@@ -19,11 +19,13 @@ namespace EVEAbacus.WebUI.Controllers
     {
         private readonly CalculatorService _calculatorService;
         private readonly IOrderService _orderService;
+        private readonly IInventoryService _inventoryService;
 
-        public CalculatorController(CalculatorService calculatorService, IOrderService orderService)
+        public CalculatorController(CalculatorService calculatorService, IOrderService orderService, IInventoryService inventoryService)
         {
             _calculatorService = calculatorService;
             _orderService = orderService;
+            _inventoryService = inventoryService;
         }
 
         /// <summary>
@@ -46,6 +48,13 @@ namespace EVEAbacus.WebUI.Controllers
             }
 
             var orders = await _orderService.OrderDTOsToOrders(request.OrderDTOs);
+            
+            // Set inventory from request if provided
+            if (request.Inventory != null && request.Inventory.Any())
+            {
+                _inventoryService.SetInventoryFromStorage(request.Inventory.ToList());
+            }
+            
             var manufBatch = await _calculatorService.GetManufacturingBatch(orders, request.StationIds);
 
             if (manufBatch == null)
@@ -346,6 +355,148 @@ namespace EVEAbacus.WebUI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while retrieving invention suggestions: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Gets all inventory items
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Gets all inventory items",
+            Description = "Returns a list of all items in the user's inventory with their quantities."
+        )]
+        [HttpGet("inventory")]
+        [ProducesResponseType(typeof(StockInventory[]), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<StockInventory[]> GetInventory()
+        {
+            try
+            {
+                var inventory = _inventoryService.StockInventories.ToArray();
+                return Ok(inventory);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while retrieving inventory: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Adds or updates an inventory item
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Adds or updates an inventory item",
+            Description = "Adds a new inventory item or updates an existing one with the specified quantity."
+        )]
+        [HttpPost("inventory")]
+        [ProducesResponseType(typeof(StockInventory), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<StockInventory>> AddInventoryItem(
+            [FromBody, SwaggerParameter(
+                Description = "Inventory item to add or update",
+                Required = true
+            )] StockInventory inventoryItem)
+        {
+            if (inventoryItem == null)
+            {
+                return BadRequest("Inventory item is required");
+            }
+
+            if (inventoryItem.TypeId <= 0)
+            {
+                return BadRequest("TypeId must be greater than 0");
+            }
+
+            if (inventoryItem.Quantity < 0)
+            {
+                return BadRequest("Quantity cannot be negative");
+            }
+
+            try
+            {
+                await _inventoryService.AddInventoryItemAsync(inventoryItem);
+                return Ok(inventoryItem);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while adding inventory item: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates the quantity of an inventory item
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Updates the quantity of an inventory item",
+            Description = "Updates the quantity of an existing inventory item. If the item doesn't exist and quantity is greater than 0, it will be created."
+        )]
+        [HttpPut("inventory/{typeId}")]
+        [ProducesResponseType(typeof(StockInventory), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<StockInventory> UpdateInventoryQuantity(
+            [FromRoute, SwaggerParameter(
+                Description = "TypeId of the inventory item",
+                Required = true
+            )] int typeId,
+            [FromBody, SwaggerParameter(
+                Description = "New quantity for the inventory item",
+                Required = true
+            )] int quantity)
+        {
+            if (typeId <= 0)
+            {
+                return BadRequest("TypeId must be greater than 0");
+            }
+
+            if (quantity < 0)
+            {
+                return BadRequest("Quantity cannot be negative");
+            }
+
+            try
+            {
+                _inventoryService.UpdateInventoryQuantity(typeId, quantity);
+                var updatedItem = _inventoryService.StockInventories.FirstOrDefault(i => i.TypeId == typeId);
+                return Ok(updatedItem);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while updating inventory quantity: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Deletes an inventory item
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Deletes an inventory item",
+            Description = "Removes an inventory item from the user's inventory."
+        )]
+        [HttpDelete("inventory/{typeId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult DeleteInventoryItem(
+            [FromRoute, SwaggerParameter(
+                Description = "TypeId of the inventory item to delete",
+                Required = true
+            )] int typeId)
+        {
+            if (typeId <= 0)
+            {
+                return BadRequest("TypeId must be greater than 0");
+            }
+
+            try
+            {
+                _inventoryService.DeleteInventoryItem(typeId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while deleting inventory item: {ex.Message}");
             }
         }
     }

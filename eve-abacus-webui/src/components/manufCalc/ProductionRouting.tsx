@@ -2,18 +2,22 @@
 
 import React from 'react';
 import { DataTable, Column } from '../DataTable';
-import { DocumentDuplicateIcon } from '../Icons';
+import { DocumentDuplicateIcon, PencilIcon } from '../Icons';
 import type { ProductionRoute } from '@/types/manufacturing';
 
 interface ProductionRoutingProps {
   productionRouting: ProductionRoute[];
+  onEditInventory?: (typeId: number, currentQuantity: number, itemName?: string) => void;
 }
 
 interface RouteItem extends Record<string, unknown> {
   id: number;
   blueprintName: string;
   materialName: string;
+  materialTypeId: number;
   requisitioned: number;
+  inventory: number;
+  netRequisitioned: number;
   copies: number;
   runs: number;
   produced: number;
@@ -24,7 +28,7 @@ interface RouteItem extends Record<string, unknown> {
   categoryName?: string;
 }
 
-export default function ProductionRouting({ productionRouting }: ProductionRoutingProps) {
+export default function ProductionRouting({ productionRouting, onEditInventory }: ProductionRoutingProps) {
   // Ensure productionRouting is an array
   const routes = Array.isArray(productionRouting) ? productionRouting : [];
 
@@ -33,7 +37,10 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
     id: index + 1,
     blueprintName: route.blueprintName || 'N/A',
     materialName: route.materialName,
+    materialTypeId: route.materialTypeId,
     requisitioned: route.requisitioned,
+    inventory: route.inventory || 0,
+    netRequisitioned: route.netRequisitioned || 0,
     copies: route.order.copies,
     runs: route.order.runs,
     produced: route.produced,
@@ -88,9 +95,50 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
     },
     {
       key: 'requisitioned',
-      header: 'Qty',
+      header: 'Required',
       sortable: true,
       render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'inventory',
+      header: 'Inventory',
+      sortable: true,
+      render: (value, row) => {
+        const inventory = value as number;
+        return (
+          <div className="flex items-center justify-between">
+            <span className={inventory > 0 ? "text-green-600 dark:text-green-400 font-medium" : "text-gray-400"}>
+              {inventory > 0 ? inventory.toLocaleString() : "0"}
+            </span>
+            {onEditInventory && (
+              <button
+                onClick={() => onEditInventory(row.materialTypeId as number, inventory, row.materialName as string)}
+                className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex-shrink-0 ml-2"
+                title="Edit inventory quantity"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      key: 'netRequisitioned',
+      header: 'Net Required',
+      sortable: true,
+      render: (value) => {
+        const netRequired = value as number;
+        return netRequired > 0 ? (
+          <span className="text-red-600 dark:text-red-400 font-medium">
+            {netRequired.toLocaleString()}
+          </span>
+        ) : (
+          <span className="text-green-600 dark:text-green-400 font-medium">
+            ✓ Covered
+          </span>
+        );
+      }
     },
     {
       key: 'copies',
@@ -123,7 +171,8 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
       key: 'te',
       header: 'TE',
       sortable: true
-    }
+    },
+
   ];
 
   if (!routes || routes.length === 0) {

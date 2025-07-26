@@ -64,6 +64,7 @@ namespace EVEAbacus.Infrastructure
 
             services.AddScoped<ICharacterService, CharacterService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IInventoryService, InventoryService>();
 
             services.AddScoped<IESIClient, ESIClient>();
 
@@ -79,8 +80,7 @@ namespace EVEAbacus.Infrastructure
                 ConnectRetry = 3,
                 ReconnectRetryPolicy = new ExponentialRetry(5000),
                 ConnectTimeout = 5000,
-                SyncTimeout = 5000,
-                ResponseTimeout = 5000
+                SyncTimeout = 5000
             };
             
             try

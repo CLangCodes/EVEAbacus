@@ -15,9 +15,11 @@ public class CalculatorService
     private readonly IMarketService _marketService;
     private readonly IMapService _mapService;
     private readonly IOrderService _orderService;
+    private readonly IInventoryService _inventoryService;
     private readonly ILogger<CalculatorService> _logger;
 
     public IEnumerable<Order> Orders { get {  return _orderService.Orders; } }
+    public IEnumerable<StockInventory> StockInventories { get { return _inventoryService.StockInventories; } }
     public long[] SelectedMarketIds { get; set; } = [];
     private IEnumerable<string> _selectedMarkets { get; set; } = [];
     public IEnumerable<string> SelectedMarkets 
@@ -37,12 +39,13 @@ public class CalculatorService
     public ManufBatch? ManufBatch { get; set; }
 
     public CalculatorService(ISDEService sdeService, IMarketService marketService, 
-        IMapService mapService, IOrderService orderService, ILogger<CalculatorService> logger)
+        IMapService mapService, IOrderService orderService, IInventoryService inventoryService, ILogger<CalculatorService> logger)
     {
         _sdeService = sdeService;   
         _marketService = marketService;
         _mapService = mapService;
         _orderService = orderService;
+        _inventoryService = inventoryService;
         _logger = logger;
         _logger.LogInformation("CalculatorService initialized");
     }
@@ -82,7 +85,10 @@ public class CalculatorService
         }
         else
         {
+            // Aggregate the required amounts
             existingItem.Requisitioned += bOMLineItem.Requisitioned;
+            // Inventory should be the same for the same TypeId, so we can use either value
+            // (they should be identical since they come from the same inventory service)
         }
 
         return billOfMaterials;
@@ -154,11 +160,14 @@ public class CalculatorService
     private async Task<BOMLineItem> BOMLineItemFromBPMaterial(BPMaterial bpMaterial, int rootCopies, int rootRuns, long[] stationIds, int? mEff = 10, int? tEff = 20)
     {
         int requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
+        int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
+        
         return new BOMLineItem()
         {
             TypeId = (int)bpMaterial.MaterialTypeId!,
             Name = bpMaterial.Material!.TypeName!,
-            Requisitioned = requisitioned,
+            Requisitioned = requisitioned, // Keep original required amount
+            Inventory = inventoryQuantity,
             Item = await _sdeService.GetItemAsync((int)bpMaterial.MaterialTypeId!)
             //MarketHistory = await _marketService.GetItemMarketRegionHistoryAsync([], (int)bpMaterial.MaterialTypeId!),
             //PurchaseRequisitions = await GetPurchaseOrders((int)bpMaterial.MaterialTypeId!, stationIds, requisitioned, null),
@@ -197,6 +206,52 @@ public class CalculatorService
             {
                 var bOMLineItem = await BOMLineItemFromBPMaterial(
                     bPMaterial, productionRoute.Order.Copies, productionRoute.Order.Runs, stationIds, productionRoute.Order.ME, productionRoute.Order.TE);
+
+                billOfMaterials = AddBOMLineItem(billOfMaterials, bOMLineItem);
+            }
+        }
+
+        return billOfMaterials.ToArray();
+    }
+
+    // To get Bill of Materials aggregated from Production Routing Net Required values
+    private async Task<BOMLineItem[]> GetBillOfMaterialsFromProductionRoutingNetRequired(ProductionRoute[] productionRouting, long[] stationIds)
+    {
+        HashSet<BOMLineItem> billOfMaterials = [];
+
+        // For each Production Route, get the raw materials needed and apply the Net Required logic
+        foreach (ProductionRoute productionRoute in productionRouting)
+        {
+            // Get only unbuildable materials (raw materials) for this blueprint
+            var unbuildables = await _sdeService.GetUnbuildableBPMaterials((int)productionRoute!.BlueprintTypeId!);
+            
+            foreach (var bPMaterial in unbuildables)
+            {
+                // Calculate the required amount for this material based on the Production Route's Net Required
+                int materialTypeId = (int)bPMaterial.MaterialTypeId!;
+                int materialQuantity = (int)bPMaterial.Quantity!;
+                
+                // Calculate how much of this raw material is needed for the Net Required amount of the final product
+                int requiredForNetRequired = 0;
+                if (productionRoute.NetRequisitioned > 0)
+                {
+                    // Calculate the proportion of this material needed for the net required amount
+                    float proportion = (float)productionRoute.NetRequisitioned / (float)productionRoute.Requisitioned;
+                    requiredForNetRequired = (int)Math.Ceiling(materialQuantity * proportion * productionRoute.Order.Copies * productionRoute.Order.Runs * (1 - (productionRoute.Order.ME * 0.01)));
+                }
+                
+                // Get current inventory for this raw material
+                int inventoryQuantity = _inventoryService.GetInventoryQuantity(materialTypeId);
+                
+                // Create BOM line item with Net Required logic
+                var bOMLineItem = new BOMLineItem()
+                {
+                    TypeId = materialTypeId,
+                    Name = bPMaterial.Material!.TypeName!,
+                    Requisitioned = requiredForNetRequired, // This is the amount needed for the Net Required
+                    Inventory = inventoryQuantity,
+                    Item = await _sdeService.GetItemAsync(materialTypeId)
+                };
 
                 billOfMaterials = AddBOMLineItem(billOfMaterials, bOMLineItem);
             }
@@ -251,9 +306,10 @@ public class CalculatorService
         try
         {
             manufBatch.ProductionRouting = await GetProductionRoutesAsync(orders.ToArray(), SelectedMarketIds);
-            manufBatch.BillOfMaterials = await GetBillOfMaterialsFromProductionRouting(manufBatch.ProductionRouting, SelectedMarketIds);
+            manufBatch.BillOfMaterials = await GetBillOfMaterialsFromProductionRoutingNetRequired(manufBatch.ProductionRouting, SelectedMarketIds);
             manufBatch.ProductionRoutingString = GetProductionRoutingString(manufBatch.ProductionRouting);
             manufBatch.BillOfMaterialsString = GetBillOfMaterialsString(manufBatch.BillOfMaterials);
+            manufBatch.StockInventories = _inventoryService.StockInventories;
 
             int[] bomTypeIds = manufBatch.BillOfMaterials.Select(o => o.TypeId).Distinct().ToArray();
             int[] prTypeIds = manufBatch.ProductionRouting.Select(o => o.MaterialTypeId).Distinct().ToArray();
@@ -375,6 +431,8 @@ public class CalculatorService
             requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
         }
 
+        int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
+        
         ProductionRoute productionRoute = new ProductionRoute()
         {
             MaterialTypeId = (int)bpMaterial.MaterialTypeId!,
@@ -409,9 +467,10 @@ public class CalculatorService
                 ME = 10,
                 TE = 20,
                 ParentBlueprintTypeId = bpMaterial.BlueprintTypeId!,
-            }],
+                },
+            ],
             ProducedPerRun = madePerRun,
-            Inventory = 0, // Not Implemented
+            Inventory = inventoryQuantity,
             BlueprintMetaData = await _sdeService.GetItemAsync(bpId),
             MaterialMetaData = await _sdeService.GetItemAsync((int)bpMaterial.MaterialTypeId!),
         };
@@ -419,6 +478,8 @@ public class CalculatorService
     }
     private async Task<ProductionRoute> GetProductionRouteFromOrder(Order order, long[] stationIds)
     {
+        int inventoryQuantity = _inventoryService.GetInventoryQuantity(order.ProductTypeId);
+        
         ProductionRoute productionRoute = new ProductionRoute()
         {
             MaterialTypeId = order.ProductTypeId,
@@ -429,7 +490,7 @@ public class CalculatorService
             Order = order,
             Orders = [order],
             ProducedPerRun = (int)(await _sdeService.HowManyProductsMadeAsync(order.ProductTypeId) ?? 0),
-            Inventory = 0, // Not Implemented
+            Inventory = inventoryQuantity,
             BlueprintMetaData = await _sdeService.GetItemAsync(order.BlueprintTypeId),
             MaterialMetaData = await _sdeService.GetItemAsync(order.ProductTypeId),
         };
@@ -516,6 +577,42 @@ public class CalculatorService
             stationIds.Add(await _mapService.GetStationId(market) ?? 0);
         }
         SelectedMarketIds = stationIds.ToArray();
+    }
+
+    // Inventory Management Methods
+    public async Task AddInventoryItemAsync(StockInventory inventoryItem)
+    {
+        await _inventoryService.AddInventoryItemAsync(inventoryItem);
+    }
+
+    public async Task AddInventoryItemsAsync(StockInventory[] inventoryItems)
+    {
+        await _inventoryService.AddInventoryItemsAsync(inventoryItems);
+    }
+
+    public void DeleteInventoryItem(int typeId)
+    {
+        _inventoryService.DeleteInventoryItem(typeId);
+    }
+
+    public async Task EditInventoryItemAsync(StockInventory inventoryItem)
+    {
+        await _inventoryService.EditInventoryItemAsync(inventoryItem);
+    }
+
+    public void SetInventoryFromStorage(List<StockInventory> inventoryItems)
+    {
+        _inventoryService.SetInventoryFromStorage(inventoryItems);
+    }
+
+    public int GetInventoryQuantity(int typeId)
+    {
+        return _inventoryService.GetInventoryQuantity(typeId);
+    }
+
+    public void UpdateInventoryQuantity(int typeId, int quantity)
+    {
+        _inventoryService.UpdateInventoryQuantity(typeId, quantity);
     }
 
 }

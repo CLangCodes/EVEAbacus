@@ -55,6 +55,8 @@ export interface BOMLineItem {
   typeId: number;
   name: string;
   requisitioned: number;
+  inventory: number;
+  netRequisitioned: number;
   item: Item;
   marketHistory: MarketRegionHistory[];
   purchaseRequisitions: PurchaseRequisition[];
@@ -86,6 +88,7 @@ export interface ProductionRoute {
   producedPerRun: number;
   produced: number;
   inventory?: number;
+  netRequisitioned: number;
   averageSellPrice?: number;
   averageBuyPrice?: number;
   blueprintMetaData?: Item;
@@ -96,4 +99,9 @@ export interface ProductionRoute {
 
 export interface StationBillOfMaterials {
   [key: string]: unknown;
+}
+
+export interface StockInventory {
+  typeId: number;
+  quantity: number;
 }

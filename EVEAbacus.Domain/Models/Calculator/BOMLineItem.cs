@@ -12,6 +12,8 @@ namespace EVEAbacus.Domain.Models.Calculator
         public int TypeId { get; set; }
         public string Name { get; set; } = string.Empty;
         public int Requisitioned { get; set; }
+        public int Inventory { get; set; } = 0;
+        public int NetRequisitioned => Math.Max(0, Requisitioned - Inventory);
         public required Item Item { get; set; }
         public List<MarketRegionHistory> MarketHistory { get; set; } = [];
         public List<PurchaseRequisition> PurchaseRequisitions { get; set; } = [];

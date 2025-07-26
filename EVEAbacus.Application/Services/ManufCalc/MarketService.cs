@@ -246,10 +246,10 @@ namespace EVEAbacus.Application.Services.ManufCalc
             
             List<PurchaseRequisition> purchaseRequisitions = new List<PurchaseRequisition>();
 
-            // Need to find the cheapest orders from the stationIds that will satisfy the Requisitioned amount on the BOM
+            // Need to find the cheapest orders from the stationIds that will satisfy the NetRequisitioned amount on the BOM
             foreach (var lineItem in billOfMaterials)
             {
-                int remaining = lineItem.Requisitioned;
+                int remaining = lineItem.NetRequisitioned;
 
                 // Get all region IDs first
                 var regionIds = new Dictionary<long, int>();
@@ -300,11 +300,11 @@ namespace EVEAbacus.Application.Services.ManufCalc
             return supplyPlan;
         }
 
-        // Find the cheapest orders in the list, and generate the PR List to fulfill the requisitioned quantity from BOM Line Item.
+        // Find the cheapest orders in the list, and generate the PR List to fulfill the net requisitioned quantity from BOM Line Item.
         private async Task<List<PurchaseRequisition>> GeneratePurchaseRequisitionsAsync(BOMLineItem lineItem, IEnumerable<MarketOrder> matchingOrders)
         {
             var requisitions = new List<PurchaseRequisition>();
-            int remaining = lineItem.Requisitioned;
+            int remaining = lineItem.NetRequisitioned;
 
             foreach (var order in matchingOrders)
             {
