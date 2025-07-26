@@ -8,11 +8,13 @@ import type { ProductionRoute } from '@/types/manufacturing';
 interface ProductionRoutingProps {
   productionRouting: ProductionRoute[];
   onEditInventory?: (typeId: number, currentQuantity: number, itemName?: string) => void;
+  onEditBlueprint?: (blueprintTypeId: number, currentME: number, currentTE: number, blueprintName?: string) => void;
 }
 
 interface RouteItem extends Record<string, unknown> {
   id: number;
   blueprintName: string;
+  blueprintTypeId: number;
   materialName: string;
   materialTypeId: number;
   requisitioned: number;
@@ -28,7 +30,7 @@ interface RouteItem extends Record<string, unknown> {
   categoryName?: string;
 }
 
-export default function ProductionRouting({ productionRouting, onEditInventory }: ProductionRoutingProps) {
+export default function ProductionRouting({ productionRouting, onEditInventory, onEditBlueprint }: ProductionRoutingProps) {
   // Ensure productionRouting is an array
   const routes = Array.isArray(productionRouting) ? productionRouting : [];
 
@@ -36,6 +38,7 @@ export default function ProductionRouting({ productionRouting, onEditInventory }
   const routeData: RouteItem[] = routes.map((route, index) => ({
     id: index + 1,
     blueprintName: route.blueprintName || 'N/A',
+    blueprintTypeId: route.blueprintTypeId,
     materialName: route.materialName,
     materialTypeId: route.materialTypeId,
     requisitioned: route.requisitioned,
@@ -165,12 +168,50 @@ export default function ProductionRouting({ productionRouting, onEditInventory }
     {
       key: 'me',
       header: 'ME',
-      sortable: true
+      sortable: true,
+      render: (value, row) => {
+        const me = value as number;
+        return (
+          <div className="flex items-center justify-between">
+            <span className={me > 0 ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-400"}>
+              {me}
+            </span>
+            {onEditBlueprint && (
+              <button
+                onClick={() => onEditBlueprint(row.blueprintTypeId as number, me, row.te as number, row.blueprintName as string)}
+                className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex-shrink-0 ml-2"
+                title="Edit blueprint ME/TE"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'te',
       header: 'TE',
-      sortable: true
+      sortable: true,
+      render: (value, row) => {
+        const te = value as number;
+        return (
+          <div className="flex items-center justify-between">
+            <span className={te > 0 ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-400"}>
+              {te}
+            </span>
+            {onEditBlueprint && (
+              <button
+                onClick={() => onEditBlueprint(row.blueprintTypeId as number, row.me as number, te, row.blueprintName as string)}
+                className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex-shrink-0 ml-2"
+                title="Edit blueprint ME/TE"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        );
+      }
     },
 
   ];

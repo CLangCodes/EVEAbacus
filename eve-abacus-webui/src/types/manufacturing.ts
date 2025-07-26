@@ -105,3 +105,9 @@ export interface StockInventory {
   typeId: number;
   quantity: number;
 }
+
+export interface CustomBlueprint {
+  blueprintTypeId: number;
+  materialEfficiency: number;
+  timeEfficiency: number;
+}

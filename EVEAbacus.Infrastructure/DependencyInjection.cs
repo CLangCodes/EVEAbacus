@@ -65,6 +65,7 @@ namespace EVEAbacus.Infrastructure
             services.AddScoped<ICharacterService, CharacterService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IInventoryService, InventoryService>();
+            services.AddScoped<ICustomBlueprintService, CustomBlueprintService>();
 
             services.AddScoped<IESIClient, ESIClient>();
 

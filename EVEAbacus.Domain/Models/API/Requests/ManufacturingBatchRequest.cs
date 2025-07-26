@@ -26,5 +26,10 @@ namespace EVEAbacus.Domain.Models.API.Requests
         /// Array of inventory items with quantities
         /// </summary>
         public StockInventory[]? Inventory { get; set; }
+
+        /// <summary>
+        /// Array of custom blueprint configurations with ME/TE values
+        /// </summary>
+        public CustomBlueprint[]? CustomBlueprints { get; set; }
     }
 }

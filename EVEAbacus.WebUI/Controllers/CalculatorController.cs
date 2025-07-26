@@ -20,12 +20,14 @@ namespace EVEAbacus.WebUI.Controllers
         private readonly CalculatorService _calculatorService;
         private readonly IOrderService _orderService;
         private readonly IInventoryService _inventoryService;
+        private readonly ICustomBlueprintService _customBlueprintService;
 
-        public CalculatorController(CalculatorService calculatorService, IOrderService orderService, IInventoryService inventoryService)
+        public CalculatorController(CalculatorService calculatorService, IOrderService orderService, IInventoryService inventoryService, ICustomBlueprintService customBlueprintService)
         {
             _calculatorService = calculatorService;
             _orderService = orderService;
             _inventoryService = inventoryService;
+            _customBlueprintService = customBlueprintService;
         }
 
         /// <summary>
@@ -53,6 +55,12 @@ namespace EVEAbacus.WebUI.Controllers
             if (request.Inventory != null && request.Inventory.Any())
             {
                 _inventoryService.SetInventoryFromStorage(request.Inventory.ToList());
+            }
+            
+            // Set custom blueprints from request if provided
+            if (request.CustomBlueprints != null && request.CustomBlueprints.Any())
+            {
+                _customBlueprintService.SetCustomBlueprintsFromStorage(request.CustomBlueprints.ToList());
             }
             
             var manufBatch = await _calculatorService.GetManufacturingBatch(orders, request.StationIds);
@@ -497,6 +505,166 @@ namespace EVEAbacus.WebUI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while deleting inventory item: {ex.Message}");
+            }
+        }
+
+        // Custom Blueprint Management Endpoints
+
+        /// <summary>
+        /// Gets all custom blueprints
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Gets all custom blueprints",
+            Description = "Returns a list of all custom blueprints with their ME/TE configurations."
+        )]
+        [HttpGet("custom-blueprints")]
+        [ProducesResponseType(typeof(CustomBlueprint[]), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<CustomBlueprint[]> GetCustomBlueprints()
+        {
+            try
+            {
+                var customBlueprints = _customBlueprintService.CustomBlueprints.ToArray();
+                return Ok(customBlueprints);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while retrieving custom blueprints: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Adds or updates a custom blueprint
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Adds or updates a custom blueprint",
+            Description = "Adds a new custom blueprint or updates an existing one with the specified ME/TE values."
+        )]
+        [HttpPost("custom-blueprints")]
+        [ProducesResponseType(typeof(CustomBlueprint), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<CustomBlueprint>> AddCustomBlueprint(
+            [FromBody, SwaggerParameter(
+                Description = "Custom blueprint to add or update",
+                Required = true
+            )] CustomBlueprint customBlueprint)
+        {
+            if (customBlueprint.BlueprintTypeId <= 0)
+            {
+                return BadRequest("BlueprintTypeId must be greater than 0");
+            }
+
+            if (customBlueprint.MaterialEfficiency < 0 || customBlueprint.MaterialEfficiency > 10)
+            {
+                return BadRequest("MaterialEfficiency must be between 0 and 10");
+            }
+
+            if (customBlueprint.TimeEfficiency < 0 || customBlueprint.TimeEfficiency > 20)
+            {
+                return BadRequest("TimeEfficiency must be between 0 and 20");
+            }
+
+            if (customBlueprint.TimeEfficiency % 2 != 0)
+            {
+                return BadRequest("TimeEfficiency must be an even number");
+            }
+
+            try
+            {
+                await _customBlueprintService.AddCustomBlueprintAsync(customBlueprint);
+                return Ok(customBlueprint);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while adding custom blueprint: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates a custom blueprint's ME/TE values
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Updates a custom blueprint's ME/TE values",
+            Description = "Updates the ME/TE values of an existing custom blueprint."
+        )]
+        [HttpPut("custom-blueprints/{blueprintTypeId}")]
+        [ProducesResponseType(typeof(CustomBlueprint), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<CustomBlueprint>> UpdateCustomBlueprint(
+            [FromRoute, SwaggerParameter(
+                Description = "BlueprintTypeId of the custom blueprint",
+                Required = true
+            )] int blueprintTypeId,
+            [FromBody, SwaggerParameter(
+                Description = "Updated ME/TE values",
+                Required = true
+            )] CustomBlueprint customBlueprint)
+        {
+            if (blueprintTypeId <= 0)
+            {
+                return BadRequest("BlueprintTypeId must be greater than 0");
+            }
+
+            if (customBlueprint.MaterialEfficiency < 0 || customBlueprint.MaterialEfficiency > 10)
+            {
+                return BadRequest("MaterialEfficiency must be between 0 and 10");
+            }
+
+            if (customBlueprint.TimeEfficiency < 0 || customBlueprint.TimeEfficiency > 20)
+            {
+                return BadRequest("TimeEfficiency must be between 0 and 20");
+            }
+
+            if (customBlueprint.TimeEfficiency % 2 != 0)
+            {
+                return BadRequest("TimeEfficiency must be an even number");
+            }
+
+            customBlueprint.BlueprintTypeId = blueprintTypeId;
+
+            try
+            {
+                await _customBlueprintService.EditCustomBlueprintAsync(customBlueprint);
+                return Ok(customBlueprint);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while updating custom blueprint: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a custom blueprint
+        /// </summary>
+        [SwaggerOperation(
+            Summary = "Deletes a custom blueprint",
+            Description = "Removes a custom blueprint configuration."
+        )]
+        [HttpDelete("custom-blueprints/{blueprintTypeId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult DeleteCustomBlueprint(
+            [FromRoute, SwaggerParameter(
+                Description = "BlueprintTypeId of the custom blueprint to delete",
+                Required = true
+            )] int blueprintTypeId)
+        {
+            if (blueprintTypeId <= 0)
+            {
+                return BadRequest("BlueprintTypeId must be greater than 0");
+            }
+
+            try
+            {
+                _customBlueprintService.DeleteCustomBlueprint(blueprintTypeId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while deleting custom blueprint: {ex.Message}");
             }
         }
     }
