@@ -32,7 +32,7 @@ interface RouteItem extends Record<string, unknown> {
 }
 
 export default function ProductionRouting({ productionRouting, onEditInventory, onEditBlueprint }: ProductionRoutingProps) {
-  const { getMaterialEfficiency, getTimeEfficiency, getCustomBlueprint } = useCustomBlueprintStorage();
+  const { getCustomBlueprint } = useCustomBlueprintStorage();
   
   // Ensure productionRouting is an array
   const routes = Array.isArray(productionRouting) ? productionRouting : [];

@@ -73,7 +73,17 @@ export default function ManufacturingResults({
     );
   }
 
-  const handleBulkEditSave = (changes: any) => {
+  const handleBulkEditSave = (changes: {
+    blueprints: Array<{
+      blueprintTypeId: number;
+      materialEfficiency: number;
+      timeEfficiency: number;
+    }>;
+    inventory: Array<{
+      typeId: number;
+      quantity: number;
+    }>;
+  }) => {
     if (onBulkEditSave) {
       onBulkEditSave(changes);
     }
