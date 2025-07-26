@@ -42,6 +42,7 @@ interface EditableRouteItem extends Record<string, unknown> {
   groupName?: string;
   categoryName?: string;
   isBlueprintEditable: boolean;
+  parentBlueprintTypeId?: number;
 }
 
 interface EditableMaterialItem extends Record<string, unknown> {
@@ -71,7 +72,12 @@ export default function BulkEditMode({
 
   // Initialize editable data
   useEffect(() => {
-    const routes = productionRouting.map((route, index) => ({
+    // Filter out user orders (routes with parentBlueprintTypeId of null or 0)
+    const filteredRoutes = productionRouting.filter(route => 
+      route.order.parentBlueprintTypeId != null && route.order.parentBlueprintTypeId !== 0
+    );
+
+    const routes = filteredRoutes.map((route, index) => ({
       id: index + 1,
       blueprintName: route.blueprintName || 'N/A',
       blueprintTypeId: route.blueprintTypeId,
@@ -88,7 +94,8 @@ export default function BulkEditMode({
       producedPerRun: route.producedPerRun,
       groupName: route.materialMetaData?.group?.groupName,
       categoryName: route.materialMetaData?.group?.category?.categoryName,
-      isBlueprintEditable: route.blueprintTypeId > 0 && route.blueprintName !== 'N/A'
+      isBlueprintEditable: route.blueprintTypeId > 0 && route.blueprintName !== 'N/A',
+      parentBlueprintTypeId: route.order.parentBlueprintTypeId
     }));
 
     const materials = billOfMaterials.map((material, index) => ({
