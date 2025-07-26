@@ -13,5 +13,7 @@ namespace EVEAbacus.Domain.Models.Calculator
         public List<PurchaseRequisition> PurchaseOrders { get; set; } = [];
         public MarketProfile? MarketProfile { get; set; }
         public SupplyPlan? SupplyPlan { get; set; }
+        public List<CustomBlueprint> CustomBlueprints { get; set; } = [];
+        public List<StockInventory> StockInventories { get; set; } = [];
     }
 }
