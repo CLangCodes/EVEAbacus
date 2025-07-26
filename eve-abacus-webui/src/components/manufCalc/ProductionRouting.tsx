@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { DataTable, Column } from '../DataTable';
-import { DocumentDuplicateIcon } from '../Icons';
+import { DocumentDuplicateIcon, PencilIcon } from '../Icons';
 import type { ProductionRoute } from '@/types/manufacturing';
 
 interface ProductionRoutingProps {
   productionRouting: ProductionRoute[];
+  onEditInventory?: (typeId: number, currentQuantity: number, itemName?: string) => void;
 }
 
 interface RouteItem extends Record<string, unknown> {
@@ -27,7 +28,7 @@ interface RouteItem extends Record<string, unknown> {
   categoryName?: string;
 }
 
-export default function ProductionRouting({ productionRouting }: ProductionRoutingProps) {
+export default function ProductionRouting({ productionRouting, onEditInventory }: ProductionRoutingProps) {
   // Ensure productionRouting is an array
   const routes = Array.isArray(productionRouting) ? productionRouting : [];
 
@@ -102,14 +103,23 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
       key: 'inventory',
       header: 'Inventory',
       sortable: true,
-      render: (value) => {
+      render: (value, row) => {
         const inventory = value as number;
-        return inventory > 0 ? (
-          <span className="text-green-600 dark:text-green-400 font-medium">
-            {inventory.toLocaleString()}
-          </span>
-        ) : (
-          <span className="text-gray-400">0</span>
+        return (
+          <div className="flex items-center justify-between">
+            <span className={inventory > 0 ? "text-green-600 dark:text-green-400 font-medium" : "text-gray-400"}>
+              {inventory > 0 ? inventory.toLocaleString() : "0"}
+            </span>
+            {onEditInventory && (
+              <button
+                onClick={() => onEditInventory(row.materialTypeId as number, inventory, row.materialName as string)}
+                className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex-shrink-0 ml-2"
+                title="Edit inventory quantity"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         );
       }
     },

@@ -63,7 +63,7 @@ export default function ManufacturingResults({ manufBatch, loading = false, onEd
           />
         );
       case 1:
-        return <ProductionRouting productionRouting={manufBatch.productionRouting || []} />;
+        return <ProductionRouting productionRouting={manufBatch.productionRouting || []} onEditInventory={onEditInventory} />;
       case 2:
         console.log('Supply Plan Debug:', {
           hasSupplyPlan: !!manufBatch.supplyPlan,

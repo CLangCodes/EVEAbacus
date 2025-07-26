@@ -214,6 +214,52 @@ public class CalculatorService
         return billOfMaterials.ToArray();
     }
 
+    // To get Bill of Materials aggregated from Production Routing Net Required values
+    private async Task<BOMLineItem[]> GetBillOfMaterialsFromProductionRoutingNetRequired(ProductionRoute[] productionRouting, long[] stationIds)
+    {
+        HashSet<BOMLineItem> billOfMaterials = [];
+
+        // For each Production Route, get the raw materials needed and apply the Net Required logic
+        foreach (ProductionRoute productionRoute in productionRouting)
+        {
+            // Get only unbuildable materials (raw materials) for this blueprint
+            var unbuildables = await _sdeService.GetUnbuildableBPMaterials((int)productionRoute!.BlueprintTypeId!);
+            
+            foreach (var bPMaterial in unbuildables)
+            {
+                // Calculate the required amount for this material based on the Production Route's Net Required
+                int materialTypeId = (int)bPMaterial.MaterialTypeId!;
+                int materialQuantity = (int)bPMaterial.Quantity!;
+                
+                // Calculate how much of this raw material is needed for the Net Required amount of the final product
+                int requiredForNetRequired = 0;
+                if (productionRoute.NetRequisitioned > 0)
+                {
+                    // Calculate the proportion of this material needed for the net required amount
+                    float proportion = (float)productionRoute.NetRequisitioned / (float)productionRoute.Requisitioned;
+                    requiredForNetRequired = (int)Math.Ceiling(materialQuantity * proportion * productionRoute.Order.Copies * productionRoute.Order.Runs * (1 - (productionRoute.Order.ME * 0.01)));
+                }
+                
+                // Get current inventory for this raw material
+                int inventoryQuantity = _inventoryService.GetInventoryQuantity(materialTypeId);
+                
+                // Create BOM line item with Net Required logic
+                var bOMLineItem = new BOMLineItem()
+                {
+                    TypeId = materialTypeId,
+                    Name = bPMaterial.Material!.TypeName!,
+                    Requisitioned = requiredForNetRequired, // This is the amount needed for the Net Required
+                    Inventory = inventoryQuantity,
+                    Item = await _sdeService.GetItemAsync(materialTypeId)
+                };
+
+                billOfMaterials = AddBOMLineItem(billOfMaterials, bOMLineItem);
+            }
+        }
+
+        return billOfMaterials.ToArray();
+    }
+
     private async Task SetStationIds(string[] stationNames)
     {
         if (stationNames.Count() == 0)
@@ -260,7 +306,7 @@ public class CalculatorService
         try
         {
             manufBatch.ProductionRouting = await GetProductionRoutesAsync(orders.ToArray(), SelectedMarketIds);
-            manufBatch.BillOfMaterials = await GetBillOfMaterialsFromProductionRouting(manufBatch.ProductionRouting, SelectedMarketIds);
+            manufBatch.BillOfMaterials = await GetBillOfMaterialsFromProductionRoutingNetRequired(manufBatch.ProductionRouting, SelectedMarketIds);
             manufBatch.ProductionRoutingString = GetProductionRoutingString(manufBatch.ProductionRouting);
             manufBatch.BillOfMaterialsString = GetBillOfMaterialsString(manufBatch.BillOfMaterials);
             manufBatch.StockInventories = _inventoryService.StockInventories;
