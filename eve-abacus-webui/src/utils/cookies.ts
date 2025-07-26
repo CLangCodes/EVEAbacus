@@ -24,9 +24,8 @@ export function setCookie(name: string, value: string, options: CookieOptions = 
     cookieString += `; expires=${expires.toUTCString()}`;
   }
 
-  if (options.path) {
-    cookieString += `; path=${options.path}`;
-  }
+  // Always set path to root to ensure cookies are available across the site
+  cookieString += `; path=/`;
 
   if (options.domain) {
     cookieString += `; domain=${options.domain}`;
@@ -67,6 +66,7 @@ export function removeCookie(name: string, options: CookieOptions = {}): void {
 
   setCookie(name, '', {
     ...options,
+    path: '/', // Ensure we remove the cookie from the correct path
     expires: new Date(0), // Set to past date to expire immediately
   });
 }

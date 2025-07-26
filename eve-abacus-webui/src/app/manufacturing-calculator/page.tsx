@@ -9,17 +9,47 @@ import { useOrderCookies, type EditableOrderDTO } from '@/hooks/useOrderCookies'
 import { OrderFormDTO } from '@/components/manufCalc/OrderFormDTO';
 import { OrdersDataGrid } from '@/components/manufCalc/OrdersDataGrid';
 import ManufacturingResults from '@/components/manufCalc/ManufacturingResults';
+import { getCookie, setCookie, removeCookie } from '@/utils/cookies';
 
 export default function ManufacturingCalculator() {
   const [selectedStations, setSelectedStations] = useState<string[]>([]);
   const [manufBatch, setManufBatch] = useState<ManufBatch | null>(null);
   const [calculating, setCalculating] = useState(false);
 
+  // Storage keys
+  const STATION_STORAGE_KEY = 'manufacturing-selected-stations';
+  const STATION_COOKIE_KEY = 'eve_abacus_stations_backup';
 
   // Available stations - will be loaded from API
   const [availableStations, setAvailableStations] = useState<string[]>([]);
+  
+  // Ref to track if preferences have been loaded
+  const preferencesLoadedRef = useRef(false);
 
-  // Load available stations and selected stations from localStorage on mount
+  // Load saved station preferences immediately on mount
+  useEffect(() => {
+    // Try to load selected stations from localStorage first
+    const savedStations = localStorage.getItem(STATION_STORAGE_KEY);
+    
+    if (savedStations) {
+      const parsedStations = JSON.parse(savedStations);
+      setSelectedStations(parsedStations);
+      preferencesLoadedRef.current = true;
+    } else {
+      // Fallback to cookies
+      const cookieData = getCookie(STATION_COOKIE_KEY);
+      
+      if (cookieData) {
+        const parsedStations = JSON.parse(cookieData);
+        setSelectedStations(parsedStations);
+        // Restore to localStorage
+        localStorage.setItem(STATION_STORAGE_KEY, cookieData);
+        preferencesLoadedRef.current = true;
+      }
+    }
+  }, []);
+
+  // Load available stations from API
   useEffect(() => {
     const loadStations = async () => {
       try {
@@ -27,13 +57,8 @@ export default function ManufacturingCalculator() {
         const stations = await apiService.getMarketHubs();
         setAvailableStations(stations);
         
-        // Load selected stations from localStorage
-        const savedStations = localStorage.getItem('manufacturing-selected-stations');
-        if (savedStations) {
-          const parsedStations = JSON.parse(savedStations);
-          setSelectedStations(parsedStations);
-        } else {
-          // Default to all stations selected
+        // Only set default stations if no preferences were loaded earlier
+        if (!preferencesLoadedRef.current) {
           setSelectedStations(stations);
         }
       } catch (error) {
@@ -48,25 +73,27 @@ export default function ManufacturingCalculator() {
         ];
         setAvailableStations(defaultStations);
         
-        const savedStations = localStorage.getItem('manufacturing-selected-stations');
-        if (savedStations) {
-          const parsedStations = JSON.parse(savedStations);
-          setSelectedStations(parsedStations);
-        } else {
+        // Only set default stations if no preferences were loaded earlier
+        if (!preferencesLoadedRef.current) {
           setSelectedStations(defaultStations);
         }
       }
     };
 
     loadStations();
-  }, []);
+  }, []); // No dependencies to avoid infinite loop
 
-  // Save selected stations to localStorage whenever they change
+  // Save selected stations to localStorage and cookies whenever they change
   useEffect(() => {
     if (selectedStations.length > 0) {
-      localStorage.setItem('manufacturing-selected-stations', JSON.stringify(selectedStations));
+      const stationsJson = JSON.stringify(selectedStations);
+      localStorage.setItem(STATION_STORAGE_KEY, stationsJson);
+      
+      // Also save to cookies as backup (expires in 30 days)
+      setCookie(STATION_COOKIE_KEY, stationsJson, { expires: 30 });
     } else {
-      localStorage.removeItem('manufacturing-selected-stations');
+      localStorage.removeItem(STATION_STORAGE_KEY);
+      removeCookie(STATION_COOKIE_KEY);
     }
   }, [selectedStations]);
 
@@ -401,6 +428,6 @@ export default function ManufacturingCalculator() {
           </div>*/}
         </div>
       </div>
-    </div>
+        </div>
   );
 } 
