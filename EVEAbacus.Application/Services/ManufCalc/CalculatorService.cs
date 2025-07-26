@@ -425,10 +425,9 @@ public class CalculatorService
         }
 
         // Get custom blueprint ME/TE values if they exist
-        int customME = _customBlueprintService.GetMaterialEfficiency(bpId);
-        int customTE = _customBlueprintService.GetTimeEfficiency(bpId);
-        int effectiveME = customME > 0 ? customME : (int)mEff!;
-        int effectiveTE = customTE > 0 ? customTE : 20; // Default TE is 20
+        var customBlueprint = _customBlueprintService.GetCustomBlueprint(bpId);
+        int effectiveME = customBlueprint != null ? customBlueprint.MaterialEfficiency : (int)mEff!;
+        int effectiveTE = customBlueprint != null ? customBlueprint.TimeEfficiency : 20; // Default TE is 20
 
         if (madePerRun != 1)
         {
@@ -492,8 +491,7 @@ public class CalculatorService
         int inventoryQuantity = _inventoryService.GetInventoryQuantity(order.ProductTypeId);
         
         // Get custom blueprint ME/TE values if they exist
-        int customME = _customBlueprintService.GetMaterialEfficiency(order.BlueprintTypeId);
-        int customTE = _customBlueprintService.GetTimeEfficiency(order.BlueprintTypeId);
+        var customBlueprint = _customBlueprintService.GetCustomBlueprint(order.BlueprintTypeId);
         
         // Create a copy of the order with custom ME/TE if they exist
         Order modifiedOrder = new Order()
@@ -506,8 +504,8 @@ public class CalculatorService
             BlueprintName = order.BlueprintName,
             Copies = order.Copies,
             Runs = order.Runs,
-            ME = customME > 0 ? customME : order.ME,
-            TE = customTE > 0 ? customTE : order.TE,
+            ME = customBlueprint != null ? customBlueprint.MaterialEfficiency : order.ME,
+            TE = customBlueprint != null ? customBlueprint.TimeEfficiency : order.TE,
             ParentBlueprintTypeId = order.ParentBlueprintTypeId
         };
         
