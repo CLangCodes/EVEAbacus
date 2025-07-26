@@ -6,16 +6,35 @@ import BillOfMaterials from './BillOfMaterials';
 import ProductionRouting from './ProductionRouting';
 import SupplyPlan from './SupplyPlan';
 import MarketAnalysis from './MarketAnalysis';
+import BulkEditMode from './BulkEditMode';
 
 interface ManufacturingResultsProps {
   manufBatch?: ManufBatch;
   loading?: boolean;
   onEditInventory?: (typeId: number, currentQuantity: number, itemName?: string) => void;
   onEditBlueprint?: (blueprintTypeId: number, currentME: number, currentTE: number, blueprintName?: string) => void;
+  onBulkEditSave?: (changes: {
+    blueprints: Array<{
+      blueprintTypeId: number;
+      materialEfficiency: number;
+      timeEfficiency: number;
+    }>;
+    inventory: Array<{
+      typeId: number;
+      quantity: number;
+    }>;
+  }) => void;
 }
 
-export default function ManufacturingResults({ manufBatch, loading = false, onEditInventory, onEditBlueprint }: ManufacturingResultsProps) {
+export default function ManufacturingResults({ 
+  manufBatch, 
+  loading = false, 
+  onEditInventory, 
+  onEditBlueprint,
+  onBulkEditSave 
+}: ManufacturingResultsProps) {
   const [activeTab, setActiveTab] = useState(0);
+  const [isBulkEditMode, setIsBulkEditMode] = useState(false);
 
   const tabs = [
     { id: 0, name: 'Bill of Materials', icon: '📋' },
@@ -54,6 +73,29 @@ export default function ManufacturingResults({ manufBatch, loading = false, onEd
     );
   }
 
+  const handleBulkEditSave = (changes: any) => {
+    if (onBulkEditSave) {
+      onBulkEditSave(changes);
+    }
+    setIsBulkEditMode(false);
+  };
+
+  const handleBulkEditCancel = () => {
+    setIsBulkEditMode(false);
+  };
+
+  // If in bulk edit mode, show the bulk edit component
+  if (isBulkEditMode) {
+    return (
+      <BulkEditMode
+        productionRouting={manufBatch.productionRouting || []}
+        billOfMaterials={manufBatch.billOfMaterials || []}
+        onSaveChanges={handleBulkEditSave}
+        onCancel={handleBulkEditCancel}
+      />
+    );
+  }
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 0:
@@ -63,8 +105,8 @@ export default function ManufacturingResults({ manufBatch, loading = false, onEd
             onEditInventory={onEditInventory}
           />
         );
-                        case 1:
-                    return <ProductionRouting productionRouting={manufBatch.productionRouting || []} onEditInventory={onEditInventory} onEditBlueprint={onEditBlueprint} />;
+      case 1:
+        return <ProductionRouting productionRouting={manufBatch.productionRouting || []} onEditInventory={onEditInventory} onEditBlueprint={onEditBlueprint} />;
       case 2:
         console.log('Supply Plan Debug:', {
           hasSupplyPlan: !!manufBatch.supplyPlan,
@@ -93,29 +135,42 @@ export default function ManufacturingResults({ manufBatch, loading = false, onEd
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-        {/* Tab Navigation */}
+        {/* Tab Navigation with Bulk Edit Button */}
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex flex-wrap gap-2 px-6" aria-label="Tabs">
-            {tabs.map((tab) => (
+          <div className="flex items-center justify-between px-6">
+            <nav className="-mb-px flex flex-wrap gap-2" aria-label="Tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <span className="mr-2">{tab.icon}</span>
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
+            
+            {/* Bulk Edit Button - only show for BOM and Production Routing tabs */}
+            {(activeTab === 0 || activeTab === 1) && onBulkEditSave && (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  py-3 px-3 border-b-2 font-medium text-sm flex items-center space-x-1.5 rounded-t-lg
-                  ${activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                  }
-                `}
+                onClick={() => setIsBulkEditMode(true)}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                title="Edit multiple blueprints and inventory items at once"
               >
-                <span className="text-base">{tab.icon}</span>
-                <span className="hidden sm:inline">{tab.name}</span>
-                <span className="sm:hidden text-xs">{tab.name.split(' ')[0]}</span>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Bulk Edit
               </button>
-            ))}
-          </nav>
+            )}
+          </div>
         </div>
-
+        
         {/* Tab Content */}
         <div className="p-6">
           {renderTabContent()}

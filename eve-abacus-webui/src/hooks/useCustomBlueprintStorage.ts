@@ -53,6 +53,7 @@ export function useCustomBlueprintStorage() {
   };
 
   const addCustomBlueprint = (customBlueprint: CustomBlueprint) => {
+    console.log('useCustomBlueprintStorage - Adding custom blueprint:', customBlueprint);
     const newCustomBlueprints = [...customBlueprints];
     const existingIndex = newCustomBlueprints.findIndex(
       cb => cb.blueprintTypeId === customBlueprint.blueprintTypeId
@@ -64,8 +65,30 @@ export function useCustomBlueprintStorage() {
       newCustomBlueprints.push(customBlueprint);
     }
 
+    console.log('useCustomBlueprintStorage - Updated custom blueprints:', newCustomBlueprints);
     setCustomBlueprints(newCustomBlueprints);
     saveCustomBlueprints(newCustomBlueprints);
+  };
+
+  const addCustomBlueprints = (newCustomBlueprints: CustomBlueprint[]) => {
+    console.log('useCustomBlueprintStorage - Adding multiple custom blueprints:', newCustomBlueprints);
+    const updatedBlueprints = [...customBlueprints];
+    
+    newCustomBlueprints.forEach(customBlueprint => {
+      const existingIndex = updatedBlueprints.findIndex(
+        cb => cb.blueprintTypeId === customBlueprint.blueprintTypeId
+      );
+
+      if (existingIndex >= 0) {
+        updatedBlueprints[existingIndex] = customBlueprint;
+      } else {
+        updatedBlueprints.push(customBlueprint);
+      }
+    });
+
+    console.log('useCustomBlueprintStorage - Updated custom blueprints:', updatedBlueprints);
+    setCustomBlueprints(updatedBlueprints);
+    saveCustomBlueprints(updatedBlueprints);
   };
 
   const updateCustomBlueprint = (blueprintTypeId: number, materialEfficiency: number, timeEfficiency: number) => {
@@ -107,7 +130,9 @@ export function useCustomBlueprintStorage() {
   };
 
   const getCustomBlueprint = (blueprintTypeId: number): CustomBlueprint | undefined => {
-    return customBlueprints.find(cb => cb.blueprintTypeId === blueprintTypeId);
+    const result = customBlueprints.find(cb => cb.blueprintTypeId === blueprintTypeId);
+    console.log(`useCustomBlueprintStorage - getCustomBlueprint(${blueprintTypeId}):`, result);
+    return result;
   };
 
   const getMaterialEfficiency = (blueprintTypeId: number): number => {
@@ -123,6 +148,7 @@ export function useCustomBlueprintStorage() {
   return {
     customBlueprints,
     addCustomBlueprint,
+    addCustomBlueprints,
     updateCustomBlueprint,
     deleteCustomBlueprint,
     clearCustomBlueprints,

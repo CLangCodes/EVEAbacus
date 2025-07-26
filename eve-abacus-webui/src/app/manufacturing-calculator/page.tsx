@@ -146,10 +146,10 @@ export default function ManufacturingCalculator() {
   } = useOrderCookies();
 
   // Use inventory storage hook
-  const { inventory, addInventoryItem, clearInventory } = useInventoryStorage();
+  const { inventory, addInventoryItem, clearInventory, updateInventoryQuantity, updateInventoryQuantities } = useInventoryStorage();
 
   // Use custom blueprint storage hook
-  const { customBlueprints, addCustomBlueprint, clearCustomBlueprints } = useCustomBlueprintStorage();
+  const { customBlueprints, addCustomBlueprint, addCustomBlueprints, clearCustomBlueprints } = useCustomBlueprintStorage();
 
   // Simplified debouncing implementation
   const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -233,7 +233,23 @@ export default function ManufacturingCalculator() {
           });
         }
         
-        setManufBatch(result);
+        // Preserve frontend's custom blueprints - don't let backend overwrite them
+        if (result) {
+          const resultWithPreservedCustomBlueprints: ManufBatch = {
+            ...result,
+            customBlueprints: customBlueprints // Use frontend's custom blueprints, not backend's
+          };
+          
+          console.log('Setting ManufBatch with preserved custom blueprints:', {
+            frontendCustomBlueprintsCount: customBlueprints.length,
+            backendCustomBlueprintsCount: result.customBlueprints?.length || 0,
+            preservedCustomBlueprints: customBlueprints
+          });
+          
+          setManufBatch(resultWithPreservedCustomBlueprints);
+        } else {
+          setManufBatch(null);
+        }
       } catch (error) {
         console.error('Error calculating manufacturing batch:', error);
         // Don't show alert for debounced calls, just log the error
@@ -323,6 +339,50 @@ export default function ManufacturingCalculator() {
       isVisible: true
     });
   }, [clearCustomBlueprints, orders, selectedStations, debouncedCalculation]);
+
+  const handleBulkEditSave = useCallback((changes: {
+    blueprints: Array<{
+      blueprintTypeId: number;
+      materialEfficiency: number;
+      timeEfficiency: number;
+    }>;
+    inventory: Array<{
+      typeId: number;
+      quantity: number;
+    }>;
+  }) => {
+    console.log('BulkEditSave - Received changes:', changes);
+    
+    // Process blueprint changes
+    addCustomBlueprints(changes.blueprints);
+
+    // Process inventory changes
+    updateInventoryQuantities(changes.inventory);
+
+    // Trigger recalculation after all changes
+    debouncedCalculation(orders, selectedStations);
+    
+    // Show success toast
+    const blueprintCount = changes.blueprints.length;
+    const inventoryCount = changes.inventory.length;
+    let message = '';
+    
+    if (blueprintCount > 0 && inventoryCount > 0) {
+      message = `Updated ${blueprintCount} blueprint(s) and ${inventoryCount} inventory item(s)`;
+    } else if (blueprintCount > 0) {
+      message = `Updated ${blueprintCount} blueprint(s)`;
+    } else if (inventoryCount > 0) {
+      message = `Updated ${inventoryCount} inventory item(s)`;
+    } else {
+      message = 'No changes were made';
+    }
+    
+    setToast({
+      message,
+      type: 'success',
+      isVisible: true
+    });
+  }, [addCustomBlueprints, updateInventoryQuantities, orders, selectedStations, debouncedCalculation]);
 
   // Trigger calculation when orders, stations, or inventory change
   useEffect(() => {
@@ -502,7 +562,13 @@ export default function ManufacturingCalculator() {
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                       Manufacturing Results
                     </h2>
-                    <ManufacturingResults manufBatch={manufBatch || undefined} loading={calculating} onEditInventory={handleEditInventory} onEditBlueprint={handleEditBlueprint} />
+                    <ManufacturingResults 
+                      manufBatch={manufBatch || undefined} 
+                      loading={calculating} 
+                      onEditInventory={handleEditInventory} 
+                      onEditBlueprint={handleEditBlueprint}
+                      onBulkEditSave={handleBulkEditSave}
+                    />
                   </div>
                 </div>
               )}
@@ -541,34 +607,9 @@ export default function ManufacturingCalculator() {
                     ))}
                   </div>
                 )}
-              </div> */}
-              
-              {/* Manual Calculation Button */}
-              {/* <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 space-y-2">
-                <button
-                  onClick={triggerCalculation}
-                  disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
-                  className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  {calculating ? 'Calculating...' : 'Manual Calculate'}
-                </button>
-                <p className="text-xs text-gray-500">
-                  Force calculation (bypasses debouncing)
-                </p>
-                
-                <button
-                  onClick={refreshMarketData}
-                  disabled={orders.length === 0 || selectedStations.length === 0 || calculating}
-                  className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  {calculating ? 'Refreshing...' : 'Refresh Market Data'}
-                </button>
-                <p className="text-xs text-gray-500">
-                  Force refresh of market data from EVE ESI
-                </p>
-              </div> 
+              </div>
             </div>
-          </div>*/}
+          </div> */}
         </div>
       </div>
       

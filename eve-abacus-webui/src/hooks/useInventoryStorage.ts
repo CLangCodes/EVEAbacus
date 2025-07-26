@@ -85,6 +85,27 @@ export function useInventoryStorage() {
     saveInventory(newInventory);
   };
 
+  const updateInventoryQuantities = (updates: Array<{ typeId: number; quantity: number }>) => {
+    const newInventory = [...inventory];
+    
+    updates.forEach(({ typeId, quantity }) => {
+      const existingIndex = newInventory.findIndex(item => item.typeId === typeId);
+      
+      if (existingIndex >= 0) {
+        if (quantity <= 0) {
+          newInventory.splice(existingIndex, 1);
+        } else {
+          newInventory[existingIndex].quantity = quantity;
+        }
+      } else if (quantity > 0) {
+        newInventory.push({ typeId, quantity });
+      }
+    });
+    
+    setInventory(newInventory);
+    saveInventory(newInventory);
+  };
+
   const deleteInventoryItem = (typeId: number) => {
     const newInventory = inventory.filter(item => item.typeId !== typeId);
     setInventory(newInventory);
@@ -106,6 +127,7 @@ export function useInventoryStorage() {
     inventory,
     addInventoryItem,
     updateInventoryQuantity,
+    updateInventoryQuantities,
     deleteInventoryItem,
     clearInventory,
     getInventoryQuantity,
