@@ -85,7 +85,10 @@ public class CalculatorService
         }
         else
         {
+            // Aggregate the required amounts
             existingItem.Requisitioned += bOMLineItem.Requisitioned;
+            // Inventory should be the same for the same TypeId, so we can use either value
+            // (they should be identical since they come from the same inventory service)
         }
 
         return billOfMaterials;
@@ -158,13 +161,12 @@ public class CalculatorService
     {
         int requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
         int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
-        int netRequisitioned = Math.Max(0, requisitioned - inventoryQuantity);
         
         return new BOMLineItem()
         {
             TypeId = (int)bpMaterial.MaterialTypeId!,
             Name = bpMaterial.Material!.TypeName!,
-            Requisitioned = netRequisitioned,
+            Requisitioned = requisitioned, // Keep original required amount
             Inventory = inventoryQuantity,
             Item = await _sdeService.GetItemAsync((int)bpMaterial.MaterialTypeId!)
             //MarketHistory = await _marketService.GetItemMarketRegionHistoryAsync([], (int)bpMaterial.MaterialTypeId!),

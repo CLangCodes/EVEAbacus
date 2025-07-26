@@ -56,6 +56,7 @@ export interface BOMLineItem {
   name: string;
   requisitioned: number;
   inventory: number;
+  netRequisitioned: number;
   item: Item;
   marketHistory: MarketRegionHistory[];
   purchaseRequisitions: PurchaseRequisition[];
@@ -87,6 +88,7 @@ export interface ProductionRoute {
   producedPerRun: number;
   produced: number;
   inventory?: number;
+  netRequisitioned: number;
   averageSellPrice?: number;
   averageBuyPrice?: number;
   blueprintMetaData?: Item;

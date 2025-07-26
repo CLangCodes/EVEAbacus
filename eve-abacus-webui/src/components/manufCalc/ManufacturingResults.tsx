@@ -10,9 +10,10 @@ import MarketAnalysis from './MarketAnalysis';
 interface ManufacturingResultsProps {
   manufBatch?: ManufBatch;
   loading?: boolean;
+  onEditInventory?: (typeId: number, currentQuantity: number, itemName?: string) => void;
 }
 
-export default function ManufacturingResults({ manufBatch, loading = false }: ManufacturingResultsProps) {
+export default function ManufacturingResults({ manufBatch, loading = false, onEditInventory }: ManufacturingResultsProps) {
   const [activeTab, setActiveTab] = useState(0);
 
   const tabs = [
@@ -58,6 +59,7 @@ export default function ManufacturingResults({ manufBatch, loading = false }: Ma
         return (
           <BillOfMaterials 
             billOfMaterials={manufBatch.billOfMaterials || []} 
+            onEditInventory={onEditInventory}
           />
         );
       case 1:

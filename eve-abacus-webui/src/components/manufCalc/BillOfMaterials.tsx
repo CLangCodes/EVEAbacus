@@ -2,10 +2,12 @@
 
 import React from 'react';
 import { DataTable, Column } from '../DataTable';
+import { PencilIcon } from '../Icons';
 import type { BOMLineItem } from '@/types/manufacturing';
 
 interface BillOfMaterialsProps {
   billOfMaterials: BOMLineItem[];
+  onEditInventory?: (typeId: number, currentQuantity: number, itemName?: string) => void;
 }
 
 interface MaterialItem extends Record<string, unknown> {
@@ -23,7 +25,7 @@ interface MaterialItem extends Record<string, unknown> {
   buyStation?: string;
 }
 
-export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProps) {
+export default function BillOfMaterials({ billOfMaterials, onEditInventory }: BillOfMaterialsProps) {
   // Ensure billOfMaterials is an array
   const materials = Array.isArray(billOfMaterials) ? billOfMaterials : [];
 
@@ -34,7 +36,7 @@ export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProp
     typeId: material.typeId,
     requisitioned: material.requisitioned,
     inventory: material.inventory || 0,
-    netRequisitioned: Math.max(0, material.requisitioned - (material.inventory || 0)),
+    netRequisitioned: material.netRequisitioned || 0,
     groupName: material.item?.group?.groupName,
     categoryName: material.item?.group?.category?.categoryName,
     lowestSellPrice: material.lowestSellPrice,
@@ -76,14 +78,23 @@ export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProp
       header: 'Inventory',
       sortable: true,
       width: 'w-20',
-      render: (value) => {
+      render: (value, row) => {
         const inventory = value as number;
-        return inventory > 0 ? (
-          <span className="text-green-600 dark:text-green-400 font-medium">
-            {inventory.toLocaleString()}
-          </span>
-        ) : (
-          <span className="text-gray-400">0</span>
+        return (
+          <div className="flex items-center justify-between">
+            <span className={inventory > 0 ? "text-green-600 dark:text-green-400 font-medium" : "text-gray-400"}>
+              {inventory > 0 ? inventory.toLocaleString() : "0"}
+            </span>
+            {onEditInventory && (
+              <button
+                onClick={() => onEditInventory(row.typeId as number, inventory, row.name as string)}
+                className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors flex-shrink-0 ml-2"
+                title="Edit inventory quantity"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         );
       }
     },
@@ -105,6 +116,7 @@ export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProp
         );
       }
     },
+
   ];
 
   const exportShoppingList = () => {

@@ -19,6 +19,7 @@ namespace EVEAbacus.Domain.Models.Calculator
         public required int ProducedPerRun { get; set; }
         public int Produced { get { return Order.Runs * Order.Copies * ProducedPerRun; } }
         public int Inventory { get; set; } = 0;
+        public int NetRequisitioned => Math.Max(0, Requisitioned - Inventory);
         public decimal? AverageSellPrice { get; set; }
         public decimal? AverageBuyPrice { get; set; }
         public Item? BlueprintMetaData { get; set; }

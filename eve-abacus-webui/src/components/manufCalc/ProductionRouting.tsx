@@ -13,6 +13,7 @@ interface RouteItem extends Record<string, unknown> {
   id: number;
   blueprintName: string;
   materialName: string;
+  materialTypeId: number;
   requisitioned: number;
   inventory: number;
   netRequisitioned: number;
@@ -35,9 +36,10 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
     id: index + 1,
     blueprintName: route.blueprintName || 'N/A',
     materialName: route.materialName,
+    materialTypeId: route.materialTypeId,
     requisitioned: route.requisitioned,
     inventory: route.inventory || 0,
-    netRequisitioned: Math.max(0, route.requisitioned - (route.inventory || 0)),
+    netRequisitioned: route.netRequisitioned || 0,
     copies: route.order.copies,
     runs: route.order.runs,
     produced: route.produced,
@@ -159,7 +161,8 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
       key: 'te',
       header: 'TE',
       sortable: true
-    }
+    },
+
   ];
 
   if (!routes || routes.length === 0) {
