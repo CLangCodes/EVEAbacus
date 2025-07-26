@@ -16,10 +16,12 @@ public class CalculatorService
     private readonly IMapService _mapService;
     private readonly IOrderService _orderService;
     private readonly IInventoryService _inventoryService;
+    private readonly ICustomBlueprintService _customBlueprintService;
     private readonly ILogger<CalculatorService> _logger;
 
     public IEnumerable<Order> Orders { get {  return _orderService.Orders; } }
     public IEnumerable<StockInventory> StockInventories { get { return _inventoryService.StockInventories; } }
+    public IEnumerable<CustomBlueprint> CustomBlueprints { get { return _customBlueprintService.CustomBlueprints; } }
     public long[] SelectedMarketIds { get; set; } = [];
     private IEnumerable<string> _selectedMarkets { get; set; } = [];
     public IEnumerable<string> SelectedMarkets 
@@ -39,13 +41,14 @@ public class CalculatorService
     public ManufBatch? ManufBatch { get; set; }
 
     public CalculatorService(ISDEService sdeService, IMarketService marketService, 
-        IMapService mapService, IOrderService orderService, IInventoryService inventoryService, ILogger<CalculatorService> logger)
+        IMapService mapService, IOrderService orderService, IInventoryService inventoryService, ICustomBlueprintService customBlueprintService, ILogger<CalculatorService> logger)
     {
         _sdeService = sdeService;   
         _marketService = marketService;
         _mapService = mapService;
         _orderService = orderService;
         _inventoryService = inventoryService;
+        _customBlueprintService = customBlueprintService;
         _logger = logger;
         _logger.LogInformation("CalculatorService initialized");
     }
@@ -310,6 +313,7 @@ public class CalculatorService
             manufBatch.ProductionRoutingString = GetProductionRoutingString(manufBatch.ProductionRouting);
             manufBatch.BillOfMaterialsString = GetBillOfMaterialsString(manufBatch.BillOfMaterials);
             manufBatch.StockInventories = _inventoryService.StockInventories;
+            manufBatch.CustomBlueprints = _customBlueprintService.CustomBlueprints;
 
             int[] bomTypeIds = manufBatch.BillOfMaterials.Select(o => o.TypeId).Distinct().ToArray();
             int[] prTypeIds = manufBatch.ProductionRouting.Select(o => o.MaterialTypeId).Distinct().ToArray();
@@ -419,16 +423,23 @@ public class CalculatorService
         {
             blueprintName = (await _sdeService.GetItemNameAsync((int)bpId))!;
         }
+
+        // Get custom blueprint ME/TE values if they exist
+        int customME = _customBlueprintService.GetMaterialEfficiency(bpId);
+        int customTE = _customBlueprintService.GetTimeEfficiency(bpId);
+        int effectiveME = customME > 0 ? customME : (int)mEff!;
+        int effectiveTE = customTE > 0 ? customTE : 20; // Default TE is 20
+
         if (madePerRun != 1)
         {
-            requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
+            requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, effectiveME);
             float newQuantityFloat = (float)((requisitioned) / madePerRun)!;
             runs = (int)(Math.Ceiling(newQuantityFloat));
         }
         else
         {
-            runs = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
-            requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
+            runs = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, effectiveME);
+            requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, effectiveME);
         }
 
         int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
@@ -450,8 +461,8 @@ public class CalculatorService
                 ActivityId = 1,
                 Copies = 1,
                 Runs = runs,
-                ME = 10,
-                TE = 20,
+                ME = effectiveME,
+                TE = effectiveTE,
                 ParentBlueprintTypeId = bpMaterial.BlueprintTypeId!,
             },
             Orders = [new Order()
@@ -464,8 +475,8 @@ public class CalculatorService
                 ActivityId = 1,
                 Copies = 1,
                 Runs = runs,
-                ME = 10,
-                TE = 20,
+                ME = effectiveME,
+                TE = effectiveTE,
                 ParentBlueprintTypeId = bpMaterial.BlueprintTypeId!,
                 },
             ],
@@ -480,15 +491,35 @@ public class CalculatorService
     {
         int inventoryQuantity = _inventoryService.GetInventoryQuantity(order.ProductTypeId);
         
+        // Get custom blueprint ME/TE values if they exist
+        int customME = _customBlueprintService.GetMaterialEfficiency(order.BlueprintTypeId);
+        int customTE = _customBlueprintService.GetTimeEfficiency(order.BlueprintTypeId);
+        
+        // Create a copy of the order with custom ME/TE if they exist
+        Order modifiedOrder = new Order()
+        {
+            BlueprintTypeId = order.BlueprintTypeId,
+            ActivityId = order.ActivityId,
+            ProductTypeId = order.ProductTypeId,
+            ProductName = order.ProductName,
+            Product = order.Product,
+            BlueprintName = order.BlueprintName,
+            Copies = order.Copies,
+            Runs = order.Runs,
+            ME = customME > 0 ? customME : order.ME,
+            TE = customTE > 0 ? customTE : order.TE,
+            ParentBlueprintTypeId = order.ParentBlueprintTypeId
+        };
+        
         ProductionRoute productionRoute = new ProductionRoute()
         {
             MaterialTypeId = order.ProductTypeId,
             MaterialName = order.ProductName,
             BlueprintTypeId = order.BlueprintTypeId,
             BlueprintName = order.BlueprintName,
-            Requisitioned = (order.Runs * order.Copies),
-            Order = order,
-            Orders = [order],
+            Requisitioned = (modifiedOrder.Runs * modifiedOrder.Copies),
+            Order = modifiedOrder,
+            Orders = [modifiedOrder],
             ProducedPerRun = (int)(await _sdeService.HowManyProductsMadeAsync(order.ProductTypeId) ?? 0),
             Inventory = inventoryQuantity,
             BlueprintMetaData = await _sdeService.GetItemAsync(order.BlueprintTypeId),
@@ -613,6 +644,47 @@ public class CalculatorService
     public void UpdateInventoryQuantity(int typeId, int quantity)
     {
         _inventoryService.UpdateInventoryQuantity(typeId, quantity);
+    }
+
+    // Custom Blueprint Management Methods
+    public async Task AddCustomBlueprintAsync(CustomBlueprint customBlueprint)
+    {
+        await _customBlueprintService.AddCustomBlueprintAsync(customBlueprint);
+    }
+
+    public async Task AddCustomBlueprintsAsync(CustomBlueprint[] customBlueprints)
+    {
+        await _customBlueprintService.AddCustomBlueprintsAsync(customBlueprints);
+    }
+
+    public void DeleteCustomBlueprint(int blueprintTypeId)
+    {
+        _customBlueprintService.DeleteCustomBlueprint(blueprintTypeId);
+    }
+
+    public async Task EditCustomBlueprintAsync(CustomBlueprint customBlueprint)
+    {
+        await _customBlueprintService.EditCustomBlueprintAsync(customBlueprint);
+    }
+
+    public void SetCustomBlueprintsFromStorage(List<CustomBlueprint> customBlueprints)
+    {
+        _customBlueprintService.SetCustomBlueprintsFromStorage(customBlueprints);
+    }
+
+    public CustomBlueprint? GetCustomBlueprint(int blueprintTypeId)
+    {
+        return _customBlueprintService.GetCustomBlueprint(blueprintTypeId);
+    }
+
+    public int GetMaterialEfficiency(int blueprintTypeId)
+    {
+        return _customBlueprintService.GetMaterialEfficiency(blueprintTypeId);
+    }
+
+    public int GetTimeEfficiency(int blueprintTypeId)
+    {
+        return _customBlueprintService.GetTimeEfficiency(blueprintTypeId);
     }
 
 }

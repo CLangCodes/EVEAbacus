@@ -11,9 +11,10 @@ interface ManufacturingResultsProps {
   manufBatch?: ManufBatch;
   loading?: boolean;
   onEditInventory?: (typeId: number, currentQuantity: number, itemName?: string) => void;
+  onEditBlueprint?: (blueprintTypeId: number, currentME: number, currentTE: number, blueprintName?: string) => void;
 }
 
-export default function ManufacturingResults({ manufBatch, loading = false, onEditInventory }: ManufacturingResultsProps) {
+export default function ManufacturingResults({ manufBatch, loading = false, onEditInventory, onEditBlueprint }: ManufacturingResultsProps) {
   const [activeTab, setActiveTab] = useState(0);
 
   const tabs = [
@@ -62,8 +63,8 @@ export default function ManufacturingResults({ manufBatch, loading = false, onEd
             onEditInventory={onEditInventory}
           />
         );
-      case 1:
-        return <ProductionRouting productionRouting={manufBatch.productionRouting || []} onEditInventory={onEditInventory} />;
+                        case 1:
+                    return <ProductionRouting productionRouting={manufBatch.productionRouting || []} onEditInventory={onEditInventory} onEditBlueprint={onEditBlueprint} />;
       case 2:
         console.log('Supply Plan Debug:', {
           hasSupplyPlan: !!manufBatch.supplyPlan,

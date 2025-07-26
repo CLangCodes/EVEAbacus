@@ -7,11 +7,13 @@ import type { Order } from '@/types/orders';
 import { PlusIcon, TrashIcon } from '@/components/Icons';
 import { useOrderCookies, type EditableOrderDTO } from '@/hooks/useOrderCookies';
 import { useInventoryStorage } from '@/hooks/useInventoryStorage';
+import { useCustomBlueprintStorage } from '@/hooks/useCustomBlueprintStorage';
 import { OrderFormDTO } from '@/components/manufCalc/OrderFormDTO';
 import { OrdersDataGrid } from '@/components/manufCalc/OrdersDataGrid';
 import ManufacturingResults from '@/components/manufCalc/ManufacturingResults';
 import Toast from '@/components/Toast';
 import InventoryEditInline from '@/components/InventoryEditInline';
+import CustomBlueprintEditInline from '@/components/CustomBlueprintEditInline';
 import { getCookie, setCookie, removeCookie } from '@/utils/cookies';
 
 export default function ManufacturingCalculator() {
@@ -33,6 +35,19 @@ export default function ManufacturingCalculator() {
     isOpen: false,
     typeId: 0,
     currentQuantity: 0
+  });
+
+  const [editBlueprintModal, setEditBlueprintModal] = useState<{
+    isOpen: boolean;
+    blueprintTypeId: number;
+    currentME: number;
+    currentTE: number;
+    blueprintName?: string;
+  }>({
+    isOpen: false,
+    blueprintTypeId: 0,
+    currentME: 0,
+    currentTE: 0
   });
 
   // Storage keys
@@ -133,6 +148,9 @@ export default function ManufacturingCalculator() {
   // Use inventory storage hook
   const { inventory, addInventoryItem, clearInventory } = useInventoryStorage();
 
+  // Use custom blueprint storage hook
+  const { customBlueprints, addCustomBlueprint, clearCustomBlueprints } = useCustomBlueprintStorage();
+
   // Simplified debouncing implementation
   const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -181,7 +199,8 @@ export default function ManufacturingCalculator() {
         const request = {
           orderDTOs: orderDTOs,
           stationIds: stations,
-          inventory: inventory
+          inventory: inventory,
+          customBlueprints: customBlueprints
         };
 
         console.log('Sending manufacturing request:', {
@@ -222,7 +241,7 @@ export default function ManufacturingCalculator() {
         setCalculating(false);
       }
     }, 1000); // Wait 1 second after user stops making changes
-  }, [inventory]);
+  }, [inventory, customBlueprints]);
 
 
 
@@ -265,6 +284,45 @@ export default function ManufacturingCalculator() {
       isVisible: true
     });
   }, [clearInventory, orders, selectedStations, debouncedCalculation]);
+
+  const handleEditBlueprint = useCallback((blueprintTypeId: number, currentME: number, currentTE: number, blueprintName?: string) => {
+    setEditBlueprintModal({
+      isOpen: true,
+      blueprintTypeId,
+      currentME,
+      currentTE,
+      blueprintName
+    });
+  }, []);
+
+  const handleSaveBlueprint = useCallback((materialEfficiency: number, timeEfficiency: number) => {
+    const { blueprintTypeId } = editBlueprintModal;
+    addCustomBlueprint({ blueprintTypeId, materialEfficiency, timeEfficiency });
+    // Trigger recalculation after updating custom blueprint
+    debouncedCalculation(orders, selectedStations);
+    
+    // Show success toast
+    setToast({
+      message: `Updated blueprint ${blueprintTypeId} to ME ${materialEfficiency}/TE ${timeEfficiency}`,
+      type: 'success',
+      isVisible: true
+    });
+    
+    setEditBlueprintModal({ isOpen: false, blueprintTypeId: 0, currentME: 0, currentTE: 0 });
+  }, [editBlueprintModal, addCustomBlueprint, orders, selectedStations, debouncedCalculation]);
+
+  const handleClearCustomBlueprints = useCallback(() => {
+    clearCustomBlueprints();
+    // Trigger recalculation after clearing custom blueprints
+    debouncedCalculation(orders, selectedStations);
+    
+    // Show success toast
+    setToast({
+      message: 'All custom blueprints cleared successfully',
+      type: 'success',
+      isVisible: true
+    });
+  }, [clearCustomBlueprints, orders, selectedStations, debouncedCalculation]);
 
   // Trigger calculation when orders, stations, or inventory change
   useEffect(() => {
@@ -357,6 +415,15 @@ export default function ManufacturingCalculator() {
                             <TrashIcon className="w-4 h-4 mr-1" />
                             Clear Inventory
                           </button>
+                          <button
+                            onClick={handleClearCustomBlueprints}
+                            className="inline-flex items-center px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                            disabled={customBlueprints.length === 0}
+                            title="Clear all custom blueprints"
+                          >
+                            <TrashIcon className="w-4 h-4 mr-1" />
+                            Clear Blueprints
+                          </button>
                         </div>
                       </div>
 
@@ -435,7 +502,7 @@ export default function ManufacturingCalculator() {
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                       Manufacturing Results
                     </h2>
-                    <ManufacturingResults manufBatch={manufBatch || undefined} loading={calculating} onEditInventory={handleEditInventory} />
+                    <ManufacturingResults manufBatch={manufBatch || undefined} loading={calculating} onEditInventory={handleEditInventory} onEditBlueprint={handleEditBlueprint} />
                   </div>
                 </div>
               )}
@@ -521,6 +588,17 @@ export default function ManufacturingCalculator() {
         typeId={editInventoryModal.typeId}
         currentQuantity={editInventoryModal.currentQuantity}
         itemName={editInventoryModal.itemName}
+      />
+
+      {/* Custom Blueprint Edit Modal */}
+      <CustomBlueprintEditInline
+        isOpen={editBlueprintModal.isOpen}
+        blueprintTypeId={editBlueprintModal.blueprintTypeId}
+        currentME={editBlueprintModal.currentME}
+        currentTE={editBlueprintModal.currentTE}
+        blueprintName={editBlueprintModal.blueprintName}
+        onSave={handleSaveBlueprint}
+        onCancel={() => setEditBlueprintModal({ isOpen: false, blueprintTypeId: 0, currentME: 0, currentTE: 0 })}
       />
     </div>
   );

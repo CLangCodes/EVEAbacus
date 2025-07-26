@@ -2,7 +2,7 @@
 // These should match the C# models in EVEAbacus.Domain/Models/Calculator/
 
 // Import types from manufacturing.ts
-import type { ProductionRoute, BOMLineItem, StockInventory } from './manufacturing';
+import type { ProductionRoute, BOMLineItem, StockInventory, CustomBlueprint } from './manufacturing';
 
 // Core manufacturing types
 export interface OrderDTO {
@@ -19,6 +19,7 @@ export interface ManufacturingBatchRequest {
   orderDTOs: OrderDTO[];
   stationIds: string[];
   inventory?: StockInventory[];
+  customBlueprints?: CustomBlueprint[];
 }
 
 // Calculator models
@@ -153,6 +154,8 @@ export interface ManufBatch {
   purchaseOrders: PurchaseRequisition[];
   marketProfile: MarketProfile;
   supplyPlan: SupplyPlan;
+  stockInventories: StockInventory[];
+  customBlueprints: CustomBlueprint[];
 }
 
 // API Response types
