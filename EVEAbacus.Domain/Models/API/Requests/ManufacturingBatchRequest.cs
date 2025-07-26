@@ -21,5 +21,10 @@ namespace EVEAbacus.Domain.Models.API.Requests
         /// Array of EVE Online station IDs where market prices will be analyzed
         /// </summary>
         public string[] StationIds { get; set; } = [];
+
+        /// <summary>
+        /// Array of inventory items with quantities
+        /// </summary>
+        public StockInventory[]? Inventory { get; set; }
     }
 }

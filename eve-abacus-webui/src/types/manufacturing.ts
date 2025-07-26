@@ -55,6 +55,7 @@ export interface BOMLineItem {
   typeId: number;
   name: string;
   requisitioned: number;
+  inventory: number;
   item: Item;
   marketHistory: MarketRegionHistory[];
   purchaseRequisitions: PurchaseRequisition[];
@@ -96,4 +97,9 @@ export interface ProductionRoute {
 
 export interface StationBillOfMaterials {
   [key: string]: unknown;
+}
+
+export interface StockInventory {
+  typeId: number;
+  quantity: number;
 }

@@ -2,7 +2,7 @@
 // These should match the C# models in EVEAbacus.Domain/Models/Calculator/
 
 // Import types from manufacturing.ts
-import type { ProductionRoute, BOMLineItem } from './manufacturing';
+import type { ProductionRoute, BOMLineItem, StockInventory } from './manufacturing';
 
 // Core manufacturing types
 export interface OrderDTO {
@@ -18,6 +18,7 @@ export interface OrderDTO {
 export interface ManufacturingBatchRequest {
   orderDTOs: OrderDTO[];
   stationIds: string[];
+  inventory?: StockInventory[];
 }
 
 // Calculator models

@@ -14,6 +14,8 @@ interface RouteItem extends Record<string, unknown> {
   blueprintName: string;
   materialName: string;
   requisitioned: number;
+  inventory: number;
+  netRequisitioned: number;
   copies: number;
   runs: number;
   produced: number;
@@ -34,6 +36,8 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
     blueprintName: route.blueprintName || 'N/A',
     materialName: route.materialName,
     requisitioned: route.requisitioned,
+    inventory: route.inventory || 0,
+    netRequisitioned: Math.max(0, route.requisitioned - (route.inventory || 0)),
     copies: route.order.copies,
     runs: route.order.runs,
     produced: route.produced,
@@ -88,9 +92,41 @@ export default function ProductionRouting({ productionRouting }: ProductionRouti
     },
     {
       key: 'requisitioned',
-      header: 'Qty',
+      header: 'Required',
       sortable: true,
       render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'inventory',
+      header: 'Inventory',
+      sortable: true,
+      render: (value) => {
+        const inventory = value as number;
+        return inventory > 0 ? (
+          <span className="text-green-600 dark:text-green-400 font-medium">
+            {inventory.toLocaleString()}
+          </span>
+        ) : (
+          <span className="text-gray-400">0</span>
+        );
+      }
+    },
+    {
+      key: 'netRequisitioned',
+      header: 'Net Required',
+      sortable: true,
+      render: (value) => {
+        const netRequired = value as number;
+        return netRequired > 0 ? (
+          <span className="text-red-600 dark:text-red-400 font-medium">
+            {netRequired.toLocaleString()}
+          </span>
+        ) : (
+          <span className="text-green-600 dark:text-green-400 font-medium">
+            ✓ Covered
+          </span>
+        );
+      }
     },
     {
       key: 'copies',

@@ -15,9 +15,11 @@ public class CalculatorService
     private readonly IMarketService _marketService;
     private readonly IMapService _mapService;
     private readonly IOrderService _orderService;
+    private readonly IInventoryService _inventoryService;
     private readonly ILogger<CalculatorService> _logger;
 
     public IEnumerable<Order> Orders { get {  return _orderService.Orders; } }
+    public IEnumerable<StockInventory> StockInventories { get { return _inventoryService.StockInventories; } }
     public long[] SelectedMarketIds { get; set; } = [];
     private IEnumerable<string> _selectedMarkets { get; set; } = [];
     public IEnumerable<string> SelectedMarkets 
@@ -37,12 +39,13 @@ public class CalculatorService
     public ManufBatch? ManufBatch { get; set; }
 
     public CalculatorService(ISDEService sdeService, IMarketService marketService, 
-        IMapService mapService, IOrderService orderService, ILogger<CalculatorService> logger)
+        IMapService mapService, IOrderService orderService, IInventoryService inventoryService, ILogger<CalculatorService> logger)
     {
         _sdeService = sdeService;   
         _marketService = marketService;
         _mapService = mapService;
         _orderService = orderService;
+        _inventoryService = inventoryService;
         _logger = logger;
         _logger.LogInformation("CalculatorService initialized");
     }
@@ -154,11 +157,15 @@ public class CalculatorService
     private async Task<BOMLineItem> BOMLineItemFromBPMaterial(BPMaterial bpMaterial, int rootCopies, int rootRuns, long[] stationIds, int? mEff = 10, int? tEff = 20)
     {
         int requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
+        int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
+        int netRequisitioned = Math.Max(0, requisitioned - inventoryQuantity);
+        
         return new BOMLineItem()
         {
             TypeId = (int)bpMaterial.MaterialTypeId!,
             Name = bpMaterial.Material!.TypeName!,
-            Requisitioned = requisitioned,
+            Requisitioned = netRequisitioned,
+            Inventory = inventoryQuantity,
             Item = await _sdeService.GetItemAsync((int)bpMaterial.MaterialTypeId!)
             //MarketHistory = await _marketService.GetItemMarketRegionHistoryAsync([], (int)bpMaterial.MaterialTypeId!),
             //PurchaseRequisitions = await GetPurchaseOrders((int)bpMaterial.MaterialTypeId!, stationIds, requisitioned, null),
@@ -254,6 +261,7 @@ public class CalculatorService
             manufBatch.BillOfMaterials = await GetBillOfMaterialsFromProductionRouting(manufBatch.ProductionRouting, SelectedMarketIds);
             manufBatch.ProductionRoutingString = GetProductionRoutingString(manufBatch.ProductionRouting);
             manufBatch.BillOfMaterialsString = GetBillOfMaterialsString(manufBatch.BillOfMaterials);
+            manufBatch.StockInventories = _inventoryService.StockInventories;
 
             int[] bomTypeIds = manufBatch.BillOfMaterials.Select(o => o.TypeId).Distinct().ToArray();
             int[] prTypeIds = manufBatch.ProductionRouting.Select(o => o.MaterialTypeId).Distinct().ToArray();
@@ -375,6 +383,8 @@ public class CalculatorService
             requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, (int)mEff!);
         }
 
+        int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
+        
         ProductionRoute productionRoute = new ProductionRoute()
         {
             MaterialTypeId = (int)bpMaterial.MaterialTypeId!,
@@ -409,9 +419,10 @@ public class CalculatorService
                 ME = 10,
                 TE = 20,
                 ParentBlueprintTypeId = bpMaterial.BlueprintTypeId!,
-            }],
+                },
+            ],
             ProducedPerRun = madePerRun,
-            Inventory = 0, // Not Implemented
+            Inventory = inventoryQuantity,
             BlueprintMetaData = await _sdeService.GetItemAsync(bpId),
             MaterialMetaData = await _sdeService.GetItemAsync((int)bpMaterial.MaterialTypeId!),
         };
@@ -419,6 +430,8 @@ public class CalculatorService
     }
     private async Task<ProductionRoute> GetProductionRouteFromOrder(Order order, long[] stationIds)
     {
+        int inventoryQuantity = _inventoryService.GetInventoryQuantity(order.ProductTypeId);
+        
         ProductionRoute productionRoute = new ProductionRoute()
         {
             MaterialTypeId = order.ProductTypeId,
@@ -429,7 +442,7 @@ public class CalculatorService
             Order = order,
             Orders = [order],
             ProducedPerRun = (int)(await _sdeService.HowManyProductsMadeAsync(order.ProductTypeId) ?? 0),
-            Inventory = 0, // Not Implemented
+            Inventory = inventoryQuantity,
             BlueprintMetaData = await _sdeService.GetItemAsync(order.BlueprintTypeId),
             MaterialMetaData = await _sdeService.GetItemAsync(order.ProductTypeId),
         };
@@ -516,6 +529,42 @@ public class CalculatorService
             stationIds.Add(await _mapService.GetStationId(market) ?? 0);
         }
         SelectedMarketIds = stationIds.ToArray();
+    }
+
+    // Inventory Management Methods
+    public async Task AddInventoryItemAsync(StockInventory inventoryItem)
+    {
+        await _inventoryService.AddInventoryItemAsync(inventoryItem);
+    }
+
+    public async Task AddInventoryItemsAsync(StockInventory[] inventoryItems)
+    {
+        await _inventoryService.AddInventoryItemsAsync(inventoryItems);
+    }
+
+    public void DeleteInventoryItem(int typeId)
+    {
+        _inventoryService.DeleteInventoryItem(typeId);
+    }
+
+    public async Task EditInventoryItemAsync(StockInventory inventoryItem)
+    {
+        await _inventoryService.EditInventoryItemAsync(inventoryItem);
+    }
+
+    public void SetInventoryFromStorage(List<StockInventory> inventoryItems)
+    {
+        _inventoryService.SetInventoryFromStorage(inventoryItems);
+    }
+
+    public int GetInventoryQuantity(int typeId)
+    {
+        return _inventoryService.GetInventoryQuantity(typeId);
+    }
+
+    public void UpdateInventoryQuantity(int typeId, int quantity)
+    {
+        _inventoryService.UpdateInventoryQuantity(typeId, quantity);
     }
 
 }

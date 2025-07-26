@@ -13,6 +13,8 @@ interface MaterialItem extends Record<string, unknown> {
   name: string;
   typeId: number;
   requisitioned: number;
+  inventory: number;
+  netRequisitioned: number;
   groupName?: string;
   categoryName?: string;
   lowestSellPrice?: number;
@@ -31,6 +33,8 @@ export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProp
     name: material.name,
     typeId: material.typeId,
     requisitioned: material.requisitioned,
+    inventory: material.inventory || 0,
+    netRequisitioned: Math.max(0, material.requisitioned - (material.inventory || 0)),
     groupName: material.item?.group?.groupName,
     categoryName: material.item?.group?.category?.categoryName,
     lowestSellPrice: material.lowestSellPrice,
@@ -62,27 +66,69 @@ export default function BillOfMaterials({ billOfMaterials }: BillOfMaterialsProp
     },
     {
       key: 'requisitioned',
-      header: 'Qty',
+      header: 'Required',
       sortable: true,
-      width: 'w-15',
+      width: 'w-20',
       render: (value) => (value as number)?.toLocaleString() || '0'
+    },
+    {
+      key: 'inventory',
+      header: 'Inventory',
+      sortable: true,
+      width: 'w-20',
+      render: (value) => {
+        const inventory = value as number;
+        return inventory > 0 ? (
+          <span className="text-green-600 dark:text-green-400 font-medium">
+            {inventory.toLocaleString()}
+          </span>
+        ) : (
+          <span className="text-gray-400">0</span>
+        );
+      }
+    },
+    {
+      key: 'netRequisitioned',
+      header: 'Net Required',
+      sortable: true,
+      width: 'w-20',
+      render: (value) => {
+        const netRequired = value as number;
+        return netRequired > 0 ? (
+          <span className="text-red-600 dark:text-red-400 font-medium">
+            {netRequired.toLocaleString()}
+          </span>
+        ) : (
+          <span className="text-green-600 dark:text-green-400 font-medium">
+            ✓ Covered
+          </span>
+        );
+      }
     },
   ];
 
   const exportShoppingList = () => {
     if (materials.length > 0) {
-      const exportText = materials.map(material => 
-        `${material.name} x${material.requisitioned.toLocaleString()}`
-      ).join('\n');
+      const exportText = materials
+        .filter(material => material.requisitioned > (material.inventory || 0))
+        .map(material => {
+          const netRequired = Math.max(0, material.requisitioned - (material.inventory || 0));
+          return `${material.name} x${netRequired.toLocaleString()}`;
+        })
+        .join('\n');
       navigator.clipboard.writeText(exportText);
     }
   };
 
   const downloadShoppingList = () => {
     if (materials.length > 0) {
-      const exportText = materials.map(material => 
-        `${material.name} x${material.requisitioned.toLocaleString()}`
-      ).join('\n');
+      const exportText = materials
+        .filter(material => material.requisitioned > (material.inventory || 0))
+        .map(material => {
+          const netRequired = Math.max(0, material.requisitioned - (material.inventory || 0));
+          return `${material.name} x${netRequired.toLocaleString()}`;
+        })
+        .join('\n');
       const blob = new Blob([exportText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

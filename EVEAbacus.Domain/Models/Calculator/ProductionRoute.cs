@@ -18,7 +18,7 @@ namespace EVEAbacus.Domain.Models.Calculator
         public List<Order> Orders { get; set; } = [];
         public required int ProducedPerRun { get; set; }
         public int Produced { get { return Order.Runs * Order.Copies * ProducedPerRun; } }
-        public int? Inventory { get; set; }
+        public int Inventory { get; set; } = 0;
         public decimal? AverageSellPrice { get; set; }
         public decimal? AverageBuyPrice { get; set; }
         public Item? BlueprintMetaData { get; set; }

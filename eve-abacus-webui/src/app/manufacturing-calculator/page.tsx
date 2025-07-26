@@ -6,8 +6,10 @@ import type { ManufBatch, OrderDTO } from '@/types/manufacturing';
 import type { Order } from '@/types/orders';
 import { PlusIcon, TrashIcon } from '@/components/Icons';
 import { useOrderCookies, type EditableOrderDTO } from '@/hooks/useOrderCookies';
+import { useInventoryStorage } from '@/hooks/useInventoryStorage';
 import { OrderFormDTO } from '@/components/manufCalc/OrderFormDTO';
 import { OrdersDataGrid } from '@/components/manufCalc/OrdersDataGrid';
+import InventoryManager from '@/components/manufCalc/InventoryManager';
 import ManufacturingResults from '@/components/manufCalc/ManufacturingResults';
 import { getCookie, setCookie, removeCookie } from '@/utils/cookies';
 
@@ -15,6 +17,7 @@ export default function ManufacturingCalculator() {
   const [selectedStations, setSelectedStations] = useState<string[]>([]);
   const [manufBatch, setManufBatch] = useState<ManufBatch | null>(null);
   const [calculating, setCalculating] = useState(false);
+  const [activeTab, setActiveTab] = useState<'orders' | 'inventory'>('orders');
 
   // Storage keys
   const STATION_STORAGE_KEY = 'manufacturing-selected-stations';
@@ -111,6 +114,9 @@ export default function ManufacturingCalculator() {
     clearAllOrders
   } = useOrderCookies();
 
+  // Use inventory storage hook
+  const { inventory } = useInventoryStorage();
+
   // Simplified debouncing implementation
   const calculationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -158,7 +164,8 @@ export default function ManufacturingCalculator() {
         
         const request = {
           orderDTOs: orderDTOs,
-          stationIds: stations
+          stationIds: stations,
+          inventory: inventory
         };
 
         console.log('Sending manufacturing request:', {
@@ -201,16 +208,23 @@ export default function ManufacturingCalculator() {
     }, 1000); // Wait 1 second after user stops making changes
   }, []);
 
-  // Trigger calculation when orders or stations change
+  // Handle inventory changes
+  const handleInventoryChange = useCallback(() => {
+    // Trigger recalculation when inventory changes
+    debouncedCalculation(orders, selectedStations);
+  }, [orders, selectedStations, debouncedCalculation]);
+
+  // Trigger calculation when orders, stations, or inventory change
   useEffect(() => {
-    console.log('useEffect triggered - orders or stations changed:', {
+    console.log('useEffect triggered - orders, stations, or inventory changed:', {
       ordersCount: orders.length,
       stationsCount: selectedStations.length,
+      inventoryCount: inventory.length,
       orders: orders.map(o => ({ name: o.blueprintName, copies: o.copies, runs: o.runs })),
       stations: selectedStations
     });
     debouncedCalculation(orders, selectedStations);
-  }, [orders, selectedStations, debouncedCalculation]);
+  }, [orders, selectedStations, inventory, debouncedCalculation]);
 
 
 
@@ -257,43 +271,69 @@ export default function ManufacturingCalculator() {
                 />
               ) : (
                 <div className="space-y-6">
-                  {/* Orders and Market Hubs Row */}
+                  {/* Orders/Inventory and Market Hubs Row */}
                   <div className="flex gap-6 overflow-x-auto">
-                    {/* Orders Section - 80% width */}
+                    {/* Orders/Inventory Section - 80% width */}
                     <div className="flex-1">
+                      {/* Tab Navigation */}
                       <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                          Orders
-                        </h2>
-                        <div className="flex gap-2">
+                        <div className="flex space-x-1">
                           <button
-                            onClick={startCreatingOrder}
-                            className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                            onClick={() => setActiveTab('orders')}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              activeTab === 'orders'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
                           >
-                            <PlusIcon className="w-4 h-4 mr-1" />
-                            Add Order
+                            Orders ({orders.length})
                           </button>
                           <button
-                            onClick={clearAllOrders}
-                            className="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                            disabled={orders.length === 0}
-                            title="Delete all orders"
+                            onClick={() => setActiveTab('inventory')}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              activeTab === 'inventory'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
                           >
-                            <TrashIcon className="w-4 h-4" />
+                            Inventory ({inventory.length})
                           </button>
                         </div>
+                        {activeTab === 'orders' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={startCreatingOrder}
+                              className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                            >
+                              <PlusIcon className="w-4 h-4 mr-1" />
+                              Add Order
+                            </button>
+                            <button
+                              onClick={clearAllOrders}
+                              className="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                              disabled={orders.length === 0}
+                              title="Delete all orders"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
-                                          {/* Orders Data Grid */}
-                    <div className="overflow-x-auto">
-                      <OrdersDataGrid
-                        orders={orders}
-                        onEdit={startEditingOrder}
-                        onDelete={deleteOrder}
-                        editingOrderId={(editingOrder as EditableOrderDTO | null)?.id}
-                        className="w-full"
-                      />
-                    </div>
+                      {/* Tab Content */}
+                      {activeTab === 'orders' ? (
+                        <div className="overflow-x-auto">
+                          <OrdersDataGrid
+                            orders={orders}
+                            onEdit={startEditingOrder}
+                            onDelete={deleteOrder}
+                            editingOrderId={(editingOrder as EditableOrderDTO | null)?.id}
+                            className="w-full"
+                          />
+                        </div>
+                      ) : (
+                        <InventoryManager onInventoryChange={handleInventoryChange} />
+                      )}
                     </div>
 
                     {/* Market Hubs Section - 25% width */}
