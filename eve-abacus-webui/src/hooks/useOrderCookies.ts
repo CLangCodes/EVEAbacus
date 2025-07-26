@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '@/services/api';
 import type { Order, OrderFormData } from '@/types/orders';
 import type { BlueprintValidation } from '@/services/api';
+import { getCookie, setCookie, removeCookie } from '@/utils/cookies';
 
 export interface EditableOrderDTO extends OrderFormData {
   id?: string;
@@ -10,34 +11,53 @@ export interface EditableOrderDTO extends OrderFormData {
   errors: Record<string, string>;
 }
 
+// Storage keys
+const STORAGE_KEY = 'manufacturing-orders';
+const COOKIE_KEY = 'eve_abacus_orders_backup';
+
 export function useOrderCookies() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [editingOrder, setEditingOrder] = useState<EditableOrderDTO | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
-  // Load orders from cookies on mount
+  // Load orders from storage on mount
   useEffect(() => {
     const loadOrders = () => {
       try {
-        const savedOrders = localStorage.getItem('manufacturing-orders');
+        // Try localStorage first
+        const savedOrders = localStorage.getItem(STORAGE_KEY);
         if (savedOrders) {
           const parsedOrders = JSON.parse(savedOrders);
           setOrders(parsedOrders);
+          return;
+        }
+
+        // Fallback to cookies
+        const cookieData = getCookie(COOKIE_KEY);
+        if (cookieData) {
+          const parsedOrders = JSON.parse(cookieData);
+          setOrders(parsedOrders);
+          // Restore to localStorage
+          localStorage.setItem(STORAGE_KEY, cookieData);
         }
       } catch (error) {
-        console.error('Error loading orders from cookies:', error);
+        console.error('Error loading orders from storage:', error);
       }
     };
 
     loadOrders();
   }, []);
 
-  // Save orders to cookies whenever they change
+  // Save orders to localStorage and cookies whenever they change
   useEffect(() => {
     if (orders.length > 0) {
-      localStorage.setItem('manufacturing-orders', JSON.stringify(orders));
+      const ordersJson = JSON.stringify(orders);
+      localStorage.setItem(STORAGE_KEY, ordersJson);
+      // Also save to cookies as backup (expires in 30 days)
+      setCookie(COOKIE_KEY, ordersJson, { expires: 30 });
     } else {
-      localStorage.removeItem('manufacturing-orders');
+      localStorage.removeItem(STORAGE_KEY);
+      removeCookie(COOKIE_KEY);
     }
   }, [orders]);
 
