@@ -4,6 +4,7 @@ import React from 'react';
 import { DataTable, Column } from '../DataTable';
 import { DocumentDuplicateIcon, PencilIcon } from '../Icons';
 import type { ProductionRoute } from '@/types/manufacturing';
+import { useCustomBlueprintStorage } from '@/hooks/useCustomBlueprintStorage';
 
 interface ProductionRoutingProps {
   productionRouting: ProductionRoute[];
@@ -31,28 +32,48 @@ interface RouteItem extends Record<string, unknown> {
 }
 
 export default function ProductionRouting({ productionRouting, onEditInventory, onEditBlueprint }: ProductionRoutingProps) {
+  const { getMaterialEfficiency, getTimeEfficiency, getCustomBlueprint } = useCustomBlueprintStorage();
+  
   // Ensure productionRouting is an array
   const routes = Array.isArray(productionRouting) ? productionRouting : [];
 
   // Transform ProductionRoute objects to table data
-  const routeData: RouteItem[] = routes.map((route, index) => ({
-    id: index + 1,
-    blueprintName: route.blueprintName || 'N/A',
-    blueprintTypeId: route.blueprintTypeId,
-    materialName: route.materialName,
-    materialTypeId: route.materialTypeId,
-    requisitioned: route.requisitioned,
-    inventory: route.inventory || 0,
-    netRequisitioned: route.netRequisitioned || 0,
-    copies: route.order.copies,
-    runs: route.order.runs,
-    produced: route.produced,
-    me: route.order.me,
-    te: route.order.te,
-    producedPerRun: route.producedPerRun,
-    groupName: route.materialMetaData?.group?.groupName,
-    categoryName: route.materialMetaData?.group?.category?.categoryName
-  }));
+  const routeData: RouteItem[] = routes.map((route, index) => {
+    // Check for custom blueprint values
+    const customBlueprint = getCustomBlueprint(route.blueprintTypeId);
+    const hasCustomBlueprint = customBlueprint !== undefined;
+    
+    // Debug logging
+    console.log(`ProductionRouting - Route ${index}:`, {
+      blueprintTypeId: route.blueprintTypeId,
+      blueprintName: route.blueprintName,
+      originalME: route.order.me,
+      originalTE: route.order.te,
+      customBlueprint,
+      hasCustomBlueprint,
+      finalME: hasCustomBlueprint ? customBlueprint!.materialEfficiency : route.order.me,
+      finalTE: hasCustomBlueprint ? customBlueprint!.timeEfficiency : route.order.te
+    });
+    
+    return {
+      id: index + 1,
+      blueprintName: route.blueprintName || 'N/A',
+      blueprintTypeId: route.blueprintTypeId,
+      materialName: route.materialName,
+      materialTypeId: route.materialTypeId,
+      requisitioned: route.requisitioned,
+      inventory: route.inventory || 0,
+      netRequisitioned: route.netRequisitioned || 0,
+      copies: route.order.copies,
+      runs: route.order.runs,
+      produced: route.produced,
+      me: hasCustomBlueprint ? customBlueprint!.materialEfficiency : route.order.me,
+      te: hasCustomBlueprint ? customBlueprint!.timeEfficiency : route.order.te,
+      producedPerRun: route.producedPerRun,
+      groupName: route.materialMetaData?.group?.groupName,
+      categoryName: route.materialMetaData?.group?.category?.categoryName
+    };
+  });
 
   const copyBlueprintName = (blueprintName: string) => {
     if (blueprintName && blueprintName !== 'N/A') {
@@ -171,10 +192,18 @@ export default function ProductionRouting({ productionRouting, onEditInventory, 
       sortable: true,
       render: (value, row) => {
         const me = value as number;
+        const customBlueprint = getCustomBlueprint(row.blueprintTypeId as number);
+        const isCustomValue = customBlueprint !== undefined;
+        
         return (
           <div className="flex items-center justify-between">
-            <span className={me > 0 ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-400"}>
+            <span className={`${isCustomValue ? "text-green-600 dark:text-green-400 font-medium" : me > 0 ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-400"}`}>
               {me}
+              {isCustomValue && (
+                <span className="ml-1 text-xs text-green-500 dark:text-green-400" title="Custom blueprint value">
+                  ★
+                </span>
+              )}
             </span>
             {onEditBlueprint && (
               <button
@@ -195,10 +224,18 @@ export default function ProductionRouting({ productionRouting, onEditInventory, 
       sortable: true,
       render: (value, row) => {
         const te = value as number;
+        const customBlueprint = getCustomBlueprint(row.blueprintTypeId as number);
+        const isCustomValue = customBlueprint !== undefined;
+        
         return (
           <div className="flex items-center justify-between">
-            <span className={te > 0 ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-400"}>
+            <span className={`${isCustomValue ? "text-green-600 dark:text-green-400 font-medium" : te > 0 ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-400"}`}>
               {te}
+              {isCustomValue && (
+                <span className="ml-1 text-xs text-green-500 dark:text-green-400" title="Custom blueprint value">
+                  ★
+                </span>
+              )}
             </span>
             {onEditBlueprint && (
               <button
