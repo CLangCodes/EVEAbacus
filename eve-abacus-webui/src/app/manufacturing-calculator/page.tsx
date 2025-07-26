@@ -146,7 +146,7 @@ export default function ManufacturingCalculator() {
   } = useOrderCookies();
 
   // Use inventory storage hook
-  const { inventory, addInventoryItem, clearInventory, updateInventoryQuantity, updateInventoryQuantities } = useInventoryStorage();
+  const { inventory, addInventoryItem, clearInventory, updateInventoryQuantities } = useInventoryStorage();
 
   // Use custom blueprint storage hook
   const { customBlueprints, addCustomBlueprint, addCustomBlueprints, clearCustomBlueprints } = useCustomBlueprintStorage();

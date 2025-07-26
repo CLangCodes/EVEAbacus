@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { DataTable, Column } from '../DataTable';
-import { DocumentDuplicateIcon, PencilIcon, CheckIcon, XMarkIcon } from '../Icons';
+import { DocumentDuplicateIcon, CheckIcon, XMarkIcon } from '../Icons';
 import type { ProductionRoute, BOMLineItem } from '@/types/manufacturing';
 
 interface BulkEditModeProps {
@@ -111,26 +111,26 @@ export default function BulkEditMode({
     setHasChanges(false);
   }, [productionRouting, billOfMaterials]);
 
-  const updateRoute = useCallback((id: number, field: keyof EditableRouteItem, value: any) => {
+  const updateRoute = useCallback((id: number, field: keyof EditableRouteItem, value: string | number) => {
     setEditableRoutes(prev => prev.map(route => {
       if (route.id === id) {
         let validatedValue = value;
         
         // Validate input values
         if (field === 'me') {
-          validatedValue = Math.max(0, Math.min(10, value));
+          validatedValue = Math.max(0, Math.min(10, Number(value)));
         } else if (field === 'te') {
-          validatedValue = Math.max(0, Math.min(20, value));
+          validatedValue = Math.max(0, Math.min(20, Number(value)));
           // Ensure TE is even
-          validatedValue = Math.floor(validatedValue / 2) * 2;
+          validatedValue = Math.floor(Number(validatedValue) / 2) * 2;
         } else if (field === 'inventory') {
-          validatedValue = Math.max(0, value);
+          validatedValue = Math.max(0, Number(value));
         }
         
         const updatedRoute = { ...route, [field]: validatedValue };
         // Recalculate net requisitioned when inventory changes
         if (field === 'inventory') {
-          updatedRoute.netRequisitioned = Math.max(0, updatedRoute.requisitioned - validatedValue);
+          updatedRoute.netRequisitioned = Math.max(0, updatedRoute.requisitioned - Number(validatedValue));
         }
         return updatedRoute;
       }
@@ -139,20 +139,20 @@ export default function BulkEditMode({
     setHasChanges(true);
   }, []);
 
-  const updateMaterial = useCallback((id: number, field: keyof EditableMaterialItem, value: any) => {
+  const updateMaterial = useCallback((id: number, field: keyof EditableMaterialItem, value: string | number) => {
     setEditableMaterials(prev => prev.map(material => {
       if (material.id === id) {
         let validatedValue = value;
         
         // Validate input values
         if (field === 'inventory') {
-          validatedValue = Math.max(0, value);
+          validatedValue = Math.max(0, Number(value));
         }
         
         const updatedMaterial = { ...material, [field]: validatedValue };
         // Recalculate net requisitioned when inventory changes
         if (field === 'inventory') {
-          updatedMaterial.netRequisitioned = Math.max(0, updatedMaterial.requisitioned - validatedValue);
+          updatedMaterial.netRequisitioned = Math.max(0, updatedMaterial.requisitioned - Number(validatedValue));
         }
         return updatedMaterial;
       }
