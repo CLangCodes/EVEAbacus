@@ -112,7 +112,8 @@ public class CalculatorService
             // Don't want to modify the root order (assume the user knows how many will be produced per run).
         if (productionRoute.ProducedPerRun != 1 && (productionRoute.Order.ParentBlueprintTypeId != null || productionRoute.Order.ParentBlueprintTypeId != 0))
             {
-            float modRuns = ((float)productionRoute.Requisitioned / (float)productionRoute.ProducedPerRun);
+            // Calculate runs based on net requisitioned (accounting for inventory)
+            float modRuns = ((float)productionRoute.NetRequisitioned / (float)productionRoute.ProducedPerRun);
             int modRunsInt = (int)Math.Ceiling(modRuns);
             productionRoute!.Order.Runs = modRunsInt;
             productionRouting.Add(productionRoute);
@@ -143,7 +144,8 @@ public class CalculatorService
 
             if (productionRoute.ProducedPerRun != 1)
             {
-                float modRuns = ((float)existingItem.Requisitioned / (float)existingItem.ProducedPerRun);
+                // Calculate runs based on net requisitioned (accounting for inventory)
+                float modRuns = ((float)existingItem.NetRequisitioned / (float)existingItem.ProducedPerRun);
                 int modRunsInt = (int)Math.Ceiling(modRuns);
 
                 existingItem!.Order.Runs = modRunsInt;
@@ -429,19 +431,23 @@ public class CalculatorService
         int effectiveME = customBlueprint != null ? customBlueprint.MaterialEfficiency : (int)mEff!;
         int effectiveTE = customBlueprint != null ? customBlueprint.TimeEfficiency : 20; // Default TE is 20
 
+        int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
+        
         if (madePerRun != 1)
         {
             requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, effectiveME);
-            float newQuantityFloat = (float)((requisitioned) / madePerRun)!;
+            // Calculate runs based on net requisitioned (accounting for inventory)
+            int netRequisitioned = Math.Max(0, requisitioned - inventoryQuantity);
+            float newQuantityFloat = (float)((netRequisitioned) / madePerRun)!;
             runs = (int)(Math.Ceiling(newQuantityFloat));
         }
         else
         {
-            runs = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, effectiveME);
             requisitioned = CalcMat((int)bpMaterial.Quantity!, rootCopies, rootRuns, effectiveME);
+            // Calculate runs based on net requisitioned (accounting for inventory)
+            int netRequisitioned = Math.Max(0, requisitioned - inventoryQuantity);
+            runs = netRequisitioned;
         }
-
-        int inventoryQuantity = _inventoryService.GetInventoryQuantity((int)bpMaterial.MaterialTypeId!);
         
         ProductionRoute productionRoute = new ProductionRoute()
         {
