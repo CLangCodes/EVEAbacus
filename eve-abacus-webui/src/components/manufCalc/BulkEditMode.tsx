@@ -458,6 +458,7 @@ export default function BulkEditMode({
           columns={routeColumns}
           emptyMessage="No production routes found."
           className="w-full"
+          secondarySortKey="blueprintName"
         />
       </div>
 
@@ -476,6 +477,7 @@ export default function BulkEditMode({
           columns={materialColumns}
           emptyMessage="No bill of materials found."
           className="w-full"
+          secondarySortKey="name"
         />
       </div>
     </div>

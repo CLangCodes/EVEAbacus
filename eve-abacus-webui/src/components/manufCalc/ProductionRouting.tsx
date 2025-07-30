@@ -280,6 +280,7 @@ export default function ProductionRouting({ productionRouting, onEditInventory, 
             columns={columns}
             emptyMessage="No production routes found. Add some orders first."
             className="w-full"
+            secondarySortKey="blueprintName"
           />
         {/* <div className="p-6">
           

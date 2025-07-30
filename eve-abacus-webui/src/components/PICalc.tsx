@@ -370,6 +370,7 @@ export function PICalc({ className = "" }: PICalcProps) {
               pageSize={pageSize}
               onPageChange={handlePageChange}
               showPagination={true}
+              secondarySortKey="name"
             />
           )}
         </>

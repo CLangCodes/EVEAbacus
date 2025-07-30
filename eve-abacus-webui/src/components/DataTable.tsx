@@ -24,6 +24,8 @@ export interface DataTableProps<T> {
   pageSize?: number;
   onPageChange?: (page: number) => void;
   showPagination?: boolean;
+  // Secondary sorting prop
+  secondarySortKey?: keyof T | string;
 }
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -37,7 +39,8 @@ export function DataTable<T extends Record<string, unknown>>({
   totalCount = 0,
   pageSize = 25,
   onPageChange,
-  showPagination = false
+  showPagination = false,
+  secondarySortKey
 }: DataTableProps<T>) {
   const [sortConfig, setSortConfig] = useState<{
     key: keyof T | string;
@@ -54,19 +57,34 @@ export function DataTable<T extends Record<string, unknown>>({
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
 
+      let comparison = 0;
+
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortConfig.direction === 'asc' 
+        comparison = sortConfig.direction === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
       }
 
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      // If primary sort values are equal and we have a secondary sort key, sort by that
+      if (comparison === 0 && secondarySortKey && sortConfig.key !== secondarySortKey) {
+        const aSecondaryValue = a[secondarySortKey];
+        const bSecondaryValue = b[secondarySortKey];
+
+        if (aSecondaryValue === null || aSecondaryValue === undefined) return 1;
+        if (bSecondaryValue === null || bSecondaryValue === undefined) return -1;
+
+        if (typeof aSecondaryValue === 'string' && typeof bSecondaryValue === 'string') {
+          comparison = aSecondaryValue.localeCompare(bSecondaryValue);
+        } else if (typeof aSecondaryValue === 'number' && typeof bSecondaryValue === 'number') {
+          comparison = aSecondaryValue - bSecondaryValue;
+        }
       }
 
-      return 0;
+      return comparison;
     });
-  }, [data, sortConfig]);
+  }, [data, sortConfig, secondarySortKey]);
 
   const handleSort = (key: keyof T | string) => {
     setSortConfig(current => {
