@@ -101,6 +101,7 @@ function ProcurementPlanContainer({ procurementPlan }: ProcurementPlanContainerP
             columns={columns}
             emptyMessage="No purchase requisitions to display."
             className="w-full"
+            secondarySortKey="name"
           />
         </div>
       </div>

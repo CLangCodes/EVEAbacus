@@ -180,6 +180,7 @@ export default function BillOfMaterials({ billOfMaterials, onEditInventory }: Bi
             columns={columns}
             emptyMessage="No materials to display. Add some orders first."
             className="w-full"
+            secondarySortKey="name"
           />
         {/* <div className="p-6">
           

@@ -195,6 +195,7 @@ export function OrdersDataGrid({
         pageSize={pageSize}
         onPageChange={handlePageChange}
         showPagination={tableData.length > pageSize}
+        secondarySortKey="blueprintName"
       />
     </div>
   );
